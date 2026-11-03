@@ -308,22 +308,41 @@
         </div>
       </section>
 
-      <!-- ================= PAGE 3: ROBOT (LAYAR OLED INTERAKTIF) ================= -->
+      <!-- ================= PAGE 3: ROBOT (LAYAR OLED ROBOT - MONITOR DISPLAY) ================= -->
       <section id="pageRobot" class="page">
         <div class="section-title-bar">
           <h2>LAYAR OLED ROBOT</h2>
         </div>
 
         <div class="robot-screens-grid">
-          <!-- 1. Layar Jam Digital -->
-          <div class="oled-screen-card active" onclick="activateOledScreen(1, this)">
+          <!-- 1. BARIS 1 KIRI: EXPRESI WAJAH -->
+          <div class="oled-screen-card">
+            <div class="oled-display-bezel">
+              <div class="oled-screen-content oled-face-view">
+                <div class="oled-face-wrap" id="oledFaceSvgWrap">
+                  <svg viewBox="0 0 100 50" class="oled-face-svg">
+                    <rect x="15" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3"></rect>
+                    <rect x="57" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3"></rect>
+                  </svg>
+                </div>
+                <div class="oled-mood-label" id="oledFaceMoodLabel">MOOD: SENANG</div>
+              </div>
+            </div>
+            <div class="screen-card-meta">
+              <span class="screen-title">EXPRESI WAJAH</span>
+              <span class="screen-desc">Tampilan Animasi Wajah</span>
+            </div>
+          </div>
+
+          <!-- 2. BARIS 1 KANAN: JAM DIGITAL -->
+          <div class="oled-screen-card">
             <div class="oled-display-bezel">
               <div class="oled-screen-content oled-clock-view">
                 <div class="oled-header-tiny">
                   <span id="oledTzLabel">WIB</span>
                   <span>BAT 100%</span>
                 </div>
-                <div class="oled-big-time" id="oledClockPreview">12:30</div>
+                <div class="oled-big-time" id="oledClockPreview">12:30:00</div>
                 <div class="oled-sub-date" id="oledDatePreview">RABU, 04 NOV</div>
               </div>
             </div>
@@ -333,92 +352,108 @@
             </div>
           </div>
 
-          <!-- 2. Layar Cuaca -->
-          <div class="oled-screen-card" onclick="activateOledScreen(2, this)">
+          <!-- 3. BARIS 2 KIRI: ALARM -->
+          <div class="oled-screen-card">
+            <div class="oled-display-bezel">
+              <div class="oled-screen-content oled-alarm-view">
+                <div class="oled-header-tiny">
+                  <span>ALARM</span>
+                  <svg viewBox="0 0 24 24" class="oled-tiny-icon" fill="none" stroke="#00F0FF" stroke-width="2">
+                    <circle cx="12" cy="13" r="8"></circle>
+                    <path d="M12 9v4l2 2M5 3L2 6M22 6l-3-3"></path>
+                  </svg>
+                </div>
+                <div class="oled-big-time" id="oledAlarmTimePreview">06:30</div>
+                <div class="oled-alarm-badge" id="oledAlarmBadgePreview">ON &bull; TIAP HARI</div>
+              </div>
+            </div>
+            <div class="screen-card-meta">
+              <span class="screen-title">ALARM</span>
+              <span class="screen-desc">Tampilan Alarm Pengingat</span>
+            </div>
+          </div>
+
+          <!-- 4. BARIS 2 KANAN: STOPWATCH -->
+          <div class="oled-screen-card">
+            <div class="oled-display-bezel">
+              <div class="oled-screen-content oled-stopwatch-view">
+                <div class="oled-header-tiny">
+                  <span>STOPWATCH</span>
+                  <span>LAP 01</span>
+                </div>
+                <div class="oled-big-time oled-mono" id="oledStopwatchPreview">00:00:00</div>
+                <div class="oled-sw-bar-track">
+                  <div class="oled-sw-bar-fill"></div>
+                </div>
+              </div>
+            </div>
+            <div class="screen-card-meta">
+              <span class="screen-title">STOPWATCH</span>
+              <span class="screen-desc">Tampilan Penghitung Waktu</span>
+            </div>
+          </div>
+
+          <!-- 5. BARIS 3 KIRI: INFO CUACA -->
+          <div class="oled-screen-card">
             <div class="oled-display-bezel">
               <div class="oled-screen-content oled-weather-view">
                 <div class="oled-weather-row">
-                  <svg viewBox="0 0 24 24" class="oled-svg-icon" fill="none" stroke="#00F0FF" stroke-width="2">
-                    <circle cx="12" cy="12" r="5"></circle>
-                    <line x1="12" y1="1" x2="12" y2="3"></line>
-                    <line x1="12" y1="21" x2="12" y2="23"></line>
-                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                    <line x1="1" y1="12" x2="3" y2="12"></line>
-                    <line x1="21" y1="12" x2="23" y2="12"></line>
-                  </svg>
-                  <span class="oled-weather-temp" id="oledTempPreview">29°C</span>
+                  <div class="oled-weather-left">
+                    <div class="oled-weather-city" id="oledCityPreview">JAKARTA</div>
+                    <div class="oled-weather-temp" id="oledTempPreview">29°C</div>
+                  </div>
+                  <div class="oled-weather-divider"></div>
+                  <div class="oled-weather-right">
+                    <div class="oled-weather-info" id="oledWeatherCondPreview">CERAH</div>
+                    <div class="oled-weather-sub">Lembap: 65%</div>
+                    <div class="oled-weather-sub">Angin: 12km</div>
+                  </div>
                 </div>
-                <div class="oled-weather-city" id="oledCityPreview">JAKARTA</div>
-                <div class="oled-weather-info">CERAH BERAWAN</div>
               </div>
             </div>
             <div class="screen-card-meta">
               <span class="screen-title">INFO CUACA</span>
-              <span class="screen-desc">Cuaca & Suhu Kota</span>
+              <span class="screen-desc">Tampilan Cuaca & Suhu Kota</span>
             </div>
           </div>
 
-          <!-- 3. Layar Ekspresi Wajah -->
-          <div class="oled-screen-card" onclick="activateOledScreen(0, this)">
+          <!-- 6. BARIS 3 KANAN: SUBTITLE -->
+          <div class="oled-screen-card">
             <div class="oled-display-bezel">
-              <div class="oled-screen-content oled-face-view">
-                <div class="oled-eyes-wrap">
-                  <div class="oled-eye left"></div>
-                  <div class="oled-eye right"></div>
+              <div class="oled-screen-content oled-msg-view">
+                <div class="oled-header-tiny">
+                  <span>SUBTITLE YOUTUBE</span>
+                  <span>♪ ♫</span>
                 </div>
-                <div class="oled-mood-label">MOOD: SENANG</div>
+                <div class="oled-marquee-text" id="oledMsgPreview">HELLO ROBOT DESK!</div>
+                <div class="oled-footer-tiny"><span>TEKS BERJALAN AKTIF</span></div>
               </div>
             </div>
             <div class="screen-card-meta">
-              <span class="screen-title">EKSPRESI WAJAH</span>
-              <span class="screen-desc">Animasi Mata OLED</span>
+              <span class="screen-title">SUBTITLE</span>
+              <span class="screen-desc">Tampilan Pesan Berjalan</span>
             </div>
           </div>
 
-          <!-- 4. Layar Arcade Game -->
-          <div class="oled-screen-card" onclick="activateOledScreen(5, this)">
+          <!-- 7. BARIS 4: MENU GAME (SPAN 2 KOLOM) -->
+          <div class="oled-screen-card full-width">
             <div class="oled-display-bezel">
               <div class="oled-screen-content oled-game-view">
+                <div class="oled-header-tiny">
+                  <span>ARCADE 9-IN-1</span>
+                  <span>MENU GAME</span>
+                </div>
                 <div class="oled-game-pixels">
                   <div class="dino-pixel"></div>
                   <div class="cactus-pixel"></div>
+                  <div class="bird-pixel"></div>
                 </div>
-                <div class="oled-score-line">HI 00420 &nbsp; SCORE 00150</div>
+                <div class="oled-score-line">SELECT GAME &bull; 10 ARCADE READY</div>
               </div>
             </div>
             <div class="screen-card-meta">
-              <span class="screen-title">ARCADE GAME</span>
-              <span class="screen-desc">Layar Game Mini OLED</span>
-            </div>
-          </div>
-
-          <!-- 5. Layar Subtitle / Pesan -->
-          <div class="oled-screen-card" onclick="activateOledScreen('msg', this)">
-            <div class="oled-display-bezel">
-              <div class="oled-screen-content oled-msg-view">
-                <div class="oled-header-tiny"><span>PESAN OLED</span></div>
-                <div class="oled-marquee-text" id="oledMsgPreview">HELLO ROBOT DESK!</div>
-                <div class="oled-footer-tiny"><span>TEKS AKTIF</span></div>
-              </div>
-            </div>
-            <div class="screen-card-meta">
-              <span class="screen-title">TEKS & SUBTITLE</span>
-              <span class="screen-desc">Pesan Berjalan OLED</span>
-            </div>
-          </div>
-
-          <!-- 6. Layar Interaksi Sensor & Daya -->
-          <div class="oled-screen-card" onclick="activateOledScreen('pet', this)">
-            <div class="oled-display-bezel">
-              <div class="oled-screen-content oled-pet-view">
-                <div class="oled-heart-beat">♥</div>
-                <div class="oled-sensor-status">SENSOR SENTUH AKTIF</div>
-              </div>
-            </div>
-            <div class="screen-card-meta">
-              <span class="screen-title">RESPON INTERAKTIF</span>
-              <span class="screen-desc">Tepuk Kepala / Elus</span>
+              <span class="screen-title">MENU GAME</span>
+              <span class="screen-desc">Tampilan Menu Game Arcade</span>
             </div>
           </div>
         </div>

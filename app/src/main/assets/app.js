@@ -509,6 +509,7 @@ window.onBLEReceived = function(jsonStr) {
         const dEl = document.getElementById('alarmDailyToggle');
         if (dEl) dEl.checked = data.alarm.daily;
       }
+      updateOledAlarmPreview();
     }
   } catch (e) {
     console.error('Failed to parse incoming BLE JSON', e);
@@ -517,11 +518,43 @@ window.onBLEReceived = function(jsonStr) {
 
 // ================= 5. FEATURE ACTION HANDLERS =================
 
+// Definisi 13 Grafis & Mood Wajah OLED Robot
+const OLED_FACES = [
+  { name: 'SENANG', svg: '<rect x="15" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3"></rect><rect x="57" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3"></rect>' },
+  { name: 'KEDIP', svg: '<rect x="15" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3"></rect><line x1="57" y1="25" x2="85" y2="25" stroke="#00F0FF" stroke-width="4" stroke-linecap="round"></line>' },
+  { name: 'NGANTUK', svg: '<path d="M15 28 Q29 38 43 28" fill="none" stroke="#00F0FF" stroke-width="3.5"></path><path d="M57 28 Q71 38 85 28" fill="none" stroke="#00F0FF" stroke-width="3.5"></path><text x="75" y="15" fill="#00F0FF" font-size="11" font-weight="bold">Z</text>' },
+  { name: 'SEDIH', svg: '<path d="M15 25 Q29 15 43 25" fill="none" stroke="#00F0FF" stroke-width="3.5"></path><path d="M57 25 Q71 15 85 25" fill="none" stroke="#00F0FF" stroke-width="3.5"></path><path d="M29 32 Q25 40 29 45 Q33 40 29 32" fill="#00F0FF"></path><path d="M71 32 Q67 40 71 45 Q75 40 71 32" fill="#00F0FF"></path>' },
+  { name: 'CEMBURU', svg: '<line x1="15" y1="20" x2="43" y2="28" stroke="#00F0FF" stroke-width="3.5"></line><line x1="85" y1="20" x2="57" y2="28" stroke="#00F0FF" stroke-width="3.5"></line>' },
+  { name: 'IMUT', svg: '<path d="M15 30 Q29 12 43 30" fill="none" stroke="#00F0FF" stroke-width="3.5"></path><path d="M57 30 Q71 12 85 30" fill="none" stroke="#00F0FF" stroke-width="3.5"></path>' },
+  { name: 'CIUM', svg: '<line x1="15" y1="25" x2="43" y2="25" stroke="#00F0FF" stroke-width="3.5"></line><path d="M57 30 Q71 14 85 30" fill="none" stroke="#00F0FF" stroke-width="3.5"></path><path d="M48 36 Q52 32 48 28" fill="none" stroke="#00F0FF" stroke-width="2.5"></path>' },
+  { name: 'CINTA', svg: '<path d="M29 18 A 6 6 0 0 0 20 22 Q 29 36 29 36 Q 29 36 38 22 A 6 6 0 0 0 29 18" fill="none" stroke="#00F0FF" stroke-width="2.5"></path><path d="M71 18 A 6 6 0 0 0 62 22 Q 71 36 71 36 Q 71 36 80 22 A 6 6 0 0 0 71 18" fill="none" stroke="#00F0FF" stroke-width="2.5"></path>' },
+  { name: 'BINTANG', svg: '<rect x="15" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="2.5"></rect><rect x="57" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="2.5"></rect><polygon points="29,18 31,23 36,25 31,27 29,32 27,27 22,25 27,23" fill="#00F0FF"></polygon><polygon points="71,18 73,23 78,25 73,27 71,32 69,27 64,25 69,23" fill="#00F0FF"></polygon>' },
+  { name: 'PUSING', svg: '<line x1="20" y1="15" x2="38" y2="35" stroke="#00F0FF" stroke-width="3.5"></line><line x1="38" y1="15" x2="20" y2="35" stroke="#00F0FF" stroke-width="3.5"></line><line x1="62" y1="15" x2="80" y2="35" stroke="#00F0FF" stroke-width="3.5"></line><line x1="80" y1="15" x2="62" y2="35" stroke="#00F0FF" stroke-width="3.5"></line>' },
+  { name: 'MARAH', svg: '<line x1="14" y1="14" x2="43" y2="24" stroke="#00F0FF" stroke-width="4"></line><line x1="86" y1="14" x2="57" y2="24" stroke="#00F0FF" stroke-width="4"></line><rect x="18" y="26" width="22" height="14" rx="4" fill="none" stroke="#00F0FF" stroke-width="2.5"></rect><rect x="60" y="26" width="22" height="14" rx="4" fill="none" stroke="#00F0FF" stroke-width="2.5"></rect>' },
+  { name: 'MELIRIK', svg: '<rect x="15" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="2.5"></rect><rect x="57" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="2.5"></rect><rect x="17" y="16" width="12" height="18" rx="4" fill="#00F0FF"></rect><rect x="59" y="16" width="12" height="18" rx="4" fill="#00F0FF"></rect>' },
+  { name: 'HATI', svg: '<path d="M29 14 A 8 8 0 0 0 17 22 Q 29 40 29 40 Q 29 40 41 22 A 8 8 0 0 0 29 14" fill="#00F0FF"></path><path d="M71 14 A 8 8 0 0 0 59 22 Q 71 40 71 40 Q 71 40 83 22 A 8 8 0 0 0 71 14" fill="#00F0FF"></path>' }
+];
+
+function updateOledFacePreview(idx) {
+  const item = OLED_FACES[idx] || OLED_FACES[0];
+  const wrap = document.getElementById('oledFaceSvgWrap');
+  const label = document.getElementById('oledFaceMoodLabel');
+  if (wrap) {
+    wrap.innerHTML = `<svg viewBox="0 0 100 50" class="oled-face-svg">${item.svg}</svg>`;
+  }
+  if (label) {
+    label.textContent = `MOOD: ${item.name}`;
+  }
+}
+
 // Ganti Ekspresi Wajah (0..12)
 function sendFace(faceIndex, elem) {
   currentFaceIndex = faceIndex;
   document.querySelectorAll('.face-card').forEach(c => c.classList.remove('active'));
   if (elem) elem.classList.add('active');
+
+  // Update tampilan layar OLED robot secara langsung
+  updateOledFacePreview(faceIndex);
 
   const ok = sendCommand({ c: 'f', v: faceIndex });
   if (ok) {
@@ -584,26 +617,66 @@ function sendWake() {
   }
 }
 
-// AKTIVASI KARTU LAYAR OLED INTERAKTIF
-function activateOledScreen(mode, elem) {
-  document.querySelectorAll('.oled-screen-card').forEach(c => c.classList.remove('active'));
-  if (elem) elem.classList.add('active');
+// SINKRONISASI TAMPILAN ALARM OLED
+function updateOledAlarmPreview() {
+  const h = document.getElementById('alarmHour');
+  const m = document.getElementById('alarmMin');
+  const en = document.getElementById('alarmEnabledToggle');
+  const daily = document.getElementById('alarmDailyToggle');
 
-  if (typeof mode === 'number') {
-    sendDeviceMode(mode);
-    const titles = { 0: 'Mode Wajah Robot', 1: 'Mode Jam Digital', 2: 'Mode Cuaca', 5: 'Mode Arcade Game' };
-    showNeonToast(titles[mode] || 'Layar Diaktifkan');
-  } else if (mode === 'msg') {
-    const text = prompt('Ketik pesan untuk ditampilkan di layar Robot Desk:', 'HELLO ROBOT DESK!');
-    if (text) {
-      sendCommand({ c: 'msg', text: text, source: 'HP' });
-      const preview = document.getElementById('oledMsgPreview');
-      if (preview) preview.textContent = text.toUpperCase();
-      showNeonToast('Pesan Dikirim ke Layar');
-      triggerHaptic(30);
-    }
-  } else if (mode === 'pet') {
-    sendPetting();
+  const timeEl = document.getElementById('oledAlarmTimePreview');
+  const badgeEl = document.getElementById('oledAlarmBadgePreview');
+
+  if (timeEl && h && m) {
+    const hh = String(parseInt(h.value, 10) || 0).padStart(2, '0');
+    const mm = String(parseInt(m.value, 10) || 0).padStart(2, '0');
+    timeEl.textContent = `${hh}:${mm}`;
+  }
+  if (badgeEl && en && daily) {
+    const isEn = en.checked;
+    const isDaily = daily.checked;
+    badgeEl.textContent = `${isEn ? 'ON' : 'OFF'} \u2022 ${isDaily ? 'TIAP HARI' : 'SEKALI'}`;
+    badgeEl.style.opacity = isEn ? '1' : '0.45';
+  }
+}
+
+// SIMPAN & TES ALARM
+function saveAlarmSettings() {
+  const hInput = document.getElementById('alarmHour');
+  const mInput = document.getElementById('alarmMin');
+  const enInput = document.getElementById('alarmEnabledToggle');
+  const dailyInput = document.getElementById('alarmDailyToggle');
+
+  const h = parseInt(hInput ? hInput.value : '6', 10) || 0;
+  const m = parseInt(mInput ? mInput.value : '30', 10) || 0;
+  const enabled = enInput ? enInput.checked : true;
+  const daily = dailyInput ? dailyInput.checked : true;
+
+  localStorage.setItem('robot_cfg_alarm_h', String(h));
+  localStorage.setItem('robot_cfg_alarm_m', String(m));
+  localStorage.setItem('robot_cfg_alarm_en', enabled ? '1' : '0');
+  localStorage.setItem('robot_cfg_alarm_daily', daily ? '1' : '0');
+
+  updateOledAlarmPreview();
+
+  const ok = sendCommand({
+    cmd: 'alarm',
+    hour: h,
+    min: m,
+    enabled: enabled,
+    daily: daily
+  });
+  if (ok) {
+    showNeonToast('Alarm Disimpan: ' + String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0'));
+    triggerHaptic(30);
+  }
+}
+
+function testAlarmBuzzer() {
+  const ok = sendCommand({ cmd: 'alarm_test' });
+  if (ok) {
+    showNeonToast('Tes Bunyi Alarm');
+    triggerHaptic(40);
   }
 }
 
@@ -623,15 +696,16 @@ function updateOledClockTick() {
 
   let hours = targetTime.getHours();
   const minutes = String(targetTime.getMinutes()).padStart(2, '0');
+  const seconds = String(targetTime.getSeconds()).padStart(2, '0');
 
   let timeStr = '';
   if (currentTimeFormat === 12) {
     const ampm = hours >= 12 ? 'PM' : 'AM';
     hours = hours % 12;
     hours = hours ? hours : 12;
-    timeStr = `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
+    timeStr = `${String(hours).padStart(2, '0')}:${minutes}:${seconds} ${ampm}`;
   } else {
-    timeStr = `${String(hours).padStart(2, '0')}:${minutes}`;
+    timeStr = `${String(hours).padStart(2, '0')}:${minutes}:${seconds}`;
   }
 
   if (clockEl) clockEl.textContent = timeStr;
@@ -827,6 +901,41 @@ window.addEventListener('DOMContentLoaded', () => {
     setTempUnit(savedUnit);
   }
 
+  // Restore saved alarm preferences
+  const savedAlarmH = localStorage.getItem('robot_cfg_alarm_h');
+  const savedAlarmM = localStorage.getItem('robot_cfg_alarm_m');
+  const savedAlarmEn = localStorage.getItem('robot_cfg_alarm_en');
+  const savedAlarmDaily = localStorage.getItem('robot_cfg_alarm_daily');
+
+  if (savedAlarmH !== null) {
+    const hEl = document.getElementById('alarmHour');
+    if (hEl) hEl.value = String(savedAlarmH).padStart(2, '0');
+  }
+  if (savedAlarmM !== null) {
+    const mEl = document.getElementById('alarmMin');
+    if (mEl) mEl.value = String(savedAlarmM).padStart(2, '0');
+  }
+  if (savedAlarmEn !== null) {
+    const enEl = document.getElementById('alarmEnabledToggle');
+    if (enEl) enEl.checked = savedAlarmEn === '1';
+  }
+  if (savedAlarmDaily !== null) {
+    const dailyEl = document.getElementById('alarmDailyToggle');
+    if (dailyEl) dailyEl.checked = savedAlarmDaily === '1';
+  }
+
+  // Attach live update listeners for alarm inputs
+  ['alarmHour', 'alarmMin'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', updateOledAlarmPreview);
+  });
+  ['alarmEnabledToggle', 'alarmDailyToggle'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', updateOledAlarmPreview);
+  });
+
+  updateOledFacePreview(0);
+  updateOledAlarmPreview();
   updateOledClockTick();
 
   // Cek status daya Bluetooth HP secara native

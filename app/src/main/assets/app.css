@@ -1535,25 +1535,18 @@ input[type="range"]::-webkit-slider-thumb {
 .oled-screen-card {
   display: flex;
   flex-direction: column;
-  background: rgba(10, 18, 34, 0.7);
+  background: rgba(10, 18, 34, 0.75);
   border: 1px solid var(--neon-cyan-border);
   border-radius: var(--radius-md);
   padding: 10px;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: default;
+  user-select: none;
   text-align: left;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
-.oled-screen-card:hover, .oled-screen-card:active {
-  transform: translateY(-2px);
-  border-color: var(--neon-cyan);
-  box-shadow: 0 0 15px rgba(0, 240, 255, 0.25);
-}
-
-.oled-screen-card.active {
-  border-color: var(--neon-cyan);
-  box-shadow: 0 0 18px rgba(0, 240, 255, 0.4);
-  background: rgba(0, 240, 255, 0.08);
+.oled-screen-card.full-width {
+  grid-column: span 2;
 }
 
 .oled-display-bezel {
@@ -1566,12 +1559,7 @@ input[type="range"]::-webkit-slider-thumb {
   box-sizing: border-box;
   overflow: hidden;
   position: relative;
-  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.9);
-}
-
-.oled-screen-card.active .oled-display-bezel {
-  border-color: rgba(0, 240, 255, 0.6);
-  box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.15), 0 0 8px rgba(0, 240, 255, 0.2);
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.95), 0 0 4px rgba(0, 240, 255, 0.15);
 }
 
 .oled-screen-content {
@@ -1590,9 +1578,16 @@ input[type="range"]::-webkit-slider-thumb {
   width: 100%;
   display: flex;
   justify-content: space-between;
+  align-items: center;
   font-size: 0.5rem;
   letter-spacing: 0.5px;
   color: #5A7B99;
+}
+
+.oled-tiny-icon {
+  width: 10px;
+  height: 10px;
+  stroke: var(--neon-cyan);
 }
 
 .oled-big-time {
@@ -1601,73 +1596,157 @@ input[type="range"]::-webkit-slider-thumb {
   letter-spacing: 1px;
 }
 
+.oled-mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
 .oled-sub-date {
   font-size: 0.52rem;
   color: #8EA9C7;
   letter-spacing: 0.5px;
 }
 
-.oled-weather-row {
+/* Face Preview in OLED */
+.oled-face-wrap {
+  width: 60px;
+  height: 30px;
   display: flex;
   align-items: center;
-  gap: 6px;
-}
-
-.oled-svg-icon {
-  width: 16px;
-  height: 16px;
-  stroke: var(--neon-cyan);
-}
-
-.oled-weather-temp {
-  font-size: 1.05rem;
-  font-weight: 800;
-}
-
-.oled-weather-city {
-  font-size: 0.52rem;
-  letter-spacing: 1px;
-  font-weight: 700;
-}
-
-.oled-weather-info {
-  font-size: 0.45rem;
-  color: #5A7B99;
-}
-
-.oled-eyes-wrap {
-  display: flex;
-  gap: 12px;
+  justify-content: center;
   margin-bottom: 2px;
 }
 
-.oled-eye {
-  width: 14px;
-  height: 16px;
-  background: var(--neon-cyan);
-  border-radius: 4px;
-  box-shadow: 0 0 6px var(--neon-cyan);
-  animation: eyeBlink 3.5s infinite;
-}
-
-@keyframes eyeBlink {
-  0%, 96%, 100% { transform: scaleY(1); }
-  98% { transform: scaleY(0.1); }
+.oled-face-svg {
+  width: 100%;
+  height: 100%;
+  stroke: var(--neon-cyan);
+  filter: drop-shadow(0 0 4px var(--neon-cyan));
 }
 
 .oled-mood-label {
   font-size: 0.48rem;
   letter-spacing: 0.5px;
   color: #8EA9C7;
+  text-transform: uppercase;
 }
 
+/* Alarm View in OLED */
+.oled-alarm-badge {
+  font-size: 0.48rem;
+  color: #02060c;
+  background: var(--neon-cyan);
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-top: 3px;
+  box-shadow: 0 0 5px rgba(0, 240, 255, 0.6);
+}
+
+/* Stopwatch View in OLED */
+.oled-sw-bar-track {
+  width: 85%;
+  height: 4px;
+  background: #10243d;
+  border-radius: 2px;
+  margin-top: 5px;
+  overflow: hidden;
+  border: 0.5px solid rgba(0, 240, 255, 0.4);
+}
+
+.oled-sw-bar-fill {
+  width: 45%;
+  height: 100%;
+  background: var(--neon-cyan);
+  box-shadow: 0 0 4px var(--neon-cyan);
+  animation: swPulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes swPulse {
+  0% { width: 10%; }
+  100% { width: 90%; }
+}
+
+/* Weather View in OLED */
+.oled-weather-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 2px;
+}
+
+.oled-weather-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.oled-weather-city {
+  font-size: 0.52rem;
+  letter-spacing: 1px;
+  font-weight: 700;
+  color: #8EA9C7;
+  text-transform: uppercase;
+}
+
+.oled-weather-temp {
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.oled-weather-divider {
+  width: 1px;
+  height: 28px;
+  border-left: 1px dashed rgba(0, 240, 255, 0.4);
+  margin: 0 6px;
+}
+
+.oled-weather-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+}
+
+.oled-weather-info {
+  font-size: 0.5rem;
+  font-weight: 700;
+  color: var(--neon-cyan);
+  text-transform: uppercase;
+}
+
+.oled-weather-sub {
+  font-size: 0.42rem;
+  color: #5A7B99;
+}
+
+/* Subtitle View in OLED */
+.oled-marquee-text {
+  font-size: 0.65rem;
+  font-weight: 700;
+  white-space: nowrap;
+  animation: marqueeScroll 6s linear infinite;
+  margin: 4px 0;
+}
+
+@keyframes marqueeScroll {
+  0% { transform: translateX(35px); }
+  100% { transform: translateX(-35px); }
+}
+
+/* Game Menu View in OLED */
 .oled-game-pixels {
   display: flex;
   align-items: flex-end;
-  justify-content: space-between;
-  width: 80%;
-  height: 18px;
+  justify-content: center;
+  gap: 18px;
+  width: 85%;
+  height: 20px;
   border-bottom: 1.5px solid var(--neon-cyan);
+  margin-top: 2px;
 }
 
 .dino-pixel {
@@ -1683,37 +1762,18 @@ input[type="range"]::-webkit-slider-thumb {
   background: var(--neon-cyan);
 }
 
+.bird-pixel {
+  width: 9px;
+  height: 7px;
+  background: var(--neon-cyan);
+  border-radius: 4px 4px 0 0;
+  position: relative;
+  top: -4px;
+}
+
 .oled-score-line {
   font-size: 0.46rem;
   margin-top: 3px;
-  color: #8EA9C7;
-}
-
-.oled-marquee-text {
-  font-size: 0.65rem;
-  font-weight: 700;
-  white-space: nowrap;
-  animation: marqueeScroll 5s linear infinite;
-}
-
-@keyframes marqueeScroll {
-  0% { transform: translateX(25px); }
-  100% { transform: translateX(-25px); }
-}
-
-.oled-heart-beat {
-  font-size: 1.2rem;
-  color: var(--neon-cyan);
-  animation: heartPulse 1.2s ease-in-out infinite;
-}
-
-@keyframes heartPulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.25); }
-}
-
-.oled-sensor-status {
-  font-size: 0.46rem;
   color: #8EA9C7;
   letter-spacing: 0.5px;
 }
