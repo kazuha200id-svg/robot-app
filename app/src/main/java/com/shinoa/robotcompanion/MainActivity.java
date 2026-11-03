@@ -19,6 +19,7 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.net.Uri;
 import android.app.Dialog;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -47,8 +48,9 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
     private Vibrator vibrator;
     private boolean receiverRegistered = false;
     private boolean hasInitialScanStarted = false;
-    private boolean hasRequestedNearby = false;
-    private boolean hasRequestedLocation = false;
+    private boolean isWaitingNativePermission = false;
+    private boolean hasDeniedNearby = false;
+    private boolean hasDeniedLocation = false;
     private Dialog activeDialog = null;
 
     private final BroadcastReceiver btStateReceiver = new BroadcastReceiver() {
@@ -132,6 +134,8 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
 
     private void checkPermissionsAndProceed() {
         if (isFinishing() || isDestroyed()) return;
+        // JANGAN tampilkan apapun selama dialog izin bawaan Android sedang aktif di layar
+        if (isWaitingNativePermission) return;
 
         // 1. Cek Perizinan Perangkat di Sekitar (Android 12+ / API 31+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -139,42 +143,46 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
             boolean hasConnect = ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED;
 
             if (!hasScan || !hasConnect) {
-                if (!hasRequestedNearby) {
-                    hasRequestedNearby = true;
-                    ActivityCompat.requestPermissions(MainActivity.this,
-                            new String[]{Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT},
-                            REQ_NEARBY);
-                } else {
+                if (hasDeniedNearby) {
+                    // Hanya munculkan popup custom jika sudah pernah DITOLAK oleh pengguna
                     showPermissionPopup(
                         "Izin Perangkat di Sekitar",
                         "Aplikasi memerlukan izin perangkat di sekitar untuk mendeteksi dan menghubungkan Robot Desk.",
-                        () -> ActivityCompat.requestPermissions(MainActivity.this,
-                                new String[]{Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT},
-                                REQ_NEARBY)
+                        this::reRequestNearbyPermissions
                     );
+                } else {
+                    // Minta izin bawaan Android secara langsung tanpa popup custom di awal
+                    isWaitingNativePermission = true;
+                    ActivityCompat.requestPermissions(MainActivity.this,
+                            new String[]{Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT},
+                            REQ_NEARBY);
                 }
                 return;
+            } else {
+                hasDeniedNearby = false;
             }
         }
 
         // 2. Cek Perizinan Lokasi
         boolean hasLocation = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
         if (!hasLocation) {
-            if (!hasRequestedLocation) {
-                hasRequestedLocation = true;
-                ActivityCompat.requestPermissions(MainActivity.this,
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
-                        REQ_LOCATION);
-            } else {
+            if (hasDeniedLocation) {
+                // Hanya munculkan popup custom jika sudah pernah DITOLAK oleh pengguna
                 showPermissionPopup(
                     "Izin Lokasi",
                     "Aplikasi memerlukan izin lokasi untuk memindai sinyal Robot Desk di sekitar Anda.",
-                    () -> ActivityCompat.requestPermissions(MainActivity.this,
-                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
-                            REQ_LOCATION)
+                    this::reRequestLocationPermissions
                 );
+            } else {
+                // Minta izin bawaan Android secara langsung tanpa popup custom di awal
+                isWaitingNativePermission = true;
+                ActivityCompat.requestPermissions(MainActivity.this,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                        REQ_LOCATION);
             }
             return;
+        } else {
+            hasDeniedLocation = false;
         }
 
         // 3. Cek Apakah Layanan Lokasi (GPS) Aktif
@@ -329,7 +337,83 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        checkPermissionsAndProceed();
+        isWaitingNativePermission = false;
+
+        boolean allGranted = grantResults.length > 0;
+        for (int res : grantResults) {
+            if (res != PackageManager.PERMISSION_GRANTED) {
+                allGranted = false;
+                break;
+            }
+        }
+
+        if (requestCode == REQ_NEARBY) {
+            if (allGranted) {
+                hasDeniedNearby = false;
+                checkPermissionsAndProceed();
+            } else {
+                hasDeniedNearby = true;
+                showPermissionPopup(
+                    "Izin Perangkat di Sekitar",
+                    "Aplikasi memerlukan izin perangkat di sekitar untuk mendeteksi dan menghubungkan Robot Desk.",
+                    this::reRequestNearbyPermissions
+                );
+            }
+        } else if (requestCode == REQ_LOCATION) {
+            if (allGranted) {
+                hasDeniedLocation = false;
+                checkPermissionsAndProceed();
+            } else {
+                hasDeniedLocation = true;
+                showPermissionPopup(
+                    "Izin Lokasi",
+                    "Aplikasi memerlukan izin lokasi untuk memindai sinyal Robot Desk di sekitar Anda.",
+                    this::reRequestLocationPermissions
+                );
+            }
+        }
+    }
+
+    private void reRequestNearbyPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            boolean rationaleScan = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.BLUETOOTH_SCAN);
+            boolean rationaleConnect = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.BLUETOOTH_CONNECT);
+
+            if (rationaleScan || rationaleConnect) {
+                isWaitingNativePermission = true;
+                ActivityCompat.requestPermissions(MainActivity.this,
+                        new String[]{Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT},
+                        REQ_NEARBY);
+            } else {
+                // Jika Android menolak memunculkan dialog native (karena ditolak berulang / diblokir sistem), buka Pengaturan Aplikasi
+                openAppSettings("Harap aktifkan izin 'Perangkat di sekitar'");
+            }
+        }
+    }
+
+    private void reRequestLocationPermissions() {
+        boolean rationale = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION);
+        if (rationale) {
+            isWaitingNativePermission = true;
+            ActivityCompat.requestPermissions(MainActivity.this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                    REQ_LOCATION);
+        } else {
+            // Jika Android menolak memunculkan dialog native (karena ditolak berulang / diblokir sistem), buka Pengaturan Aplikasi
+            openAppSettings("Harap aktifkan izin 'Lokasi' pada aplikasi");
+        }
+    }
+
+    private void openAppSettings(String message) {
+        try {
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+            Uri uri = Uri.fromParts("package", getPackageName(), null);
+            intent.setData(uri);
+            startActivity(intent);
+        } catch (Exception e) {
+            Toast.makeText(this, "Buka Pengaturan -> Aplikasi -> Robot Desk -> Izin", Toast.LENGTH_LONG).show();
+        }
     }
 
     public class WebAppInterface {

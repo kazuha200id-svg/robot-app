@@ -110,6 +110,9 @@ let isConnecting = false;
 let connectStartTime = 0;
 let connectTimeoutId = null;
 let isScanAnimating = true;
+let scanStartTime = Date.now();
+let scanMinTimerId = null;
+const MIN_SCAN_ANIMATION_MS = 2500; // Minimal durasi animasi pindai ulang 2.5 detik
 
 function toggleSelectDevice() {
   if (!isDeviceFound || isConnecting) return;
@@ -255,6 +258,11 @@ function requestEnableBluetooth() {
 function retryAutoScan() {
   if (isScanAnimating) return;
   isScanAnimating = true;
+  scanStartTime = Date.now();
+  if (scanMinTimerId) {
+    clearTimeout(scanMinTimerId);
+    scanMinTimerId = null;
+  }
 
   isDeviceFound = false;
   isDeviceSelected = false;
@@ -302,49 +310,62 @@ function retryAutoScan() {
   }
 }
 
-// CALLBACK: DISCOVERED DEVICE
+// CALLBACK: DISCOVERED DEVICE (Diberikan animasi minimal agar tidak langsung)
 window.onDeviceDiscovered = function(name, address) {
-  isDeviceFound = true;
-  const scanningBox = document.getElementById('deviceScanningBox');
-  const itemBox = document.getElementById('deviceItemBox');
-  const nameEl = document.getElementById('detectedDevName');
-  const subEl = document.getElementById('detectedDevSub');
-  const btnScan = document.getElementById('btnManualScan');
-  const scanSpinner = document.getElementById('scanCornerSpinner');
-  const scanLabel = document.getElementById('scanCornerLabel');
+  const elapsed = Date.now() - scanStartTime;
+  const remaining = Math.max(0, MIN_SCAN_ANIMATION_MS - elapsed);
 
-  if (nameEl) nameEl.textContent = name || 'Robot Desk';
-  if (subEl) subEl.textContent = address ? `Bluetooth (${address})` : 'Bluetooth Siap Terhubung';
+  if (scanMinTimerId) clearTimeout(scanMinTimerId);
+  scanMinTimerId = setTimeout(() => {
+    isDeviceFound = true;
+    const scanningBox = document.getElementById('deviceScanningBox');
+    const itemBox = document.getElementById('deviceItemBox');
+    const nameEl = document.getElementById('detectedDevName');
+    const subEl = document.getElementById('detectedDevSub');
+    const btnScan = document.getElementById('btnManualScan');
+    const scanSpinner = document.getElementById('scanCornerSpinner');
+    const scanLabel = document.getElementById('scanCornerLabel');
 
-  if (btnScan) {
-    btnScan.disabled = false;
-    btnScan.classList.remove('scanning', 'disabled');
-  }
-  if (scanSpinner) scanSpinner.style.display = 'none';
-  if (scanLabel) scanLabel.textContent = 'PINDAI ULANG';
-  isScanAnimating = false;
+    if (nameEl) nameEl.textContent = name || 'Robot Desk';
+    if (subEl) subEl.textContent = address ? `Bluetooth (${address})` : 'Bluetooth Siap Terhubung';
 
-  if (scanningBox) scanningBox.style.display = 'none';
-  if (itemBox) {
-    itemBox.style.display = 'flex';
-  }
+    if (btnScan) {
+      btnScan.disabled = false;
+      btnScan.classList.remove('scanning', 'disabled');
+    }
+    if (scanSpinner) scanSpinner.style.display = 'none';
+    if (scanLabel) scanLabel.textContent = 'PINDAI ULANG';
+    isScanAnimating = false;
 
-  updateConnectButtonState();
+    if (scanningBox) scanningBox.style.display = 'none';
+    if (itemBox) {
+      itemBox.style.display = 'flex';
+    }
+
+    updateConnectButtonState();
+    triggerHaptic(30);
+  }, remaining);
 };
 
-// CALLBACK: SCAN STOPPED
+// CALLBACK: SCAN STOPPED (Diberikan animasi minimal agar tidak langsung)
 window.onScanStopped = function() {
-  const btnScan = document.getElementById('btnManualScan');
-  const scanSpinner = document.getElementById('scanCornerSpinner');
-  const scanLabel = document.getElementById('scanCornerLabel');
+  const elapsed = Date.now() - scanStartTime;
+  const remaining = Math.max(0, MIN_SCAN_ANIMATION_MS - elapsed);
 
-  if (btnScan) {
-    btnScan.disabled = false;
-    btnScan.classList.remove('scanning', 'disabled');
-  }
-  if (scanSpinner) scanSpinner.style.display = 'none';
-  if (scanLabel) scanLabel.textContent = 'PINDAI ULANG';
-  isScanAnimating = false;
+  if (scanMinTimerId) clearTimeout(scanMinTimerId);
+  scanMinTimerId = setTimeout(() => {
+    const btnScan = document.getElementById('btnManualScan');
+    const scanSpinner = document.getElementById('scanCornerSpinner');
+    const scanLabel = document.getElementById('scanCornerLabel');
+
+    if (btnScan) {
+      btnScan.disabled = false;
+      btnScan.classList.remove('scanning', 'disabled');
+    }
+    if (scanSpinner) scanSpinner.style.display = 'none';
+    if (scanLabel) scanLabel.textContent = 'PINDAI ULANG';
+    isScanAnimating = false;
+  }, remaining);
 };
 
 // BLUETOOTH POWER STATE CALLBACK FROM NATIVE ANDROID
