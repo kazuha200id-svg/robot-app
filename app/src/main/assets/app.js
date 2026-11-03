@@ -244,7 +244,7 @@ function finalizeFailed() {
 function requestEnableBluetooth() {
   if (window.AndroidBLE && typeof window.AndroidBLE.enableBluetooth === 'function') {
     window.AndroidBLE.enableBluetooth();
-    showNeonToast('Meminta Izin Bluetooth');
+    showNeonToast('Mengaktifkan Bluetooth');
   } else {
     showNeonToast('Bluetooth Aktif (Mock)');
     window.onBluetoothPowerState(true);
@@ -373,6 +373,13 @@ window.onBluetoothPowerState = function(enabled) {
     isConnecting = false;
     if (connectTimeoutId) { clearTimeout(connectTimeoutId); connectTimeoutId = null; }
 
+    if (txtBt) {
+      txtBt.textContent = 'TIDAK AKTIF';
+      txtBt.className = 'status-card-state warning';
+    }
+    if (btnEnable) btnEnable.style.display = 'block';
+    if (boxBt) boxBt.classList.remove('ready');
+
     const scanningBox = document.getElementById('deviceScanningBox');
     const itemBox = document.getElementById('deviceItemBox');
     if (scanningBox) scanningBox.style.display = 'flex';
@@ -380,7 +387,7 @@ window.onBluetoothPowerState = function(enabled) {
       itemBox.style.display = 'none';
       itemBox.classList.remove('selected');
     }
-    if (txtScan) txtScan.textContent = 'Menunggu koneksi...';
+    if (txtScan) txtScan.textContent = 'Nyalakan Bluetooth untuk mulai';
     if (spinner) spinner.style.display = 'none';
 
     updateConnectButtonState();

@@ -43,6 +43,22 @@
 
         <h1 class="setup-title">ROBOT DESK</h1>
 
+        <!-- Card: Status Bluetooth -->
+        <div id="boxBtPower" class="setup-status-card">
+          <div class="status-card-row">
+            <svg class="status-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M7 7l10 10-5 5V2l5 5L7 17"></path>
+            </svg>
+            <div class="status-card-text">
+              <span class="status-card-label">BLUETOOTH</span>
+              <span id="txtBtPower" class="status-card-state warning">TIDAK AKTIF</span>
+            </div>
+          </div>
+          <button id="btnEnableBt" class="neon-btn-action full mt-8" onclick="requestEnableBluetooth()">
+            AKTIFKAN BLUETOOTH
+          </button>
+        </div>
+
         <!-- Card: Perangkat Terdeteksi -->
         <div class="setup-status-card">
           <div class="status-card-header-row">

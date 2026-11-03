@@ -47,6 +47,12 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
                 if (state == BluetoothAdapter.STATE_ON) {
                     runOnUiThread(() -> {
                         webView.evaluateJavascript("if (window.onBluetoothPowerState) window.onBluetoothPowerState(true);", null);
+                        if (!hasInitialScanStarted) {
+                            hasInitialScanStarted = true;
+                            if (bleManager != null) {
+                                bleManager.startScan();
+                            }
+                        }
                     });
                 } else if (state == BluetoothAdapter.STATE_OFF) {
                     runOnUiThread(() -> {
@@ -173,16 +179,17 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
             activeDialog = null;
         }
 
-        // Pastikan Bluetooth adapter aktif
+        // Cek status Bluetooth adapter dan kirim ke UI WebView
         BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-        if (adapter != null && !adapter.isEnabled()) {
-            try {
-                adapter.enable();
-            } catch (Exception ignored) {}
-        }
+        boolean isBtOn = adapter != null && adapter.isEnabled();
+        runOnUiThread(() -> {
+            if (webView != null) {
+                webView.evaluateJavascript("if (window.onBluetoothPowerState) window.onBluetoothPowerState(" + isBtOn + ");", null);
+            }
+        });
 
-        // Hanya jalankan pemindaian otomatis SATU KALI saat pertama kali buka aplikasi
-        if (!hasInitialScanStarted) {
+        // Hanya jalankan pemindaian otomatis SATU KALI saat Bluetooth telah aktif
+        if (isBtOn && !hasInitialScanStarted) {
             hasInitialScanStarted = true;
             runOnUiThread(() -> {
                 if (bleManager != null) {
@@ -232,7 +239,12 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
                     Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                     startActivity(enableBtIntent);
                 } catch (Exception e) {
-                    Toast.makeText(MainActivity.this, "Gagal mengaktifkan Bluetooth", Toast.LENGTH_SHORT).show();
+                    try {
+                        BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+                        if (adapter != null) adapter.enable();
+                    } catch (Exception ignored) {
+                        Toast.makeText(MainActivity.this, "Gagal mengaktifkan Bluetooth", Toast.LENGTH_SHORT).show();
+                    }
                 }
             });
         }
