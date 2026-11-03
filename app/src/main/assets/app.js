@@ -109,7 +109,7 @@ let isDeviceSelected = false;
 let isConnecting = false;
 let connectStartTime = 0;
 let connectTimeoutId = null;
-let isScanAnimating = false;
+let isScanAnimating = true;
 
 function toggleSelectDevice() {
   if (!isDeviceFound || isConnecting) return;
@@ -137,7 +137,7 @@ function updateConnectButtonState() {
   if (isConnecting) {
     btn.disabled = true;
     btn.className = 'neon-btn-action full connect-action-btn btn-state-connecting';
-    if (label) label.textContent = 'MENYAMBUNGKAN...';
+    if (label) label.textContent = 'MENGHUBUNGKAN...';
     if (spinner) spinner.style.display = 'inline-block';
   } else if (isDeviceFound && isDeviceSelected) {
     btn.disabled = false;
@@ -269,20 +269,20 @@ function retryAutoScan() {
   const txtScan = document.getElementById('txtScanState');
   const spinner = document.getElementById('scanSpinner');
 
-  // Matikan dan nonaktifkan tombol PINDAI agar tidak bisa dipencet saat sedang memindai
+  // Matikan dan nonaktifkan tombol PINDAI ULANG agar tidak bisa dipencet saat sedang mencari
   if (btnScan) {
     btnScan.disabled = true;
     btnScan.classList.add('scanning', 'disabled');
   }
   if (scanSpinner) scanSpinner.style.display = 'inline-block';
-  if (scanLabel) scanLabel.textContent = 'MEMINDAI...';
+  if (scanLabel) scanLabel.textContent = 'PINDAI ULANG';
 
   if (scanningBox) scanningBox.style.display = 'flex';
   if (itemBox) {
     itemBox.style.display = 'none';
     itemBox.classList.remove('selected');
   }
-  if (txtScan) txtScan.textContent = 'Memindai Robot Desk...';
+  if (txtScan) txtScan.textContent = 'Mencari Robot Desk...';
   if (spinner) spinner.style.display = 'block';
 
   updateConnectButtonState();
@@ -290,21 +290,16 @@ function retryAutoScan() {
 
   if (window.AndroidBLE && typeof window.AndroidBLE.startScan === 'function') {
     window.AndroidBLE.startScan();
-    showNeonToast('Memindai Robot Desk');
+    showNeonToast('Mencari Robot Desk');
   } else if (window.AndroidBLE && typeof window.AndroidBLE.connect === 'function') {
     window.AndroidBLE.connect();
-    showNeonToast('Memindai Robot Desk');
+    showNeonToast('Mencari Robot Desk');
   } else {
-    showNeonToast('Memindai (Mock)');
+    showNeonToast('Mencari (Mock)');
     setTimeout(() => {
       window.onDeviceDiscovered('Robot Desk', 'Siap Terhubung');
     }, 1800);
   }
-
-  // Berikan durasi minimal sebelum tombol PINDAI aktif kembali
-  setTimeout(() => {
-    window.onScanStopped();
-  }, 3500);
 }
 
 // CALLBACK: DISCOVERED DEVICE
@@ -326,7 +321,7 @@ window.onDeviceDiscovered = function(name, address) {
     btnScan.classList.remove('scanning', 'disabled');
   }
   if (scanSpinner) scanSpinner.style.display = 'none';
-  if (scanLabel) scanLabel.textContent = 'PINDAI';
+  if (scanLabel) scanLabel.textContent = 'PINDAI ULANG';
   isScanAnimating = false;
 
   if (scanningBox) scanningBox.style.display = 'none';
@@ -348,7 +343,7 @@ window.onScanStopped = function() {
     btnScan.classList.remove('scanning', 'disabled');
   }
   if (scanSpinner) scanSpinner.style.display = 'none';
-  if (scanLabel) scanLabel.textContent = 'PINDAI';
+  if (scanLabel) scanLabel.textContent = 'PINDAI ULANG';
   isScanAnimating = false;
 };
 
@@ -369,7 +364,7 @@ window.onBluetoothPowerState = function(enabled) {
     if (btnEnable) btnEnable.style.display = 'none';
     if (boxBt) boxBt.classList.add('ready');
     if (txtScan && !isBleConnected && !isDeviceFound) {
-      txtScan.textContent = 'Memindai Robot Desk...';
+      txtScan.textContent = 'Mencari Robot Desk...';
       if (spinner) spinner.style.display = 'block';
     }
   } else {
@@ -378,13 +373,6 @@ window.onBluetoothPowerState = function(enabled) {
     isConnecting = false;
     if (connectTimeoutId) { clearTimeout(connectTimeoutId); connectTimeoutId = null; }
 
-    if (txtBt) {
-      txtBt.textContent = 'TIDAK AKTIF';
-      txtBt.className = 'status-card-state warning';
-    }
-    if (btnEnable) btnEnable.style.display = 'block';
-    if (boxBt) boxBt.classList.remove('ready');
-
     const scanningBox = document.getElementById('deviceScanningBox');
     const itemBox = document.getElementById('deviceItemBox');
     if (scanningBox) scanningBox.style.display = 'flex';
@@ -392,7 +380,7 @@ window.onBluetoothPowerState = function(enabled) {
       itemBox.style.display = 'none';
       itemBox.classList.remove('selected');
     }
-    if (txtScan) txtScan.textContent = 'Nyalakan Bluetooth untuk mulai';
+    if (txtScan) txtScan.textContent = 'Menunggu koneksi...';
     if (spinner) spinner.style.display = 'none';
 
     updateConnectButtonState();
@@ -449,6 +437,7 @@ window.onBLEStatus = function(connected, message) {
       if (isNotFound) {
         if (txtScan) txtScan.textContent = 'Robot Desk Tidak Ditemukan';
         if (spinner) spinner.style.display = 'none';
+        window.onScanStopped();
       } else if (message) {
         if (txtScan) txtScan.textContent = message;
       }

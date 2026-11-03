@@ -8,9 +8,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Vibrator;
+import android.provider.Settings;
 import android.view.View;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
@@ -20,20 +22,21 @@ import android.webkit.WebViewClient;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class MainActivity extends AppCompatActivity implements BleManager.BleListener {
-    private static final int PERMISSION_REQ_CODE = 101;
+    private static final int REQ_NEARBY = 101;
+    private static final int REQ_LOCATION = 102;
 
     private WebView webView;
     private BleManager bleManager;
     private Vibrator vibrator;
     private boolean receiverRegistered = false;
+    private boolean hasInitialScanStarted = false;
+    private AlertDialog activeDialog = null;
 
     private final BroadcastReceiver btStateReceiver = new BroadcastReceiver() {
         @Override
@@ -44,8 +47,6 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
                 if (state == BluetoothAdapter.STATE_ON) {
                     runOnUiThread(() -> {
                         webView.evaluateJavascript("if (window.onBluetoothPowerState) window.onBluetoothPowerState(true);", null);
-                        checkAndRequestPermissions();
-                        bleManager.startScan();
                     });
                 } else if (state == BluetoothAdapter.STATE_OFF) {
                     runOnUiThread(() -> {
@@ -89,11 +90,7 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                boolean btEnabled = bleManager.isBluetoothEnabled();
-                webView.evaluateJavascript("if (window.onBluetoothPowerState) window.onBluetoothPowerState(" + btEnabled + ");", null);
-                if (btEnabled) {
-                    bleManager.startScan();
-                }
+                checkPermissionsAndProceed();
             }
         });
         webView.setWebChromeClient(new WebChromeClient());
@@ -103,8 +100,6 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
 
         webView.loadUrl("file:///android_asset/index.html");
 
-        checkAndRequestPermissions();
-
         IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
         registerReceiver(btStateReceiver, filter);
         receiverRegistered = true;
@@ -113,59 +108,115 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
     @Override
     protected void onResume() {
         super.onResume();
-        if (bleManager != null && webView != null) {
-            boolean btEnabled = bleManager.isBluetoothEnabled();
-            webView.evaluateJavascript("if (window.onBluetoothPowerState) window.onBluetoothPowerState(" + btEnabled + ");", null);
-            if (btEnabled && !bleManager.isConnected()) {
-                bleManager.startScan();
+        checkPermissionsAndProceed();
+    }
+
+    private void checkPermissionsAndProceed() {
+        if (isFinishing() || isDestroyed()) return;
+
+        // 1. Cek Perizinan Perangkat di Sekitar (Android 12+ / API 31+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            boolean hasScan = ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED;
+            boolean hasConnect = ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED;
+
+            if (!hasScan || !hasConnect) {
+                showPermissionPopup(
+                    "Izin Perangkat di Sekitar",
+                    "Aplikasi memerlukan izin perangkat di sekitar untuk mendeteksi dan menghubungkan Robot Desk.",
+                    () -> ActivityCompat.requestPermissions(MainActivity.this,
+                            new String[]{Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT},
+                            REQ_NEARBY)
+                );
+                return;
             }
+        }
+
+        // 2. Cek Perizinan Lokasi
+        boolean hasLocation = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        if (!hasLocation) {
+            showPermissionPopup(
+                "Izin Lokasi",
+                "Aplikasi memerlukan izin lokasi untuk memindai perangkat Robot Desk.",
+                () -> ActivityCompat.requestPermissions(MainActivity.this,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                        REQ_LOCATION)
+            );
+            return;
+        }
+
+        // 3. Cek Apakah Layanan Lokasi (GPS) Aktif
+        LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        boolean isGpsEnabled = false;
+        try {
+            isGpsEnabled = lm != null && (lm.isProviderEnabled(LocationManager.GPS_PROVIDER) || lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER));
+        } catch (Exception ignored) {}
+
+        if (!isGpsEnabled) {
+            showPermissionPopup(
+                "Aktifkan Lokasi",
+                "Layanan lokasi (GPS) pada HP Anda belum aktif. Aktifkan lokasi untuk memindai Robot Desk.",
+                () -> {
+                    try {
+                        Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                        startActivity(intent);
+                    } catch (Exception e) {
+                        Toast.makeText(MainActivity.this, "Gagal membuka pengaturan lokasi", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            );
+            return;
+        }
+
+        // Jika semua perizinan terpenuhi, tutup pop-up dialog yang aktif
+        if (activeDialog != null && activeDialog.isShowing()) {
+            activeDialog.dismiss();
+            activeDialog = null;
+        }
+
+        // Pastikan Bluetooth adapter aktif
+        BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+        if (adapter != null && !adapter.isEnabled()) {
+            try {
+                adapter.enable();
+            } catch (Exception ignored) {}
+        }
+
+        // Hanya jalankan pemindaian otomatis SATU KALI saat pertama kali buka aplikasi
+        if (!hasInitialScanStarted) {
+            hasInitialScanStarted = true;
+            runOnUiThread(() -> {
+                if (bleManager != null) {
+                    bleManager.startScan();
+                }
+            });
         }
     }
 
-    private void checkAndRequestPermissions() {
-        List<String> neededPermissions = new ArrayList<>();
+    private void showPermissionPopup(String title, String message, Runnable onAllow) {
+        if (isFinishing() || isDestroyed()) return;
+        if (activeDialog != null && activeDialog.isShowing()) return;
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
-                neededPermissions.add(Manifest.permission.BLUETOOTH_SCAN);
-            }
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                neededPermissions.add(Manifest.permission.BLUETOOTH_CONNECT);
-            }
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                neededPermissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
-            }
-        } else {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                neededPermissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
-            }
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                neededPermissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
-            }
-        }
-
-        if (!neededPermissions.isEmpty()) {
-            ActivityCompat.requestPermissions(this, neededPermissions.toArray(new String[0]), PERMISSION_REQ_CODE);
-        }
+        activeDialog = new AlertDialog.Builder(this)
+                .setTitle(title)
+                .setMessage(message)
+                .setCancelable(false)
+                .setPositiveButton("IZINKAN", (dialog, which) -> {
+                    dialog.dismiss();
+                    activeDialog = null;
+                    if (onAllow != null) onAllow.run();
+                })
+                .setNegativeButton("TUTUP", (dialog, which) -> {
+                    dialog.dismiss();
+                    activeDialog = null;
+                    finishAffinity();
+                })
+                .show();
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == PERMISSION_REQ_CODE) {
-            boolean allGranted = true;
-            for (int result : grantResults) {
-                if (result != PackageManager.PERMISSION_GRANTED) {
-                    allGranted = false;
-                    break;
-                }
-            }
-            if (allGranted && bleManager.isBluetoothEnabled()) {
-                bleManager.startScan();
-            } else if (!allGranted) {
-                Toast.makeText(this, "Izin Bluetooth diperlukan untuk menghubungkan robot", Toast.LENGTH_LONG).show();
-            }
-        }
+        checkPermissionsAndProceed();
     }
 
     public class WebAppInterface {
@@ -189,7 +240,6 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
         @JavascriptInterface
         public void startScan() {
             runOnUiThread(() -> {
-                checkAndRequestPermissions();
                 bleManager.startScan();
             });
         }
@@ -197,7 +247,6 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
         @JavascriptInterface
         public void connect() {
             runOnUiThread(() -> {
-                checkAndRequestPermissions();
                 bleManager.connectToDiscoveredDevice();
             });
         }

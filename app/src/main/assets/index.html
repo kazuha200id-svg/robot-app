@@ -43,39 +43,23 @@
 
         <h1 class="setup-title">ROBOT DESK</h1>
 
-        <!-- Card: Status Bluetooth -->
-        <div id="boxBtPower" class="setup-status-card">
-          <div class="status-card-row">
-            <svg class="status-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M7 7l10 10-5 5V2l5 5L7 17"></path>
-            </svg>
-            <div class="status-card-text">
-              <span class="status-card-label">BLUETOOTH</span>
-              <span id="txtBtPower" class="status-card-state warning">TIDAK AKTIF</span>
-            </div>
-          </div>
-          <button id="btnEnableBt" class="neon-btn-action full mt-8" onclick="requestEnableBluetooth()">
-            AKTIFKAN BLUETOOTH
-          </button>
-        </div>
-
         <!-- Card: Perangkat Terdeteksi -->
         <div class="setup-status-card">
           <div class="status-card-header-row">
             <span class="status-card-label">PERANGKAT TERDETEKSI</span>
             <!-- Tombol Pindai Ulang di Pojok Kanan Atas (Murni Teks tanpa Icon) -->
-            <button id="btnManualScan" class="neon-btn-corner" onclick="retryAutoScan()" title="Pindai Ulang">
-              <span id="scanCornerSpinner" class="corner-spinner" style="display: none;"></span>
-              <span id="scanCornerLabel">PINDAI</span>
+            <button id="btnManualScan" class="neon-btn-corner disabled" onclick="retryAutoScan()" title="Pindai Ulang" disabled>
+              <span id="scanCornerSpinner" class="corner-spinner" style="display: inline-block;"></span>
+              <span id="scanCornerLabel">PINDAI ULANG</span>
             </button>
           </div>
 
           <div id="detectedDevicesContainer" class="detected-devices-wrap">
-            <!-- Box: Status Memindai / Belum Ada Perangkat -->
+            <!-- Box: Status Mencari / Belum Ada Perangkat -->
             <div id="deviceScanningBox" class="device-state-box">
               <div id="scanSpinner" class="neon-spinner"></div>
               <div class="device-state-info">
-                <span id="txtScanState" class="device-state-title">Memindai Robot Desk...</span>
+                <span id="txtScanState" class="device-state-title">Mencari Robot Desk...</span>
                 <span class="device-state-sub">Pastikan Robot Desk menyala di dekat Anda</span>
               </div>
             </div>
