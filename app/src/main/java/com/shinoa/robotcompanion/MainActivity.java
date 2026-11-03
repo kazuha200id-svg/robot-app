@@ -2,7 +2,11 @@ package com.shinoa.robotcompanion;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.bluetooth.BluetoothAdapter;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -29,6 +33,29 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
     private WebView webView;
     private BleManager bleManager;
     private Vibrator vibrator;
+    private boolean receiverRegistered = false;
+
+    private final BroadcastReceiver btStateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
+                int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
+                if (state == BluetoothAdapter.STATE_ON) {
+                    runOnUiThread(() -> {
+                        webView.evaluateJavascript("if (window.onBluetoothPowerState) window.onBluetoothPowerState(true);", null);
+                        checkAndRequestPermissions();
+                        bleManager.startScanAndConnect();
+                    });
+                } else if (state == BluetoothAdapter.STATE_OFF) {
+                    runOnUiThread(() -> {
+                        webView.evaluateJavascript("if (window.onBluetoothPowerState) window.onBluetoothPowerState(false);", null);
+                        bleManager.disconnect();
+                    });
+                }
+            }
+        }
+    };
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -58,7 +85,17 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
         settings.setUseWideViewPort(true);
         settings.setLoadWithOverviewMode(true);
 
-        webView.setWebViewClient(new WebViewClient());
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                boolean btEnabled = bleManager.isBluetoothEnabled();
+                webView.evaluateJavascript("if (window.onBluetoothPowerState) window.onBluetoothPowerState(" + btEnabled + ");", null);
+                if (btEnabled) {
+                    bleManager.startScanAndConnect();
+                }
+            }
+        });
         webView.setWebChromeClient(new WebChromeClient());
         webView.setBackgroundColor(0xFF060B13);
 
@@ -67,6 +104,22 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
         webView.loadUrl("file:///android_asset/index.html");
 
         checkAndRequestPermissions();
+
+        IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
+        registerReceiver(btStateReceiver, filter);
+        receiverRegistered = true;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (bleManager != null && webView != null) {
+            boolean btEnabled = bleManager.isBluetoothEnabled();
+            webView.evaluateJavascript("if (window.onBluetoothPowerState) window.onBluetoothPowerState(" + btEnabled + ");", null);
+            if (btEnabled && !bleManager.isConnected()) {
+                bleManager.startScanAndConnect();
+            }
+        }
     }
 
     private void checkAndRequestPermissions() {
@@ -101,13 +154,32 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
                     break;
                 }
             }
-            if (!allGranted) {
+            if (allGranted && bleManager.isBluetoothEnabled()) {
+                bleManager.startScanAndConnect();
+            } else if (!allGranted) {
                 Toast.makeText(this, "Izin Bluetooth diperlukan untuk menghubungkan robot", Toast.LENGTH_LONG).show();
             }
         }
     }
 
     public class WebAppInterface {
+        @JavascriptInterface
+        public boolean isBluetoothEnabled() {
+            return bleManager.isBluetoothEnabled();
+        }
+
+        @JavascriptInterface
+        public void enableBluetooth() {
+            runOnUiThread(() -> {
+                try {
+                    Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                    startActivity(enableBtIntent);
+                } catch (Exception e) {
+                    Toast.makeText(MainActivity.this, "Gagal mengaktifkan Bluetooth", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
         @JavascriptInterface
         public void connect() {
             runOnUiThread(() -> {
@@ -158,6 +230,12 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (receiverRegistered) {
+            try {
+                unregisterReceiver(btStateReceiver);
+            } catch (Exception ignored) {}
+            receiverRegistered = false;
+        }
         if (bleManager != null) {
             bleManager.disconnect();
         }

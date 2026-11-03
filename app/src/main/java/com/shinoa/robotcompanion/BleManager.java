@@ -65,6 +65,10 @@ public class BleManager {
         return isConnected;
     }
 
+    public boolean isBluetoothEnabled() {
+        return bluetoothAdapter != null && bluetoothAdapter.isEnabled();
+    }
+
     public void startScanAndConnect() {
         if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {
             notifyStatus(false, "Bluetooth HP belum aktif!");

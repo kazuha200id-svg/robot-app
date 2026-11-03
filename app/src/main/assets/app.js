@@ -1,5 +1,5 @@
 /* ========================================================
-   ROBOT COMPANION APP CONTROLLER (4 PILAR NAV & BLE NUS)
+   ROBOT DESK APP CONTROLLER (STRICT BLUETOOTH GATE)
    ======================================================== */
 
 let isBleConnected = false;
@@ -35,6 +35,11 @@ function triggerHaptic(durationMs = 25) {
 
 // ================= 2. 4-TAB NAVIGATION =================
 function switchMainTab(pageId, btn) {
+  if (!isBleConnected) {
+    showNeonToast('Wajib Terhubung Robot');
+    return;
+  }
+
   currentMainTab = pageId;
 
   // Toggle pages
@@ -92,50 +97,93 @@ function sendCommand(cmdObject) {
       return false;
     }
   } else {
-    // Mock dispatch in browser preview
     console.log('[MOCK BLE SEND]', jsonStr);
     showNeonToast('Perintah Terkirim');
     return true;
   }
 }
 
-// TOGGLE BLE CONNECTION
-function toggleBleConnection() {
-  if (isBleConnected) {
-    if (window.AndroidBLE && typeof window.AndroidBLE.disconnect === 'function') {
-      window.AndroidBLE.disconnect();
-      showNeonToast('Memutuskan...');
-    }
+// ================= 4. STRICT BLUETOOTH SETUP GATE HANDLERS =================
+function requestEnableBluetooth() {
+  if (window.AndroidBLE && typeof window.AndroidBLE.enableBluetooth === 'function') {
+    window.AndroidBLE.enableBluetooth();
+    showNeonToast('Meminta Izin Bluetooth');
   } else {
-    if (window.AndroidBLE && typeof window.AndroidBLE.connect === 'function') {
-      window.AndroidBLE.connect();
-      showNeonToast('Memindai Robot...');
-    } else {
-      showNeonToast('BLE Siap');
-    }
+    showNeonToast('Bluetooth Aktif (Mock)');
+    window.onBluetoothPowerState(true);
   }
   triggerHaptic(30);
 }
 
-// BLE CALLBACKS FROM NATIVE ANDROID
+function retryAutoScan() {
+  if (window.AndroidBLE && typeof window.AndroidBLE.connect === 'function') {
+    window.AndroidBLE.connect();
+    const txtScan = document.getElementById('txtScanState');
+    if (txtScan) txtScan.textContent = 'Memindai Ulang Robot...';
+    showNeonToast('Memindai Robot Desk');
+  } else {
+    showNeonToast('Memindai (Mock)');
+    setTimeout(() => window.onBLEStatus(true, 'Tersambung (Mock)'), 1500);
+  }
+  triggerHaptic(30);
+}
+
+// BLUETOOTH POWER STATE CALLBACK FROM NATIVE ANDROID
+window.onBluetoothPowerState = function(enabled) {
+  const txtBt = document.getElementById('txtBtPower');
+  const btnEnable = document.getElementById('btnEnableBt');
+  const boxBt = document.getElementById('boxBtPower');
+  const txtScan = document.getElementById('txtScanState');
+  const spinner = document.getElementById('scanSpinner');
+
+  if (enabled) {
+    if (txtBt) {
+      txtBt.textContent = 'AKTIF';
+      txtBt.className = 'status-card-state success';
+    }
+    if (btnEnable) btnEnable.style.display = 'none';
+    if (boxBt) boxBt.classList.add('ready');
+    if (txtScan && !isBleConnected) txtScan.textContent = 'Mencari Sinyal Robot Desk...';
+    if (spinner && !isBleConnected) spinner.style.display = 'block';
+  } else {
+    if (txtBt) {
+      txtBt.textContent = 'TIDAK AKTIF';
+      txtBt.className = 'status-card-state warning';
+    }
+    if (btnEnable) btnEnable.style.display = 'block';
+    if (boxBt) boxBt.classList.remove('ready');
+    if (txtScan) txtScan.textContent = 'Nyalakan Bluetooth untuk mulai';
+    if (spinner) spinner.style.display = 'none';
+
+    // Strict Lock dashboard when Bluetooth is off
+    const gate = document.getElementById('setupGate');
+    if (gate) gate.classList.add('active');
+  }
+};
+
+// BLE CONNECTION STATUS CALLBACK FROM NATIVE ANDROID
 window.onBLEStatus = function(connected, message) {
   isBleConnected = connected;
   const dot = document.getElementById('bleDot');
   const label = document.getElementById('bleStatusLabel');
-  const btnText = document.getElementById('btnBleText');
+  const gate = document.getElementById('setupGate');
+  const txtScan = document.getElementById('txtScanState');
+  const spinner = document.getElementById('scanSpinner');
 
   if (connected) {
     if (dot) dot.className = 'pulse-dot online';
     if (label) label.textContent = 'BLE TERHUBUNG';
-    if (btnText) btnText.textContent = 'PUTUSKAN';
+    if (gate) gate.classList.remove('active'); // BUKA DASHBOARD UTAMA
     showNeonToast('Robot Tersambung');
     syncClockQuiet();
     // Request initial telemetry
     setTimeout(() => sendCommand({ c: 's' }), 400);
   } else {
     if (dot) dot.className = 'pulse-dot';
-    if (label) label.textContent = message ? message.toUpperCase() : 'BLE TERPUTUS';
-    if (btnText) btnText.textContent = 'SAMBUNGKAN';
+    if (label) label.textContent = 'BLE TERPUTUS';
+    if (gate) gate.classList.add('active'); // KUNCI TOTAL DASHBOARD
+    if (txtScan) txtScan.textContent = message ? message : 'Mencari Sinyal Robot...';
+    if (spinner) spinner.style.display = 'block';
   }
 };
 
@@ -177,7 +225,7 @@ window.onBLEReceived = function(jsonStr) {
   }
 };
 
-// ================= 4. FEATURE ACTION HANDLERS =================
+// ================= 5. FEATURE ACTION HANDLERS =================
 
 // Ganti Ekspresi Wajah (0..12)
 function sendFace(faceIndex, elem) {
@@ -201,15 +249,7 @@ function sendDeviceMode(modeIndex) {
   }
 }
 
-// Tombol Virtual Aksi Gamepad
-function sendActionTap() {
-  const ok = sendCommand({ c: 'a' });
-  if (ok) {
-    triggerHaptic(35);
-  }
-}
-
-// ================= 5. ROBOT SENSOR & DAYA =================
+// ================= 6. ROBOT SENSOR & DAYA =================
 function sendTouchTap() {
   const ok = sendCommand({ c: 'tap' });
   if (ok) {
@@ -254,7 +294,7 @@ function sendWake() {
   }
 }
 
-// ================= 6. PENGATURAN (SETTING) =================
+// ================= 7. PENGATURAN (SETTING) =================
 
 // Pengaturan Kota Cuaca
 function saveCitySetting() {
@@ -374,11 +414,20 @@ function restartRobot() {
   }
 }
 
-// Restore saved preferences on startup
+// Restore saved preferences on startup & trigger auto check
 window.addEventListener('DOMContentLoaded', () => {
   const savedCity = localStorage.getItem('robot_cfg_city');
   if (savedCity) {
     const input = document.getElementById('cfgCityInput');
     if (input) input.value = savedCity;
+  }
+
+  // Cek status daya Bluetooth HP secara native
+  if (window.AndroidBLE && typeof window.AndroidBLE.isBluetoothEnabled === 'function') {
+    const btOn = window.AndroidBLE.isBluetoothEnabled();
+    window.onBluetoothPowerState(btOn);
+    if (btOn) {
+      window.AndroidBLE.connect();
+    }
   }
 });
