@@ -584,14 +584,166 @@ function sendWake() {
   }
 }
 
+// AKTIVASI KARTU LAYAR OLED INTERAKTIF
+function activateOledScreen(mode, elem) {
+  document.querySelectorAll('.oled-screen-card').forEach(c => c.classList.remove('active'));
+  if (elem) elem.classList.add('active');
+
+  if (typeof mode === 'number') {
+    sendDeviceMode(mode);
+    const titles = { 0: 'Mode Wajah Robot', 1: 'Mode Jam Digital', 2: 'Mode Cuaca', 5: 'Mode Arcade Game' };
+    showNeonToast(titles[mode] || 'Layar Diaktifkan');
+  } else if (mode === 'msg') {
+    const text = prompt('Ketik pesan untuk ditampilkan di layar Robot Desk:', 'HELLO ROBOT DESK!');
+    if (text) {
+      sendCommand({ c: 'msg', text: text, source: 'HP' });
+      const preview = document.getElementById('oledMsgPreview');
+      if (preview) preview.textContent = text.toUpperCase();
+      showNeonToast('Pesan Dikirim ke Layar');
+      triggerHaptic(30);
+    }
+  } else if (mode === 'pet') {
+    sendPetting();
+  }
+}
+
+// JAM DIGITAL OLED DENGAN ZONA WAKTU & FORMAT
+let currentTimeFormat = 24;
+let currentTimezoneOffset = 7;
+let currentTempUnit = 'C';
+
+function updateOledClockTick() {
+  const clockEl = document.getElementById('oledClockPreview');
+  const dateEl = document.getElementById('oledDatePreview');
+  if (!clockEl && !dateEl) return;
+
+  const now = new Date();
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+  const targetTime = new Date(utc + (3600000 * currentTimezoneOffset));
+
+  let hours = targetTime.getHours();
+  const minutes = String(targetTime.getMinutes()).padStart(2, '0');
+
+  let timeStr = '';
+  if (currentTimeFormat === 12) {
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    timeStr = `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
+  } else {
+    timeStr = `${String(hours).padStart(2, '0')}:${minutes}`;
+  }
+
+  if (clockEl) clockEl.textContent = timeStr;
+
+  if (dateEl) {
+    const days = ['MIN', 'SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB'];
+    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MEI', 'JUN', 'JUL', 'AGU', 'SEP', 'OKT', 'NOV', 'DES'];
+    const dayName = days[targetTime.getDay()];
+    const dateNum = String(targetTime.getDate()).padStart(2, '0');
+    const monthName = months[targetTime.getMonth()];
+    dateEl.textContent = `${dayName}, ${dateNum} ${monthName}`;
+  }
+}
+
+setInterval(updateOledClockTick, 1000);
+
 // ================= 7. PENGATURAN (SETTING) =================
 
-// Pengaturan Kota Cuaca
+// Pengaturan Format Waktu (24 vs 12 Jam)
+function setTimeFormat(fmt) {
+  currentTimeFormat = fmt;
+  const btn24 = document.getElementById('btnFmt24');
+  const btn12 = document.getElementById('btnFmt12');
+  if (btn24) btn24.classList.toggle('active', fmt === 24);
+  if (btn12) btn12.classList.toggle('active', fmt === 12);
+  localStorage.setItem('robot_cfg_time_fmt', String(fmt));
+  updateOledClockTick();
+  showNeonToast('Format Jam: ' + (fmt === 24 ? '24 Jam' : '12 Jam'));
+  triggerHaptic(25);
+}
+
+// Pengaturan Zona Waktu Kota Dunia
+function onTimezoneSelected(val) {
+  const customWrap = document.getElementById('customTzWrap');
+  const tzLabel = document.getElementById('oledTzLabel');
+
+  if (val === 'custom') {
+    if (customWrap) customWrap.style.display = 'flex';
+    const customInput = document.getElementById('customTzInput');
+    const customVal = parseFloat(customInput ? customInput.value : '7') || 0;
+    currentTimezoneOffset = customVal;
+    if (tzLabel) tzLabel.textContent = `UTC${customVal >= 0 ? '+' : ''}${customVal}`;
+  } else {
+    if (customWrap) customWrap.style.display = 'none';
+    currentTimezoneOffset = parseFloat(val);
+    const sel = document.getElementById('selTimezoneWorld');
+    const selectedText = sel ? sel.options[sel.selectedIndex].text : '';
+    const code = selectedText.split(' ')[0] || 'UTC';
+    if (tzLabel) tzLabel.textContent = code;
+  }
+  localStorage.setItem('robot_cfg_tz', String(currentTimezoneOffset));
+  updateOledClockTick();
+  triggerHaptic(20);
+}
+
+// Sinkronisasi Jam HP & Timezone ke Robot Desk
+function syncClock() {
+  const now = new Date();
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+  const targetTime = new Date(utc + (3600000 * currentTimezoneOffset));
+  const epochSec = Math.floor(targetTime.getTime() / 1000);
+
+  const ok = sendCommand({
+    cmd: 'time',
+    epoch: epochSec,
+    tz: currentTimezoneOffset,
+    fmt: currentTimeFormat
+  });
+  if (ok) {
+    showNeonToast('Jam Disinkronkan (' + (currentTimezoneOffset >= 0 ? '+' : '') + currentTimezoneOffset + ' UTC)');
+    triggerHaptic(35);
+  }
+}
+
+function syncClockQuiet() {
+  const now = new Date();
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+  const targetTime = new Date(utc + (3600000 * currentTimezoneOffset));
+  const epochSec = Math.floor(targetTime.getTime() / 1000);
+  sendCommand({ cmd: 'time', epoch: epochSec, tz: currentTimezoneOffset, fmt: currentTimeFormat });
+}
+
+// Pengaturan Satuan Suhu (°C / °F)
+function setTempUnit(unit) {
+  currentTempUnit = unit;
+  const btnC = document.getElementById('btnTempC');
+  const btnF = document.getElementById('btnTempF');
+  if (btnC) btnC.classList.toggle('active', unit === 'C');
+  if (btnF) btnF.classList.toggle('active', unit === 'F');
+
+  const tempPreview = document.getElementById('oledTempPreview');
+  if (tempPreview) tempPreview.textContent = unit === 'C' ? '29°C' : '84°F';
+
+  localStorage.setItem('robot_cfg_temp_unit', unit);
+  sendCommand({ cmd: 'temp_unit', unit: unit });
+  showNeonToast('Satuan Suhu: °' + unit);
+  triggerHaptic(25);
+}
+
+// Pengaturan Kota Cuaca Dunia
 function saveCitySetting() {
   const input = document.getElementById('cfgCityInput');
   const city = (input ? input.value.trim() : '') || 'Jakarta';
   localStorage.setItem('robot_cfg_city', city);
-  showNeonToast('Kota Disimpan: ' + city);
+
+  const cityPreview = document.getElementById('oledCityPreview');
+  if (cityPreview) cityPreview.textContent = city.toUpperCase();
+
+  const ok = sendCommand({ cmd: 'weather_city', city: city, unit: currentTempUnit });
+  if (ok) {
+    showNeonToast('Kota Disimpan: ' + city);
+  }
   triggerHaptic(30);
 }
 
@@ -599,65 +751,6 @@ function setPresetCity(name) {
   const input = document.getElementById('cfgCityInput');
   if (input) input.value = name;
   saveCitySetting();
-}
-
-// Kirim Subtitle Teks Berjalan
-function sendCustomSubtitle() {
-  const input = document.getElementById('cfgSubtitleInput');
-  const text = (input ? input.value.trim() : '');
-  if (!text) {
-    showNeonToast('Ketik Teks Dulu');
-    return;
-  }
-  const ok = sendCommand({ c: 'msg', text: text, source: 'HP' });
-  if (ok) {
-    showNeonToast('Teks Ditampilkan');
-    triggerHaptic(30);
-  }
-}
-
-// Pengaturan Alarm
-function saveAlarmSettings() {
-  const hour = parseInt(document.getElementById('alarmHour').value, 10) || 0;
-  const min = parseInt(document.getElementById('alarmMin').value, 10) || 0;
-  const en = document.getElementById('alarmEnabledToggle').checked;
-  const daily = document.getElementById('alarmDailyToggle').checked;
-
-  const ok = sendCommand({
-    cmd: 'alarm',
-    hour: Math.max(0, Math.min(23, hour)),
-    min: Math.max(0, Math.min(59, min)),
-    en: en,
-    daily: daily
-  });
-
-  if (ok) {
-    showNeonToast(en ? 'Alarm Diaktifkan' : 'Alarm Dimatikan');
-    triggerHaptic(35);
-  }
-}
-
-function testAlarmBuzzer() {
-  const ok = sendCommand({ cmd: 'alarm_test' });
-  if (ok) {
-    showNeonToast('Tes Bunyi Alarm');
-    triggerHaptic(40);
-  }
-}
-
-// Sinkronisasi Jam HP
-function syncClock() {
-  const epochSec = Math.floor(Date.now() / 1000);
-  const ok = sendCommand({ cmd: 'time', epoch: epochSec });
-  if (ok) {
-    showNeonToast('Jam Disinkronkan');
-    triggerHaptic(35);
-  }
-}
-
-function syncClockQuiet() {
-  const epochSec = Math.floor(Date.now() / 1000);
-  sendCommand({ cmd: 'time', epoch: epochSec });
 }
 
 // Kecerahan Layar OLED
@@ -710,7 +803,31 @@ window.addEventListener('DOMContentLoaded', () => {
   if (savedCity) {
     const input = document.getElementById('cfgCityInput');
     if (input) input.value = savedCity;
+    const cityPreview = document.getElementById('oledCityPreview');
+    if (cityPreview) cityPreview.textContent = savedCity.toUpperCase();
   }
+
+  const savedFmt = localStorage.getItem('robot_cfg_time_fmt');
+  if (savedFmt) {
+    setTimeFormat(parseInt(savedFmt, 10));
+  }
+
+  const savedTz = localStorage.getItem('robot_cfg_tz');
+  if (savedTz) {
+    currentTimezoneOffset = parseFloat(savedTz);
+    const sel = document.getElementById('selTimezoneWorld');
+    if (sel) sel.value = savedTz;
+    const tzLabel = document.getElementById('oledTzLabel');
+    const selectedText = sel ? sel.options[sel.selectedIndex]?.text : '';
+    if (tzLabel && selectedText) tzLabel.textContent = selectedText.split(' ')[0] || 'UTC';
+  }
+
+  const savedUnit = localStorage.getItem('robot_cfg_temp_unit');
+  if (savedUnit) {
+    setTempUnit(savedUnit);
+  }
+
+  updateOledClockTick();
 
   // Cek status daya Bluetooth HP secara native
   if (window.AndroidBLE && typeof window.AndroidBLE.isBluetoothEnabled === 'function') {

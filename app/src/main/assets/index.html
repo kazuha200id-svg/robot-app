@@ -19,9 +19,6 @@
         </svg>
         <div class="brand-text">
           <span class="brand-name">ROBOT DESK</span>
-          <div class="status-indicator">
-            <span id="bleStatusLabel" class="status-txt">BLE TERPUTUS</span>
-          </div>
         </div>
       </div>
     </header>
@@ -311,143 +308,252 @@
         </div>
       </section>
 
-      <!-- ================= PAGE 3: ROBOT (INFO STATUS & SENSOR) ================= -->
+      <!-- ================= PAGE 3: ROBOT (LAYAR OLED INTERAKTIF) ================= -->
       <section id="pageRobot" class="page">
         <div class="section-title-bar">
-          <h2>STATUS ROBOT</h2>
+          <h2>LAYAR OLED ROBOT</h2>
         </div>
 
-        <div class="telemetry-stack">
-          <!-- Status Mode -->
-          <div class="hud-tile">
-            <div class="tile-icon-box">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="12" cy="12" r="3"></circle></svg>
+        <div class="robot-screens-grid">
+          <!-- 1. Layar Jam Digital -->
+          <div class="oled-screen-card active" onclick="activateOledScreen(1, this)">
+            <div class="oled-display-bezel">
+              <div class="oled-screen-content oled-clock-view">
+                <div class="oled-header-tiny">
+                  <span id="oledTzLabel">WIB</span>
+                  <span>BAT 100%</span>
+                </div>
+                <div class="oled-big-time" id="oledClockPreview">12:30</div>
+                <div class="oled-sub-date" id="oledDatePreview">RABU, 04 NOV</div>
+              </div>
             </div>
-            <div class="tile-info">
-              <span class="tile-label">MODE AKTIF SAAT INI</span>
-              <span id="teleActiveMode" class="tile-val">Animasi Wajah</span>
-            </div>
-          </div>
-
-          <!-- Status Daya & Tidur -->
-          <div class="hud-tile">
-            <div class="tile-icon-box">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-            </div>
-            <div class="tile-info">
-              <span class="tile-label">KONDISI DAYA</span>
-              <span id="teleSleepState" class="tile-val">Robot Aktif (Bangun)</span>
-            </div>
-            <div class="tile-action">
-              <button class="btn-micro" onclick="sendSleep()">TIDUR</button>
-              <button class="btn-micro primary" onclick="sendWake()">BANGUN</button>
+            <div class="screen-card-meta">
+              <span class="screen-title">JAM DIGITAL</span>
+              <span class="screen-desc">Tampilan Jam & Kalender</span>
             </div>
           </div>
 
-          <!-- Memori Robot Desk -->
-          <div class="hud-tile">
-            <div class="tile-icon-box">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><line x1="8" y1="2" x2="8" y2="4"></line><line x1="16" y1="2" x2="16" y2="4"></line></svg>
+          <!-- 2. Layar Cuaca -->
+          <div class="oled-screen-card" onclick="activateOledScreen(2, this)">
+            <div class="oled-display-bezel">
+              <div class="oled-screen-content oled-weather-view">
+                <div class="oled-weather-row">
+                  <svg viewBox="0 0 24 24" class="oled-svg-icon" fill="none" stroke="#00F0FF" stroke-width="2">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                  </svg>
+                  <span class="oled-weather-temp" id="oledTempPreview">29°C</span>
+                </div>
+                <div class="oled-weather-city" id="oledCityPreview">JAKARTA</div>
+                <div class="oled-weather-info">CERAH BERAWAN</div>
+              </div>
             </div>
-            <div class="tile-info">
-              <span class="tile-label">SISA MEMORI SRAM (HEAP)</span>
-              <span class="tile-val">278.9 KB (85.1% Bebas)</span>
+            <div class="screen-card-meta">
+              <span class="screen-title">INFO CUACA</span>
+              <span class="screen-desc">Cuaca & Suhu Kota</span>
             </div>
           </div>
 
-          <!-- Interaksi Fisik Virtual -->
-          <div class="hud-panel-box">
-            <span class="panel-tag">SIMULASI SENSOR FISIK</span>
-            <div class="sensor-btn-cluster">
-              <button class="neon-sensor-btn" onclick="sendTouchTap()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v6M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8M18 11a2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"></path></svg>
-                <span>TEPUK KEPALA</span>
-              </button>
-              <button class="neon-sensor-btn" onclick="sendPetting()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-                <span>ELUS SAYANG</span>
-              </button>
-              <button class="neon-sensor-btn" onclick="sendShake()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M2 12h20M2 6h20M2 18h20"></path></svg>
-                <span>GOYANGKAN</span>
-              </button>
+          <!-- 3. Layar Ekspresi Wajah -->
+          <div class="oled-screen-card" onclick="activateOledScreen(0, this)">
+            <div class="oled-display-bezel">
+              <div class="oled-screen-content oled-face-view">
+                <div class="oled-eyes-wrap">
+                  <div class="oled-eye left"></div>
+                  <div class="oled-eye right"></div>
+                </div>
+                <div class="oled-mood-label">MOOD: SENANG</div>
+              </div>
+            </div>
+            <div class="screen-card-meta">
+              <span class="screen-title">EKSPRESI WAJAH</span>
+              <span class="screen-desc">Animasi Mata OLED</span>
+            </div>
+          </div>
+
+          <!-- 4. Layar Arcade Game -->
+          <div class="oled-screen-card" onclick="activateOledScreen(5, this)">
+            <div class="oled-display-bezel">
+              <div class="oled-screen-content oled-game-view">
+                <div class="oled-game-pixels">
+                  <div class="dino-pixel"></div>
+                  <div class="cactus-pixel"></div>
+                </div>
+                <div class="oled-score-line">HI 00420 &nbsp; SCORE 00150</div>
+              </div>
+            </div>
+            <div class="screen-card-meta">
+              <span class="screen-title">ARCADE GAME</span>
+              <span class="screen-desc">Layar Game Mini OLED</span>
+            </div>
+          </div>
+
+          <!-- 5. Layar Subtitle / Pesan -->
+          <div class="oled-screen-card" onclick="activateOledScreen('msg', this)">
+            <div class="oled-display-bezel">
+              <div class="oled-screen-content oled-msg-view">
+                <div class="oled-header-tiny"><span>PESAN OLED</span></div>
+                <div class="oled-marquee-text" id="oledMsgPreview">HELLO ROBOT DESK!</div>
+                <div class="oled-footer-tiny"><span>TEKS AKTIF</span></div>
+              </div>
+            </div>
+            <div class="screen-card-meta">
+              <span class="screen-title">TEKS & SUBTITLE</span>
+              <span class="screen-desc">Pesan Berjalan OLED</span>
+            </div>
+          </div>
+
+          <!-- 6. Layar Interaksi Sensor & Daya -->
+          <div class="oled-screen-card" onclick="activateOledScreen('pet', this)">
+            <div class="oled-display-bezel">
+              <div class="oled-screen-content oled-pet-view">
+                <div class="oled-heart-beat">♥</div>
+                <div class="oled-sensor-status">SENSOR SENTUH AKTIF</div>
+              </div>
+            </div>
+            <div class="screen-card-meta">
+              <span class="screen-title">RESPON INTERAKTIF</span>
+              <span class="screen-desc">Tepuk Kepala / Elus</span>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- ================= PAGE 4: SETTING (PENGATURAN PARAMETER) ================= -->
+      <!-- ================= PAGE 4: SETTING (4 KOTAK PENGATURAN) ================= -->
       <section id="pageSetting" class="page">
         <div class="section-title-bar">
           <h2>PENGATURAN FITUR</h2>
         </div>
 
         <div class="settings-scroll-stack">
-          <!-- 1. Pengaturan Cuaca (Kota) -->
+
+          <!-- KOTAK 1: PENGATURAN JAM & ZONA WAKTU DUNIA -->
           <div class="config-card">
             <div class="config-header">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>
-              <span class="config-title">PENGATURAN KOTA CUACA</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <span class="config-title">PENGATURAN JAM & ZONA WAKTU</span>
             </div>
-            <div class="input-inline-wrap">
-              <input type="text" id="cfgCityInput" placeholder="Ketik nama kota..." value="Jakarta">
-              <button class="neon-btn-action" onclick="saveCitySetting()">SIMPAN</button>
+
+            <!-- Format 24 Jam vs 12 Jam -->
+            <div class="setting-row-group">
+              <span class="setting-sub-label">Format Tampilan Jam</span>
+              <div class="format-toggle-group">
+                <button type="button" id="btnFmt24" class="chip-preset active" onclick="setTimeFormat(24)">24 JAM (23:59)</button>
+                <button type="button" id="btnFmt12" class="chip-preset" onclick="setTimeFormat(12)">12 JAM (11:59 PM)</button>
+              </div>
             </div>
-            <!-- Preset Cepat Kota -->
-            <div class="chip-preset-row">
-              <button class="chip-preset" onclick="setPresetCity('Jakarta')">Jakarta</button>
-              <button class="chip-preset" onclick="setPresetCity('Bandung')">Bandung</button>
-              <button class="chip-preset" onclick="setPresetCity('Surabaya')">Surabaya</button>
-              <button class="chip-preset" onclick="setPresetCity('Yogyakarta')">Yogya</button>
-              <button class="chip-preset" onclick="setPresetCity('Bali')">Bali</button>
+
+            <!-- Pilihan Zona Waktu Seluruh Dunia -->
+            <div class="setting-row-group mt-8">
+              <span class="setting-sub-label">Zona Waktu Kota Dunia</span>
+              <select id="selTimezoneWorld" class="neon-select" onchange="onTimezoneSelected(this.value)">
+                <option value="7" selected>WIB - Jakarta, Bangkok (UTC+7)</option>
+                <option value="8">WITA - Bali, Singapore, KL (UTC+8)</option>
+                <option value="9">WIT - Jayapura, Tokyo, Seoul (UTC+9)</option>
+                <option value="0">UTC - London, Dublin, Lisbon (UTC+0)</option>
+                <option value="1">CET - Paris, Berlin, Rome (UTC+1)</option>
+                <option value="2">EET - Kairo, Athena, Helsinki (UTC+2)</option>
+                <option value="3">MSK - Moskow, Riyadh, Nairobi (UTC+3)</option>
+                <option value="4">GST - Dubai, Baku (UTC+4)</option>
+                <option value="5.5">IST - New Delhi, Mumbai (UTC+5:30)</option>
+                <option value="10">AEST - Sydney, Melbourne (UTC+10)</option>
+                <option value="12">NZST - Auckland, Wellington (UTC+12)</option>
+                <option value="-5">EST - New York, Washington, Toronto (UTC-5)</option>
+                <option value="-6">CST - Chicago, Mexico City (UTC-6)</option>
+                <option value="-8">PST - Los Angeles, San Francisco (UTC-8)</option>
+                <option value="-3">BRT - São Paulo, Buenos Aires (UTC-3)</option>
+                <option value="custom">Kustom Offset Manual (UTC)...</option>
+              </select>
+            </div>
+
+            <!-- Custom Offset Input (Muncul jika pilih kustom) -->
+            <div id="customTzWrap" class="input-inline-wrap mt-8" style="display: none;">
+              <input type="number" id="customTzInput" placeholder="Contoh: 7 atau -5" min="-12" max="14" step="0.5" value="7">
+              <span class="unit-label">Jam dari UTC</span>
+            </div>
+
+            <!-- Tombol Sinkronisasi Jam -->
+            <div class="action-btn-row mt-12">
+              <button class="neon-btn-action full" onclick="syncClock()">SINKRONKAN JAM KE ROBOT DESK</button>
             </div>
           </div>
 
-          <!-- 2. Pengaturan Subtitle -->
-          <div class="config-card">
-            <div class="config-header">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"></rect><line x1="6" y1="12" x2="18" y2="12"></line></svg>
-              <span class="config-title">PENGATURAN SUBTITLE</span>
-            </div>
-            <div class="input-inline-wrap">
-              <input type="text" id="cfgSubtitleInput" placeholder="Ketik subtitle untuk OLED..." maxlength="64">
-              <button class="neon-btn-action" onclick="sendCustomSubtitle()">KIRIM</button>
-            </div>
-          </div>
-
-          <!-- 3. Pengaturan Alarm Robot -->
+          <!-- KOTAK 2: PENGATURAN ALARM ROBOT -->
           <div class="config-card">
             <div class="config-header">
               <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l2 2M5 3L2 6M22 6l-3-3"></path></svg>
-              <span class="config-title">ALARM BANGUN ROBOT</span>
+              <span class="config-title">PENGATURAN ALARM ROBOT</span>
             </div>
+
+            <!-- Alarm Time Picker -->
             <div class="alarm-picker-box">
               <div class="picker-digit"><label>JAM</label><input type="number" id="alarmHour" min="0" max="23" value="06"></div>
               <span class="picker-sep">:</span>
               <div class="picker-digit"><label>MENIT</label><input type="number" id="alarmMin" min="0" max="59" value="30"></div>
             </div>
+
+            <!-- Sakelar Aktif/Mati & Pengulangan Sekali/Tiap Hari -->
             <div class="alarm-switches-box">
-              <label class="neon-switch"><span>Aktifkan Alarm</span><input type="checkbox" id="alarmEnabledToggle" checked><span class="slider"></span></label>
-              <label class="neon-switch"><span>Ulangi Setiap Hari</span><input type="checkbox" id="alarmDailyToggle" checked><span class="slider"></span></label>
+              <label class="neon-switch">
+                <span>Status Alarm</span>
+                <input type="checkbox" id="alarmEnabledToggle" checked>
+                <span class="slider"></span>
+              </label>
+              <label class="neon-switch">
+                <span>Ulangi Setiap Hari (Daily)</span>
+                <input type="checkbox" id="alarmDailyToggle" checked>
+                <span class="slider"></span>
+              </label>
             </div>
-            <div class="dual-btn-row">
+
+            <div class="dual-btn-row mt-8">
               <button class="neon-btn-action" onclick="saveAlarmSettings()">SIMPAN ALARM</button>
               <button class="neon-btn-subtle" onclick="testAlarmBuzzer()">TES ALARM</button>
             </div>
           </div>
 
-          <!-- 4. Pengaturan Jam -->
+          <!-- KOTAK 3: PENGATURAN CUACA DUNIA -->
           <div class="config-card">
             <div class="config-header">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-              <span class="config-title">SINKRONISASI JAM</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>
+              <span class="config-title">PENGATURAN CUACA DUNIA</span>
             </div>
-            <div class="action-btn-row">
-              <button class="neon-btn-action full" onclick="syncClock()">SINKRONKAN JAM HP KE ROBOT DESK</button>
+
+            <div class="input-inline-wrap">
+              <input type="text" id="cfgCityInput" placeholder="Ketik nama kota di seluruh dunia..." value="Jakarta">
+              <button class="neon-btn-action" onclick="saveCitySetting()">SIMPAN</button>
+            </div>
+
+            <!-- Satuan Suhu -->
+            <div class="setting-row-group mt-8">
+              <span class="setting-sub-label">Satuan Suhu</span>
+              <div class="format-toggle-group">
+                <button type="button" id="btnTempC" class="chip-preset active" onclick="setTempUnit('C')">CELCIUS (°C)</button>
+                <button type="button" id="btnTempF" class="chip-preset" onclick="setTempUnit('F')">FAHRENHEIT (°F)</button>
+              </div>
+            </div>
+
+            <!-- Preset Cepat Kota Populer -->
+            <div class="setting-row-group mt-8">
+              <span class="setting-sub-label">Pilihan Cepat Kota Populer</span>
+              <div class="chip-preset-row">
+                <button class="chip-preset" onclick="setPresetCity('Jakarta')">Jakarta</button>
+                <button class="chip-preset" onclick="setPresetCity('Bandung')">Bandung</button>
+                <button class="chip-preset" onclick="setPresetCity('Tokyo')">Tokyo</button>
+                <button class="chip-preset" onclick="setPresetCity('London')">London</button>
+                <button class="chip-preset" onclick="setPresetCity('New York')">New York</button>
+                <button class="chip-preset" onclick="setPresetCity('Paris')">Paris</button>
+                <button class="chip-preset" onclick="setPresetCity('Bali')">Bali</button>
+              </div>
             </div>
           </div>
 
-          <!-- 5. Perangkat Keras (Hardware & Audio) -->
+          <!-- KOTAK 4: PENGATURAN PERANGKAT KERAS (HARDWARE) -->
           <div class="config-card">
             <div class="config-header">
               <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
@@ -475,10 +581,11 @@
             </div>
 
             <div class="dual-btn-row mt-8">
-              <button class="neon-btn-subtle" onclick="testBuzzerSound()">TES BUZZER</button>
+              <button class="neon-btn-subtle" onclick="testBuzzerSound()">TES NADA BUZZER</button>
               <button class="neon-btn-subtle danger" onclick="restartRobot()">RESTART ROBOT</button>
             </div>
           </div>
+
         </div>
       </section>
 

@@ -1523,3 +1523,272 @@ input[type="range"]::-webkit-slider-thumb {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
+
+/* ================= ROBOT OLED SCREEN PREVIEW CARDS ================= */
+.robot-screens-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  width: 100%;
+}
+
+.oled-screen-card {
+  display: flex;
+  flex-direction: column;
+  background: rgba(10, 18, 34, 0.7);
+  border: 1px solid var(--neon-cyan-border);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+}
+
+.oled-screen-card:hover, .oled-screen-card:active {
+  transform: translateY(-2px);
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.25);
+}
+
+.oled-screen-card.active {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 18px rgba(0, 240, 255, 0.4);
+  background: rgba(0, 240, 255, 0.08);
+}
+
+.oled-display-bezel {
+  width: 100%;
+  aspect-ratio: 2 / 1;
+  background: #02060c;
+  border: 2px solid #162a45;
+  border-radius: 6px;
+  padding: 6px 8px;
+  box-sizing: border-box;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.9);
+}
+
+.oled-screen-card.active .oled-display-bezel {
+  border-color: rgba(0, 240, 255, 0.6);
+  box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.15), 0 0 8px rgba(0, 240, 255, 0.2);
+}
+
+.oled-screen-content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-family: var(--font-mono);
+  color: var(--neon-cyan);
+  text-shadow: 0 0 4px rgba(0, 240, 255, 0.8);
+}
+
+.oled-header-tiny, .oled-footer-tiny {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.5rem;
+  letter-spacing: 0.5px;
+  color: #5A7B99;
+}
+
+.oled-big-time {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.oled-sub-date {
+  font-size: 0.52rem;
+  color: #8EA9C7;
+  letter-spacing: 0.5px;
+}
+
+.oled-weather-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.oled-svg-icon {
+  width: 16px;
+  height: 16px;
+  stroke: var(--neon-cyan);
+}
+
+.oled-weather-temp {
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.oled-weather-city {
+  font-size: 0.52rem;
+  letter-spacing: 1px;
+  font-weight: 700;
+}
+
+.oled-weather-info {
+  font-size: 0.45rem;
+  color: #5A7B99;
+}
+
+.oled-eyes-wrap {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 2px;
+}
+
+.oled-eye {
+  width: 14px;
+  height: 16px;
+  background: var(--neon-cyan);
+  border-radius: 4px;
+  box-shadow: 0 0 6px var(--neon-cyan);
+  animation: eyeBlink 3.5s infinite;
+}
+
+@keyframes eyeBlink {
+  0%, 96%, 100% { transform: scaleY(1); }
+  98% { transform: scaleY(0.1); }
+}
+
+.oled-mood-label {
+  font-size: 0.48rem;
+  letter-spacing: 0.5px;
+  color: #8EA9C7;
+}
+
+.oled-game-pixels {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  width: 80%;
+  height: 18px;
+  border-bottom: 1.5px solid var(--neon-cyan);
+}
+
+.dino-pixel {
+  width: 8px;
+  height: 12px;
+  background: var(--neon-cyan);
+  border-radius: 2px 2px 0 0;
+}
+
+.cactus-pixel {
+  width: 4px;
+  height: 8px;
+  background: var(--neon-cyan);
+}
+
+.oled-score-line {
+  font-size: 0.46rem;
+  margin-top: 3px;
+  color: #8EA9C7;
+}
+
+.oled-marquee-text {
+  font-size: 0.65rem;
+  font-weight: 700;
+  white-space: nowrap;
+  animation: marqueeScroll 5s linear infinite;
+}
+
+@keyframes marqueeScroll {
+  0% { transform: translateX(25px); }
+  100% { transform: translateX(-25px); }
+}
+
+.oled-heart-beat {
+  font-size: 1.2rem;
+  color: var(--neon-cyan);
+  animation: heartPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes heartPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.25); }
+}
+
+.oled-sensor-status {
+  font-size: 0.46rem;
+  color: #8EA9C7;
+  letter-spacing: 0.5px;
+}
+
+.screen-card-meta {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.screen-title {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-bright);
+}
+
+.screen-desc {
+  font-size: 0.55rem;
+  color: var(--text-muted);
+}
+
+/* ================= WORLD CLOCK & SETTINGS SELECT ================= */
+.neon-select {
+  width: 100%;
+  padding: 10px 12px;
+  background: rgba(10, 18, 34, 0.85);
+  border: 1px solid var(--neon-cyan-border);
+  border-radius: var(--radius-sm);
+  color: var(--neon-cyan);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.neon-select:focus {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+}
+
+.format-toggle-group {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.format-toggle-group .chip-preset {
+  flex: 1;
+  text-align: center;
+}
+
+.setting-row-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.setting-sub-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.unit-label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+}
