@@ -1,5 +1,5 @@
 /* ========================================================
-   ROBOT COMPANION APP CONTROLLER (LOGIC-SYNCHRONIZED)
+   ROBOT COMPANION APP CONTROLLER (ULTRA-COMPACT PAYLOADS)
    ======================================================== */
 
 let isBleConnected = false;
@@ -12,7 +12,7 @@ function showNeonToast(message) {
   if (!toast) return;
   document.getElementById('toastText').textContent = message;
   toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 2200);
+  setTimeout(() => toast.classList.remove('show'), 2400);
   triggerHaptic(20);
 }
 
@@ -47,15 +47,13 @@ function switchPage(pageId) {
 function sendCommand(cmdObject) {
   const jsonStr = JSON.stringify(cmdObject);
   if (window.AndroidBLE && typeof window.AndroidBLE.send === 'function') {
-    const success = window.AndroidBLE.send(jsonStr);
-    if (!success) {
-      if (!isBleConnected) {
-        showNeonToast('Bluetooth Belum Terhubung');
-      } else {
-        showNeonToast('Gagal Mengirim ke Robot');
-      }
+    const res = window.AndroidBLE.send(jsonStr);
+    if (res === 'OK' || res === true) {
+      return true;
+    } else {
+      showNeonToast(res || 'Gagal Mengirim');
+      return false;
     }
-    return success;
   } else {
     // Mock for browser testing
     console.log('[MOCK BLE SEND]', jsonStr);
@@ -124,7 +122,7 @@ function sendFace(faceIndex, elem) {
   document.querySelectorAll('.face-card').forEach(c => c.classList.remove('active'));
   if (elem) elem.classList.add('active');
 
-  const ok = sendCommand({ cmd: 'face', val: faceIndex });
+  const ok = sendCommand({ c: 'f', v: faceIndex });
   if (ok) {
     showNeonToast('Ekspresi Diganti');
     triggerHaptic(25);
@@ -133,7 +131,7 @@ function sendFace(faceIndex, elem) {
 
 // 2. Ganti Mode Robot (Game, Jam, Cuaca, dll)
 function sendDeviceMode(modeIndex) {
-  const ok = sendCommand({ cmd: 'mode', val: modeIndex });
+  const ok = sendCommand({ c: 'm', v: modeIndex });
   if (ok) {
     showNeonToast('Mode Robot Diaktifkan');
     triggerHaptic(30);
@@ -142,16 +140,20 @@ function sendDeviceMode(modeIndex) {
 
 // 3. Tombol Aksi Game (Virtual Action / Jump Tap)
 function sendActionTap() {
-  sendCommand({ cmd: 'action' });
-  triggerHaptic(40);
+  const ok = sendCommand({ c: 'a' });
+  if (ok) {
+    triggerHaptic(40);
+  }
 }
 
 // 4. Sinkronisasi Jam HP ke ESP32
 function syncClock() {
   const epochSec = Math.floor(Date.now() / 1000);
-  sendCommand({ cmd: 'time', epoch: epochSec });
-  showNeonToast('Jam Berhasil Disinkronkan');
-  triggerHaptic(35);
+  const ok = sendCommand({ cmd: 'time', epoch: epochSec });
+  if (ok) {
+    showNeonToast('Jam Berhasil Disinkronkan');
+    triggerHaptic(35);
+  }
 }
 
 function syncClockQuiet() {
@@ -166,7 +168,7 @@ function saveAlarmSettings() {
   const en = document.getElementById('alarmEnabledToggle').checked;
   const daily = document.getElementById('alarmDailyToggle').checked;
 
-  sendCommand({
+  const ok = sendCommand({
     cmd: 'alarm',
     hour: Math.max(0, Math.min(23, hour)),
     min: Math.max(0, Math.min(59, min)),
@@ -174,60 +176,76 @@ function saveAlarmSettings() {
     daily: daily
   });
 
-  showNeonToast(en ? 'Alarm Disimpan & Aktif' : 'Alarm Dinonaktifkan');
-  triggerHaptic(35);
+  if (ok) {
+    showNeonToast(en ? 'Alarm Disimpan & Aktif' : 'Alarm Dinonaktifkan');
+    triggerHaptic(35);
+  }
 }
 
 // 6. Tes Buzzer Alarm
 function testAlarmBuzzer() {
-  sendCommand({ cmd: 'alarm_test' });
-  showNeonToast('Menguji Suara Alarm');
-  triggerHaptic(40);
+  const ok = sendCommand({ cmd: 'alarm_test' });
+  if (ok) {
+    showNeonToast('Menguji Suara Alarm');
+    triggerHaptic(40);
+  }
 }
 
 // 7. Interaksi Fisik Virtual (Tepuk, Elus, Goyang)
 function sendTouchTap() {
-  sendCommand({ cmd: 'tap' });
-  showNeonToast('Tepuk Kepala Virtual');
-  triggerHaptic(30);
+  const ok = sendCommand({ c: 'tap' });
+  if (ok) {
+    showNeonToast('Tepuk Kepala Virtual');
+    triggerHaptic(30);
+  }
 }
 
 function sendPetting() {
-  sendCommand({ cmd: 'pet' });
-  showNeonToast('Elus Sayang Robot');
-  triggerHaptic(45);
+  const ok = sendCommand({ c: 'pet' });
+  if (ok) {
+    showNeonToast('Elus Sayang Robot');
+    triggerHaptic(45);
+  }
 }
 
 function sendShake() {
-  sendCommand({ cmd: 'tilt' });
-  showNeonToast('Goyang Robot Virtual');
-  triggerHaptic(50);
+  const ok = sendCommand({ c: 'tilt' });
+  if (ok) {
+    showNeonToast('Goyang Robot Virtual');
+    triggerHaptic(50);
+  }
 }
 
 // 8. Manajemen Tidur & Bangun
 function sendSleep() {
-  sendCommand({ cmd: 'sleep' });
-  showNeonToast('Robot Masuk Mode Tidur');
-  triggerHaptic(30);
+  const ok = sendCommand({ c: 'sleep' });
+  if (ok) {
+    showNeonToast('Robot Masuk Mode Tidur');
+    triggerHaptic(30);
+  }
 }
 
 function sendWake() {
-  sendCommand({ cmd: 'wake' });
-  showNeonToast('Robot Dibangunkan');
-  triggerHaptic(35);
+  const ok = sendCommand({ c: 'wake' });
+  if (ok) {
+    showNeonToast('Robot Dibangunkan');
+    triggerHaptic(35);
+  }
 }
 
 // 9. Tes Suara Buzzer Umum
 function testBuzzerSound() {
-  sendCommand({ cmd: 'buzzer', freq: 2400, dur: 120 });
-  showNeonToast('Bunyi Nada Buzzer');
-  triggerHaptic(30);
+  const ok = sendCommand({ cmd: 'buzzer', freq: 2400, dur: 120 });
+  if (ok) {
+    showNeonToast('Bunyi Nada Buzzer');
+    triggerHaptic(30);
+  }
 }
 
 // 10. Restart Robot
 function restartRobot() {
   if (confirm('Restart mikrokontroler ESP32 sekarang?')) {
-    sendCommand({ cmd: 'restart' });
+    sendCommand({ cmd: 'reboot' });
     showNeonToast('Robot Sedang Restart...');
     triggerHaptic(60);
   }

@@ -193,11 +193,10 @@ public class BleManager {
                 mainHandler.postDelayed(() -> {
                     try {
                         if (gatt != null) {
-                            gatt.requestMtu(256);
                             gatt.discoverServices();
                         }
                     } catch (Exception ignored) {}
-                }, 300);
+                }, 350);
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 isConnected = false;
                 rxChar = null;
@@ -208,33 +207,51 @@ public class BleManager {
 
         @Override
         public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
-            Log.d(TAG, "BLE MTU dinegosiasikan ke: " + mtu);
+            Log.d(TAG, "BLE MTU dinegosiasikan: " + mtu);
         }
 
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                BluetoothGattService nusService = gatt.getService(NUS_SERVICE_UUID);
-                if (nusService != null) {
-                    rxChar = nusService.getCharacteristic(NUS_RX_UUID);
-                    txChar = nusService.getCharacteristic(NUS_TX_UUID);
+                // Cari service NUS secara case-insensitive
+                BluetoothGattService foundService = null;
+                for (BluetoothGattService s : gatt.getServices()) {
+                    if (s.getUuid().toString().equalsIgnoreCase(NUS_SERVICE_UUID.toString())) {
+                        foundService = s;
+                        break;
+                    }
+                }
 
-                    if (txChar != null) {
-                        gatt.setCharacteristicNotification(txChar, true);
-                        BluetoothGattDescriptor descriptor = txChar.getDescriptor(CCCD_UUID);
-                        if (descriptor != null) {
-                            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                            gatt.writeDescriptor(descriptor);
+                if (foundService != null) {
+                    for (BluetoothGattCharacteristic c : foundService.getCharacteristics()) {
+                        if (c.getUuid().toString().equalsIgnoreCase(NUS_RX_UUID.toString())) {
+                            rxChar = c;
+                        } else if (c.getUuid().toString().equalsIgnoreCase(NUS_TX_UUID.toString())) {
+                            txChar = c;
                         }
                     }
 
-                    isConnected = true;
-                    notifyStatus(true, "Tersambung ke Robot");
-                    // Minta telemetri awal setelah jeda singkat
-                    mainHandler.postDelayed(() -> sendCommand("{\"cmd\":\"status\"}"), 400);
+                    if (rxChar != null) {
+                        isConnected = true;
+                        notifyStatus(true, "Tersambung ke Robot");
+
+                        // Negosiasikan MTU setelah servis ditemukan
+                        mainHandler.postDelayed(() -> {
+                            try {
+                                if (gatt != null) gatt.requestMtu(256);
+                            } catch (Exception ignored) {}
+                        }, 200);
+
+                        // Minta status awal
+                        mainHandler.postDelayed(() -> sendCommand("{\"c\":\"s\"}"), 500);
+                    } else {
+                        notifyStatus(false, "RX Karakteristik tidak ditemukan");
+                    }
                 } else {
                     notifyStatus(false, "Layanan robot tidak ditemukan");
                 }
+            } else {
+                notifyStatus(false, "GATT error status: " + status);
             }
         }
 
@@ -252,35 +269,59 @@ public class BleManager {
         }
     };
 
-    public boolean sendCommand(String jsonCommand) {
-        if (!isConnected || bluetoothGatt == null || rxChar == null) {
-            Log.e(TAG, "Gagal kirim: isConnected=" + isConnected + ", rxChar=" + rxChar);
-            return false;
-        }
+    public String sendCommand(String jsonCommand) {
+        if (!isConnected) return "ERR: Belum Tersambung";
+        if (bluetoothGatt == null) return "ERR: GATT Null";
+        if (rxChar == null) return "ERR: RX Char Null";
+
         try {
-            byte[] bytes = (jsonCommand + "\n").getBytes(StandardCharsets.UTF_8);
-            boolean writeOk;
+            byte[] bytes = jsonCommand.getBytes(StandardCharsets.UTF_8);
+            int props = rxChar.getProperties();
+            int preferredType = ((props & BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE) != 0) ?
+                    BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE : BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT;
+            int alternativeType = (preferredType == BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE) ?
+                    BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT : BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE;
+
+            boolean writeOk = false;
+            int errCode = -1;
+
+            // 1. Coba API 33+ (Android 13/14)
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                int res = bluetoothGatt.writeCharacteristic(rxChar, bytes, BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
-                writeOk = (res == android.bluetooth.BluetoothStatusCodes.SUCCESS);
-                if (!writeOk) {
-                    res = bluetoothGatt.writeCharacteristic(rxChar, bytes, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
-                    writeOk = (res == android.bluetooth.BluetoothStatusCodes.SUCCESS);
+                int res = bluetoothGatt.writeCharacteristic(rxChar, bytes, preferredType);
+                if (res == android.bluetooth.BluetoothStatusCodes.SUCCESS) {
+                    writeOk = true;
+                } else {
+                    errCode = res;
+                    int res2 = bluetoothGatt.writeCharacteristic(rxChar, bytes, alternativeType);
+                    if (res2 == android.bluetooth.BluetoothStatusCodes.SUCCESS) {
+                        writeOk = true;
+                    } else {
+                        errCode = res2;
+                    }
                 }
-            } else {
+            }
+
+            // 2. Fallback metode setValue untuk Android 12 ke bawah atau jika API 33 gagal
+            if (!writeOk) {
+                rxChar.setWriteType(preferredType);
                 rxChar.setValue(bytes);
-                rxChar.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
                 writeOk = bluetoothGatt.writeCharacteristic(rxChar);
                 if (!writeOk) {
-                    rxChar.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+                    rxChar.setWriteType(alternativeType);
                     writeOk = bluetoothGatt.writeCharacteristic(rxChar);
                 }
             }
-            Log.d(TAG, "sendCommand: " + jsonCommand + " -> " + writeOk);
-            return writeOk;
+
+            if (writeOk) {
+                Log.d(TAG, "sendCommand sukses: " + jsonCommand);
+                return "OK";
+            } else {
+                Log.e(TAG, "sendCommand gagal: kode " + errCode);
+                return "ERR: Gagal Kirim (" + (errCode >= 0 ? errCode : "WriteFalse") + ")";
+            }
         } catch (Exception e) {
-            Log.e(TAG, "Gagal kirim command: " + e.getMessage());
-            return false;
+            Log.e(TAG, "sendCommand exception: " + e.getMessage());
+            return "ERR: " + e.getClass().getSimpleName();
         }
     }
 

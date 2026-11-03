@@ -122,7 +122,7 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
         }
 
         @JavascriptInterface
-        public boolean send(String jsonCommand) {
+        public String send(String jsonCommand) {
             return bleManager.sendCommand(jsonCommand);
         }
 
