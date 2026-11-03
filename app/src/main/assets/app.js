@@ -352,6 +352,7 @@ window.onBluetoothPowerState = function(enabled) {
   const txtBt = document.getElementById('txtBtPower');
   const btnEnable = document.getElementById('btnEnableBt');
   const boxBt = document.getElementById('boxBtPower');
+  const boxDetected = document.getElementById('boxDetectedDevices');
   const txtScan = document.getElementById('txtScanState');
   const spinner = document.getElementById('scanSpinner');
   const gate = document.getElementById('setupGate');
@@ -363,6 +364,7 @@ window.onBluetoothPowerState = function(enabled) {
     }
     if (btnEnable) btnEnable.style.display = 'none';
     if (boxBt) boxBt.classList.add('ready');
+    if (boxDetected) boxDetected.style.display = 'flex';
     if (txtScan && !isBleConnected && !isDeviceFound) {
       txtScan.textContent = 'Mencari Robot Desk...';
       if (spinner) spinner.style.display = 'block';
@@ -379,6 +381,7 @@ window.onBluetoothPowerState = function(enabled) {
     }
     if (btnEnable) btnEnable.style.display = 'block';
     if (boxBt) boxBt.classList.remove('ready');
+    if (boxDetected) boxDetected.style.display = 'none';
 
     const scanningBox = document.getElementById('deviceScanningBox');
     const itemBox = document.getElementById('deviceItemBox');

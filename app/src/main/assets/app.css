@@ -1266,11 +1266,12 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .status-card-state.warning {
-  color: #FFAA00;
+  color: #5A7B99;
 }
 
 .status-card-state.success {
-  color: #00FF88;
+  color: #00F0FF;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.7);
 }
 
 .setup-note {
@@ -1297,11 +1298,11 @@ input[type="range"]::-webkit-slider-thumb {
 /* ================= DETECTED DEVICE & SELECTION ================= */
 .detected-devices-wrap {
   width: 100%;
-  margin: 14px 0 16px 0;
+  margin: 10px 0 0 0;
 }
 
 .connect-action-btn {
-  margin-top: 14px !important;
+  margin-top: 10px !important;
 }
 
 .device-state-box {

@@ -19,10 +19,21 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.app.Dialog;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.GradientDrawable;
+import android.util.TypedValue;
+import android.view.Gravity;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -36,7 +47,9 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
     private Vibrator vibrator;
     private boolean receiverRegistered = false;
     private boolean hasInitialScanStarted = false;
-    private AlertDialog activeDialog = null;
+    private boolean hasRequestedNearby = false;
+    private boolean hasRequestedLocation = false;
+    private Dialog activeDialog = null;
 
     private final BroadcastReceiver btStateReceiver = new BroadcastReceiver() {
         @Override
@@ -126,13 +139,20 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
             boolean hasConnect = ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED;
 
             if (!hasScan || !hasConnect) {
-                showPermissionPopup(
-                    "Izin Perangkat di Sekitar",
-                    "Aplikasi memerlukan izin perangkat di sekitar untuk mendeteksi dan menghubungkan Robot Desk.",
-                    () -> ActivityCompat.requestPermissions(MainActivity.this,
+                if (!hasRequestedNearby) {
+                    hasRequestedNearby = true;
+                    ActivityCompat.requestPermissions(MainActivity.this,
                             new String[]{Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT},
-                            REQ_NEARBY)
-                );
+                            REQ_NEARBY);
+                } else {
+                    showPermissionPopup(
+                        "Izin Perangkat di Sekitar",
+                        "Aplikasi memerlukan izin perangkat di sekitar untuk mendeteksi dan menghubungkan Robot Desk.",
+                        () -> ActivityCompat.requestPermissions(MainActivity.this,
+                                new String[]{Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT},
+                                REQ_NEARBY)
+                    );
+                }
                 return;
             }
         }
@@ -140,13 +160,20 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
         // 2. Cek Perizinan Lokasi
         boolean hasLocation = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
         if (!hasLocation) {
-            showPermissionPopup(
-                "Izin Lokasi",
-                "Aplikasi memerlukan izin lokasi untuk memindai perangkat Robot Desk.",
-                () -> ActivityCompat.requestPermissions(MainActivity.this,
+            if (!hasRequestedLocation) {
+                hasRequestedLocation = true;
+                ActivityCompat.requestPermissions(MainActivity.this,
                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
-                        REQ_LOCATION)
-            );
+                        REQ_LOCATION);
+            } else {
+                showPermissionPopup(
+                    "Izin Lokasi",
+                    "Aplikasi memerlukan izin lokasi untuk memindai sinyal Robot Desk di sekitar Anda.",
+                    () -> ActivityCompat.requestPermissions(MainActivity.this,
+                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                            REQ_LOCATION)
+                );
+            }
             return;
         }
 
@@ -160,7 +187,7 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
         if (!isGpsEnabled) {
             showPermissionPopup(
                 "Aktifkan Lokasi",
-                "Layanan lokasi (GPS) pada HP Anda belum aktif. Aktifkan lokasi untuk memindai Robot Desk.",
+                "Layanan lokasi (GPS) pada HP Anda belum aktif. Harap izinkan / aktifkan lokasi untuk memindai Robot Desk.",
                 () -> {
                     try {
                         Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
@@ -199,25 +226,104 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
         }
     }
 
+    private int dp(float val) {
+        return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, val, getResources().getDisplayMetrics());
+    }
+
     private void showPermissionPopup(String title, String message, Runnable onAllow) {
         if (isFinishing() || isDestroyed()) return;
         if (activeDialog != null && activeDialog.isShowing()) return;
 
-        activeDialog = new AlertDialog.Builder(this)
-                .setTitle(title)
-                .setMessage(message)
-                .setCancelable(false)
-                .setPositiveButton("IZINKAN", (dialog, which) -> {
-                    dialog.dismiss();
-                    activeDialog = null;
-                    if (onAllow != null) onAllow.run();
-                })
-                .setNegativeButton("TUTUP", (dialog, which) -> {
-                    dialog.dismiss();
-                    activeDialog = null;
-                    finishAffinity();
-                })
-                .show();
+        Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setCancelable(false);
+
+        // Kontainer utama bertema Cyberpunk Dark & Neon Cyan
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(22), dp(22), dp(22), dp(20));
+
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(Color.parseColor("#0A1222"));
+        bg.setCornerRadius(dp(16));
+        bg.setStroke(dp(1.5f), Color.parseColor("#00F0FF"));
+        root.setBackground(bg);
+
+        // Judul dialog
+        TextView titleView = new TextView(this);
+        titleView.setText(title);
+        titleView.setTextColor(Color.parseColor("#00F0FF"));
+        titleView.setTextSize(17);
+        titleView.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
+        titleView.setLetterSpacing(0.04f);
+        root.addView(titleView);
+
+        // Pesan dialog
+        TextView msgView = new TextView(this);
+        msgView.setText(message);
+        msgView.setTextColor(Color.parseColor("#8EA9C7"));
+        msgView.setTextSize(13.5f);
+        msgView.setLineSpacing(dp(3), 1.0f);
+        LinearLayout.LayoutParams msgParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        msgParams.topMargin = dp(10);
+        msgParams.bottomMargin = dp(22);
+        root.addView(msgView, msgParams);
+
+        // Baris tombol aksi
+        LinearLayout btnRow = new LinearLayout(this);
+        btnRow.setOrientation(LinearLayout.HORIZONTAL);
+
+        // Tombol TUTUP (Sisi Kiri)
+        Button btnClose = new Button(this);
+        btnClose.setText("TUTUP");
+        btnClose.setTextColor(Color.parseColor("#8EA9C7"));
+        btnClose.setTextSize(13);
+        btnClose.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
+        GradientDrawable closeBg = new GradientDrawable();
+        closeBg.setColor(Color.parseColor("#101C33"));
+        closeBg.setCornerRadius(dp(8));
+        closeBg.setStroke(dp(1), Color.parseColor("#26456E"));
+        btnClose.setBackground(closeBg);
+        LinearLayout.LayoutParams closeParams = new LinearLayout.LayoutParams(0, dp(42), 1f);
+        closeParams.rightMargin = dp(10);
+        btnClose.setOnClickListener(v -> {
+            dialog.dismiss();
+            activeDialog = null;
+            finishAffinity();
+        });
+        btnRow.addView(btnClose, closeParams);
+
+        // Tombol IZINKAN (Sisi Kanan)
+        Button btnAllow = new Button(this);
+        btnAllow.setText("IZINKAN");
+        btnAllow.setTextColor(Color.parseColor("#050A14"));
+        btnAllow.setTextSize(13);
+        btnAllow.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
+        GradientDrawable allowBg = new GradientDrawable();
+        allowBg.setColor(Color.parseColor("#00F0FF"));
+        allowBg.setCornerRadius(dp(8));
+        btnAllow.setBackground(allowBg);
+        LinearLayout.LayoutParams allowParams = new LinearLayout.LayoutParams(0, dp(42), 1f);
+        btnAllow.setOnClickListener(v -> {
+            dialog.dismiss();
+            activeDialog = null;
+            if (onAllow != null) onAllow.run();
+        });
+        btnRow.addView(btnAllow, allowParams);
+
+        root.addView(btnRow);
+
+        dialog.setContentView(root);
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            dialog.getWindow().setLayout(
+                    (int) (getResources().getDisplayMetrics().widthPixels * 0.88),
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            );
+        }
+        activeDialog = dialog;
+        dialog.show();
     }
 
     @Override

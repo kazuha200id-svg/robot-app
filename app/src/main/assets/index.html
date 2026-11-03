@@ -20,7 +20,6 @@
         <div class="brand-text">
           <span class="brand-name">ROBOT DESK</span>
           <div class="status-indicator">
-            <span id="bleDot" class="pulse-dot"></span>
             <span id="bleStatusLabel" class="status-txt">BLE TERPUTUS</span>
           </div>
         </div>
@@ -59,8 +58,8 @@
           </button>
         </div>
 
-        <!-- Card: Perangkat Terdeteksi -->
-        <div class="setup-status-card">
+        <!-- Card: Perangkat Terdeteksi (Disembunyikan saat Bluetooth mati) -->
+        <div id="boxDetectedDevices" class="setup-status-card" style="display: none;">
           <div class="status-card-header-row">
             <span class="status-card-label">PERANGKAT TERDETEKSI</span>
             <!-- Tombol Pindai Ulang di Pojok Kanan Atas (Murni Teks tanpa Icon) -->
