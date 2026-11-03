@@ -40,6 +40,7 @@ public class BleManager {
         void onStatus(boolean connected, String statusMessage);
         void onDataReceived(String json);
         void onDeviceDiscovered(String name, String address);
+        void onScanStopped();
     }
 
     private final Context context;
@@ -54,6 +55,7 @@ public class BleManager {
     private boolean isConnected = false;
     private boolean isAutoConnectWhenFound = false;
     private BluetoothDevice discoveredDevice = null;
+    private BluetoothDevice bondedCandidate = null;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     public BleManager(Context context) {
@@ -81,11 +83,30 @@ public class BleManager {
 
         stopScan();
         discoveredDevice = null;
+        bondedCandidate = null;
 
-        // Pemindaian sinyal aktif BLE realtime
+        // 1. Cek apakah ada perangkat yang pernah dipasangkan (paired/bonded) di HP sebagai deteksi instan
+        try {
+            if (bluetoothAdapter.getBondedDevices() != null) {
+                for (BluetoothDevice bonded : bluetoothAdapter.getBondedDevices()) {
+                    String bName = bonded.getName();
+                    String bLower = (bName != null) ? bName.toLowerCase() : "";
+                    if (bLower.contains("robot") || bLower.contains("desk") || bLower.contains("esp") || bLower.contains("c3")) {
+                        bondedCandidate = bonded;
+                        discoveredDevice = bonded;
+                        notifyDeviceDiscovered("Robot Desk", bonded.getAddress());
+                        break;
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+
+        // 2. Pemindaian sinyal aktif BLE realtime
         bleScanner = bluetoothAdapter.getBluetoothLeScanner();
         if (bleScanner == null) {
-            notifyStatus(false, "Scanner BLE tidak tersedia");
+            if (discoveredDevice == null) {
+                notifyStatus(false, "Scanner BLE tidak tersedia");
+            }
             return;
         }
 
@@ -94,6 +115,7 @@ public class BleManager {
 
         ScanSettings settings = new ScanSettings.Builder()
                 .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                .setReportDelay(0)
                 .build();
 
         mainHandler.postDelayed(() -> {
@@ -146,6 +168,11 @@ public class BleManager {
             } catch (Exception ignored) {}
             isScanning = false;
         }
+        mainHandler.post(() -> {
+            if (listener != null) {
+                listener.onScanStopped();
+            }
+        });
     }
 
     private final ScanCallback scanCallback = new ScanCallback() {
@@ -161,11 +188,12 @@ public class BleManager {
                 name = device.getName();
             }
 
-            boolean matchName = (name != null && (name.contains("Robot") || name.contains("ESP32") || name.contains("Desk")));
+            String lowerName = (name != null) ? name.toLowerCase() : "";
+            boolean matchName = lowerName.contains("robot") || lowerName.contains("desk") || lowerName.contains("esp") || lowerName.contains("c3") || lowerName.contains("companion");
             boolean matchUuid = false;
             if (result.getScanRecord() != null && result.getScanRecord().getServiceUuids() != null) {
                 for (ParcelUuid pUuid : result.getScanRecord().getServiceUuids()) {
-                    if (pUuid != null && pUuid.getUuid().equals(NUS_SERVICE_UUID)) {
+                    if (pUuid != null && pUuid.getUuid().toString().equalsIgnoreCase(NUS_SERVICE_UUID.toString())) {
                         matchUuid = true;
                         break;
                     }
@@ -186,7 +214,10 @@ public class BleManager {
         @Override
         public void onScanFailed(int errorCode) {
             isScanning = false;
-            notifyStatus(false, "Pemindaian gagal (Kode: " + errorCode + ")");
+            stopScan();
+            if (discoveredDevice == null) {
+                notifyStatus(false, "Pemindaian gagal (Kode: " + errorCode + ")");
+            }
         }
     };
 

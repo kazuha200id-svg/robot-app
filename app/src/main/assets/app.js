@@ -269,8 +269,11 @@ function retryAutoScan() {
   const txtScan = document.getElementById('txtScanState');
   const spinner = document.getElementById('scanSpinner');
 
-  // Aktifkan animasi putar neon spinner pada tombol pojok PINDAI
-  if (btnScan) btnScan.classList.add('scanning');
+  // Matikan dan nonaktifkan tombol PINDAI agar tidak bisa dipencet saat sedang memindai
+  if (btnScan) {
+    btnScan.disabled = true;
+    btnScan.classList.add('scanning', 'disabled');
+  }
   if (scanSpinner) scanSpinner.style.display = 'inline-block';
   if (scanLabel) scanLabel.textContent = 'MEMINDAI...';
 
@@ -298,13 +301,10 @@ function retryAutoScan() {
     }, 1800);
   }
 
-  // Berikan animasi pemindaian minimal 2.5 detik
+  // Berikan durasi minimal sebelum tombol PINDAI aktif kembali
   setTimeout(() => {
-    isScanAnimating = false;
-    if (btnScan) btnScan.classList.remove('scanning');
-    if (scanSpinner) scanSpinner.style.display = 'none';
-    if (scanLabel) scanLabel.textContent = 'PINDAI';
-  }, 2500);
+    window.onScanStopped();
+  }, 3500);
 }
 
 // CALLBACK: DISCOVERED DEVICE
@@ -321,9 +321,13 @@ window.onDeviceDiscovered = function(name, address) {
   if (nameEl) nameEl.textContent = name || 'Robot Desk';
   if (subEl) subEl.textContent = address ? `Bluetooth (${address})` : 'Bluetooth Siap Terhubung';
 
-  if (btnScan) btnScan.classList.remove('scanning');
+  if (btnScan) {
+    btnScan.disabled = false;
+    btnScan.classList.remove('scanning', 'disabled');
+  }
   if (scanSpinner) scanSpinner.style.display = 'none';
   if (scanLabel) scanLabel.textContent = 'PINDAI';
+  isScanAnimating = false;
 
   if (scanningBox) scanningBox.style.display = 'none';
   if (itemBox) {
@@ -331,6 +335,21 @@ window.onDeviceDiscovered = function(name, address) {
   }
 
   updateConnectButtonState();
+};
+
+// CALLBACK: SCAN STOPPED
+window.onScanStopped = function() {
+  const btnScan = document.getElementById('btnManualScan');
+  const scanSpinner = document.getElementById('scanCornerSpinner');
+  const scanLabel = document.getElementById('scanCornerLabel');
+
+  if (btnScan) {
+    btnScan.disabled = false;
+    btnScan.classList.remove('scanning', 'disabled');
+  }
+  if (scanSpinner) scanSpinner.style.display = 'none';
+  if (scanLabel) scanLabel.textContent = 'PINDAI';
+  isScanAnimating = false;
 };
 
 // BLUETOOTH POWER STATE CALLBACK FROM NATIVE ANDROID

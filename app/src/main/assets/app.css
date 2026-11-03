@@ -1182,6 +1182,14 @@ input[type="range"]::-webkit-slider-thumb {
   box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
 }
 
+.neon-btn-corner:disabled,
+.neon-btn-corner.disabled {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+  box-shadow: none !important;
+}
+
 .corner-spinner {
   width: 9px;
   height: 9px;

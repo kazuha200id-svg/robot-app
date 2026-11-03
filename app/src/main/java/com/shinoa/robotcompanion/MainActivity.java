@@ -132,9 +132,15 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
                 neededPermissions.add(Manifest.permission.BLUETOOTH_CONNECT);
             }
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                neededPermissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
+            }
         } else {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 neededPermissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
+            }
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                neededPermissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
             }
         }
 
@@ -225,6 +231,15 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
             String safeName = (name != null ? name : "Robot Desk").replace("'", "\\'");
             String safeAddr = (address != null ? address : "").replace("'", "\\'");
             webView.evaluateJavascript("if (window.onDeviceDiscovered) window.onDeviceDiscovered('" + safeName + "', '" + safeAddr + "');", null);
+        });
+    }
+
+    @Override
+    public void onScanStopped() {
+        runOnUiThread(() -> {
+            if (webView != null) {
+                webView.evaluateJavascript("if (window.onScanStopped) window.onScanStopped();", null);
+            }
         });
     }
 
