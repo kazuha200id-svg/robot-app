@@ -63,27 +63,7 @@ function switchMainTab(pageId, btn) {
   triggerHaptic(15);
 }
 
-// ARCADE SUBVIEW SWITCHER (Faces vs Games)
-function switchArcadeSubView(view) {
-  const facesView = document.getElementById('subViewFaces');
-  const gamesView = document.getElementById('subViewGames');
-  const btnFaces = document.getElementById('btnSubFaces');
-  const btnGames = document.getElementById('btnSubGames');
 
-  if (view === 'faces') {
-    if (facesView) facesView.classList.add('active');
-    if (gamesView) gamesView.classList.remove('active');
-    if (btnFaces) btnFaces.classList.add('active');
-    if (btnGames) btnGames.classList.remove('active');
-  } else {
-    if (facesView) facesView.classList.remove('active');
-    if (gamesView) gamesView.classList.add('active');
-    if (btnFaces) btnFaces.classList.remove('active');
-    if (btnGames) btnGames.classList.add('active');
-  }
-
-  triggerHaptic(15);
-}
 
 // ================= 3. BLE COMMAND DISPATCH =================
 function sendCommand(cmdObject) {
@@ -505,23 +485,6 @@ window.onBLEReceived = function(jsonStr) {
       const modeEl = document.getElementById('teleActiveMode');
       if (modeEl) modeEl.textContent = data.mode_name;
     }
-    if (typeof data.mode === 'number') {
-      const modeBtnMap = {
-        0: 'btnMenuFace',
-        1: 'btnMenuClock',
-        2: 'btnMenuWeather',
-        3: 'btnMenuSubtitle',
-        4: 'btnMenuGame',
-        7: 'btnMenuStopwatch',
-        8: 'btnMenuAlarm'
-      };
-      const activeId = modeBtnMap[data.mode];
-      if (activeId) {
-        document.querySelectorAll('.menu-action-card').forEach(c => c.classList.remove('active'));
-        const el = document.getElementById(activeId);
-        if (el) el.classList.add('active');
-      }
-    }
     if (typeof data.asleep === 'boolean') {
       const sleepEl = document.getElementById('teleSleepState');
       if (sleepEl) sleepEl.textContent = data.asleep ? 'Robot Tidur' : 'Robot Aktif (Bangun)';
@@ -590,10 +553,9 @@ function selectRobotMenuFeature(featureKey, btnEl) {
     return;
   }
 
-  // Berikan visual active state pada kartu menu yang dipilih
-  document.querySelectorAll('.menu-action-card').forEach(c => c.classList.remove('active'));
-  if (btnEl) {
-    btnEl.classList.add('active');
+  // Hilangkan fokus/hover langsung setelah tombol disentuh
+  if (btnEl && typeof btnEl.blur === 'function') {
+    btnEl.blur();
   }
 
   triggerHaptic(35);
