@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Robot Companion</title>
+  <title>Robot Desk</title>
   <link rel="stylesheet" href="app.css">
 </head>
 <body>
@@ -18,7 +18,7 @@
           <line x1="12" y1="2" x2="12" y2="5"></line>
         </svg>
         <div class="brand-text">
-          <span class="brand-name">DESK COMPANION</span>
+          <span class="brand-name">ROBOT DESK</span>
           <div class="status-indicator">
             <span id="bleDot" class="pulse-dot"></span>
             <span id="bleStatusLabel" class="status-txt">BLE TERPUTUS</span>
@@ -41,7 +41,6 @@
       <section id="pageMenu" class="page active">
         <div class="section-title-bar">
           <h2>MENU LAYAR ROBOT</h2>
-          <span class="hud-badge">REMOTE KONTROL</span>
         </div>
 
         <div class="menu-feature-grid">
@@ -53,10 +52,7 @@
                 <polyline points="12 6 12 12 16 14"></polyline>
               </svg>
             </div>
-            <div class="card-meta">
-              <span class="card-title">JAM DIGITAL</span>
-              <span class="card-desc">Buka jam besar di OLED</span>
-            </div>
+            <span class="card-title">JAM DIGITAL</span>
           </button>
 
           <!-- Cuaca -->
@@ -66,13 +62,10 @@
                 <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
               </svg>
             </div>
-            <div class="card-meta">
-              <span class="card-title">INFO CUACA</span>
-              <span class="card-desc">Suhu & cuaca kota</span>
-            </div>
+            <span class="card-title">INFO CUACA</span>
           </button>
 
-          <!-- Teks Berjalan -->
+          <!-- Subtitle -->
           <button class="menu-action-card" onclick="sendDeviceMode(3)">
             <div class="card-icon-wrap">
               <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
@@ -80,10 +73,7 @@
                 <line x1="6" y1="12" x2="18" y2="12" stroke-dasharray="2 2"></line>
               </svg>
             </div>
-            <div class="card-meta">
-              <span class="card-title">TEKS BERJALAN</span>
-              <span class="card-desc">Tampilkan pesan di OLED</span>
-            </div>
+            <span class="card-title">SUBTITLE</span>
           </button>
 
           <!-- Stopwatch -->
@@ -95,13 +85,10 @@
                 <line x1="12" y1="14" x2="15" y2="11"></line>
               </svg>
             </div>
-            <div class="card-meta">
-              <span class="card-title">STOPWATCH</span>
-              <span class="card-desc">Pencatat waktu presisi</span>
-            </div>
+            <span class="card-title">STOPWATCH</span>
           </button>
 
-          <!-- Menu Game di Layar -->
+          <!-- Menu Game -->
           <button class="menu-action-card" onclick="sendDeviceMode(4)">
             <div class="card-icon-wrap">
               <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
@@ -111,13 +98,10 @@
                 <circle cx="16" cy="10" r="1" fill="#00F0FF"></circle>
               </svg>
             </div>
-            <div class="card-meta">
-              <span class="card-title">MENU GAME OLED</span>
-              <span class="card-desc">Pilih game di layar robot</span>
-            </div>
+            <span class="card-title">MENU GAME</span>
           </button>
 
-          <!-- Wajah Netral -->
+          <!-- Expresi Wajah -->
           <button class="menu-action-card" onclick="sendFace(0, null)">
             <div class="card-icon-wrap">
               <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
@@ -127,10 +111,7 @@
                 <path d="M8 15h8"></path>
               </svg>
             </div>
-            <div class="card-meta">
-              <span class="card-title">MODE ANIMASI</span>
-              <span class="card-desc">Kembali ke wajah robot</span>
-            </div>
+            <span class="card-title">EXPRESI WAJAH</span>
           </button>
         </div>
       </section>
@@ -141,11 +122,11 @@
         <div class="sub-tab-bar">
           <button id="btnSubFaces" class="sub-tab-btn active" onclick="switchArcadeSubView('faces')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"></path></svg>
-            <span>13 EKSPRESI WAJAH</span>
+            <span>13 EXPRESI</span>
           </button>
           <button id="btnSubGames" class="sub-tab-btn" onclick="switchArcadeSubView('games')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="3"></rect><line x1="6" y1="12" x2="10" y2="12"></line><line x1="8" y1="10" x2="8" y2="14"></line><circle cx="16" cy="10" r="1" fill="currentColor"></circle></svg>
-            <span>10 GAME ARCADE</span>
+            <span>10 GAME</span>
           </button>
         </div>
 
@@ -207,7 +188,7 @@
           </div>
         </div>
 
-        <!-- SUBVIEW B: 10 GAME ARCADE + GAMEPAD -->
+        <!-- SUBVIEW B: 10 GAME ARCADE -->
         <div id="subViewGames" class="arcade-subview">
           <div class="games-grid">
             <button class="game-btn" onclick="sendDeviceMode(5)">
@@ -251,14 +232,6 @@
               <span>Orbit Pong</span>
             </button>
           </div>
-
-          <!-- STICKY ACTION BUTTON (GAMEPAD TAP) -->
-          <div class="action-pad-wrap">
-            <button class="neon-action-pad" onclick="sendActionTap()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2.5"><polygon points="12 2 15 8 21 9 17 14 18 20 12 17 6 20 7 14 3 9 9 8 12 2"></polygon></svg>
-              <span>AKSI / LOMPAT GAMEPAD</span>
-            </button>
-          </div>
         </div>
       </section>
 
@@ -266,7 +239,6 @@
       <section id="pageRobot" class="page">
         <div class="section-title-bar">
           <h2>STATUS ROBOT</h2>
-          <span class="hud-badge">TELEMETRI REAL-TIME</span>
         </div>
 
         <div class="telemetry-stack">
@@ -332,7 +304,6 @@
       <section id="pageSetting" class="page">
         <div class="section-title-bar">
           <h2>PENGATURAN FITUR</h2>
-          <span class="hud-badge">KONFIGURASI</span>
         </div>
 
         <div class="settings-scroll-stack">
@@ -356,14 +327,14 @@
             </div>
           </div>
 
-          <!-- 2. Pengaturan Teks Berjalan (Subtitle) -->
+          <!-- 2. Pengaturan Subtitle -->
           <div class="config-card">
             <div class="config-header">
               <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"></rect><line x1="6" y1="12" x2="18" y2="12"></line></svg>
-              <span class="config-title">TEKS PESAN BERJALAN (SUBTITLE)</span>
+              <span class="config-title">PENGATURAN SUBTITLE</span>
             </div>
             <div class="input-inline-wrap">
-              <input type="text" id="cfgSubtitleInput" placeholder="Ketik pesan untuk OLED..." maxlength="64">
+              <input type="text" id="cfgSubtitleInput" placeholder="Ketik subtitle untuk OLED..." maxlength="64">
               <button class="neon-btn-action" onclick="sendCustomSubtitle()">KIRIM</button>
             </div>
           </div>
