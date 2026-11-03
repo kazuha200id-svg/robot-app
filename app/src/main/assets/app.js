@@ -107,8 +107,7 @@ function sendCommand(cmdObject) {
 let isDeviceFound = false;
 let isDeviceSelected = false;
 let isConnecting = false;
-let connectResultStatus = null; // null | 'SUCCESS' | 'FAILED'
-let connectTimerId = null;
+let connectStartTime = 0;
 let connectTimeoutId = null;
 let isScanAnimating = false;
 
@@ -132,28 +131,24 @@ function toggleSelectDevice() {
 function updateConnectButtonState() {
   const btn = document.getElementById('btnConnectRobot');
   const label = document.getElementById('btnConnectLabel');
-  const icon = document.getElementById('btnConnectIcon');
+  const spinner = document.getElementById('btnConnectSpinner');
   if (!btn) return;
 
   if (isConnecting) {
     btn.disabled = true;
     btn.className = 'neon-btn-action full connect-action-btn btn-state-connecting';
     if (label) label.textContent = 'MENYAMBUNGKAN...';
-    if (icon) icon.innerHTML = '<div class="neon-btn-spinner"></div>';
+    if (spinner) spinner.style.display = 'inline-block';
   } else if (isDeviceFound && isDeviceSelected) {
     btn.disabled = false;
     btn.className = 'neon-btn-action full connect-action-btn';
     if (label) label.textContent = 'HUBUNGKAN';
-    if (icon) {
-      icon.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle;margin-right:6px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>';
-    }
+    if (spinner) spinner.style.display = 'none';
   } else {
     btn.disabled = true;
     btn.className = 'neon-btn-action full connect-action-btn disabled';
     if (label) label.textContent = 'HUBUNGKAN';
-    if (icon) {
-      icon.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle;margin-right:6px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>';
-    }
+    if (spinner) spinner.style.display = 'none';
   }
 }
 
@@ -165,7 +160,7 @@ function connectToFoundRobot() {
   if (isConnecting) return;
 
   isConnecting = true;
-  connectResultStatus = null;
+  connectStartTime = Date.now();
 
   updateConnectButtonState();
   triggerHaptic(30);
@@ -180,86 +175,70 @@ function connectToFoundRobot() {
     }, 1200);
   }
 
-  if (connectTimerId) clearTimeout(connectTimerId);
   if (connectTimeoutId) clearTimeout(connectTimeoutId);
-
-  // ANIMASI WAJIB MINIMAL 3 DETIK
-  connectTimerId = setTimeout(() => {
-    connectTimerId = null;
-    checkAndFinalizeConnect();
-  }, 3000);
-
-  // Batas waktu keamanan 10 detik jika tidak ada balasan dari bluetooth
   connectTimeoutId = setTimeout(() => {
-    connectTimeoutId = null;
-    if (isConnecting && connectResultStatus === null) {
-      connectResultStatus = 'FAILED';
-      checkAndFinalizeConnect();
+    if (isConnecting) {
+      finalizeFailed();
     }
   }, 10000);
 }
 
-function checkAndFinalizeConnect() {
-  // Tunggu sampai timer 3 detik selesai sebelum menampilkan hasil
-  if (connectTimerId !== null) {
-    return;
-  }
+function finalizeSuccess() {
   if (!isConnecting) return;
+  isConnecting = false;
+  if (connectTimeoutId) {
+    clearTimeout(connectTimeoutId);
+    connectTimeoutId = null;
+  }
 
   const btn = document.getElementById('btnConnectRobot');
   const label = document.getElementById('btnConnectLabel');
-  const icon = document.getElementById('btnConnectIcon');
+  const spinner = document.getElementById('btnConnectSpinner');
   const gate = document.getElementById('setupGate');
 
-  if (connectResultStatus === 'SUCCESS' || isBleConnected) {
-    isConnecting = false;
-    if (connectTimeoutId) {
-      clearTimeout(connectTimeoutId);
-      connectTimeoutId = null;
-    }
-
-    if (btn) {
-      btn.disabled = true;
-      btn.className = 'neon-btn-action full connect-action-btn btn-state-success';
-    }
-    if (label) label.textContent = 'BERHASIL';
-    if (icon) {
-      icon.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#00FF88" stroke-width="3" style="vertical-align:middle;margin-right:6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-    }
-
-    triggerHaptic(40);
-    showNeonToast('Robot Tersambung');
-
-    setTimeout(() => {
-      if (gate) gate.classList.remove('active');
-      syncClockQuiet();
-      setTimeout(() => sendCommand({ c: 's' }), 400);
-    }, 700);
-
-  } else if (connectResultStatus === 'FAILED') {
-    isConnecting = false;
-    if (connectTimeoutId) {
-      clearTimeout(connectTimeoutId);
-      connectTimeoutId = null;
-    }
-
-    if (btn) {
-      btn.disabled = true;
-      btn.className = 'neon-btn-action full connect-action-btn btn-state-failed';
-    }
-    if (label) label.textContent = 'GAGAL TERHUBUNG';
-    if (icon) {
-      icon.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#FF3366" stroke-width="2.5" style="vertical-align:middle;margin-right:6px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
-    }
-
-    triggerHaptic(50);
-    showNeonToast('Gagal Menghubungkan');
-
-    // Kembalikan tombol ke keadaan HUBUNGKAN setelah 2.5 detik
-    setTimeout(() => {
-      updateConnectButtonState();
-    }, 2500);
+  if (btn) {
+    btn.disabled = true;
+    btn.className = 'neon-btn-action full connect-action-btn btn-state-success';
   }
+  if (spinner) spinner.style.display = 'none';
+  if (label) label.textContent = 'BERHASIL';
+
+  triggerHaptic(40);
+  showNeonToast('Robot Tersambung');
+
+  setTimeout(() => {
+    if (gate) gate.classList.remove('active');
+    syncClockQuiet();
+    setTimeout(() => sendCommand({ c: 's' }), 400);
+  }, 700);
+}
+
+function finalizeFailed() {
+  if (!isConnecting) return;
+  isConnecting = false;
+  if (connectTimeoutId) {
+    clearTimeout(connectTimeoutId);
+    connectTimeoutId = null;
+  }
+
+  const btn = document.getElementById('btnConnectRobot');
+  const label = document.getElementById('btnConnectLabel');
+  const spinner = document.getElementById('btnConnectSpinner');
+
+  if (btn) {
+    btn.disabled = true;
+    btn.className = 'neon-btn-action full connect-action-btn btn-state-failed';
+  }
+  if (spinner) spinner.style.display = 'none';
+  if (label) label.textContent = 'GAGAL TERHUBUNG';
+
+  triggerHaptic(50);
+  showNeonToast('Gagal Menghubungkan');
+
+  // Kembalikan tombol ke keadaan HUBUNGKAN setelah 2.5 detik
+  setTimeout(() => {
+    updateConnectButtonState();
+  }, 2500);
 }
 
 function requestEnableBluetooth() {
@@ -280,21 +259,19 @@ function retryAutoScan() {
   isDeviceFound = false;
   isDeviceSelected = false;
   isConnecting = false;
-  connectResultStatus = null;
-  if (connectTimerId) { clearTimeout(connectTimerId); connectTimerId = null; }
   if (connectTimeoutId) { clearTimeout(connectTimeoutId); connectTimeoutId = null; }
 
   const btnScan = document.getElementById('btnManualScan');
-  const scanIcon = document.getElementById('scanCornerIcon');
+  const scanSpinner = document.getElementById('scanCornerSpinner');
   const scanLabel = document.getElementById('scanCornerLabel');
   const scanningBox = document.getElementById('deviceScanningBox');
   const itemBox = document.getElementById('deviceItemBox');
   const txtScan = document.getElementById('txtScanState');
   const spinner = document.getElementById('scanSpinner');
 
-  // Aktifkan animasi putar pada tombol pojok PINDAI
+  // Aktifkan animasi putar neon spinner pada tombol pojok PINDAI
   if (btnScan) btnScan.classList.add('scanning');
-  if (scanIcon) scanIcon.classList.add('spin-icon');
+  if (scanSpinner) scanSpinner.style.display = 'inline-block';
   if (scanLabel) scanLabel.textContent = 'MEMINDAI...';
 
   if (scanningBox) scanningBox.style.display = 'flex';
@@ -325,7 +302,7 @@ function retryAutoScan() {
   setTimeout(() => {
     isScanAnimating = false;
     if (btnScan) btnScan.classList.remove('scanning');
-    if (scanIcon) scanIcon.classList.remove('spin-icon');
+    if (scanSpinner) scanSpinner.style.display = 'none';
     if (scanLabel) scanLabel.textContent = 'PINDAI';
   }, 2500);
 }
@@ -337,9 +314,16 @@ window.onDeviceDiscovered = function(name, address) {
   const itemBox = document.getElementById('deviceItemBox');
   const nameEl = document.getElementById('detectedDevName');
   const subEl = document.getElementById('detectedDevSub');
+  const btnScan = document.getElementById('btnManualScan');
+  const scanSpinner = document.getElementById('scanCornerSpinner');
+  const scanLabel = document.getElementById('scanCornerLabel');
 
   if (nameEl) nameEl.textContent = name || 'Robot Desk';
   if (subEl) subEl.textContent = address ? `Bluetooth (${address})` : 'Bluetooth Siap Terhubung';
+
+  if (btnScan) btnScan.classList.remove('scanning');
+  if (scanSpinner) scanSpinner.style.display = 'none';
+  if (scanLabel) scanLabel.textContent = 'PINDAI';
 
   if (scanningBox) scanningBox.style.display = 'none';
   if (itemBox) {
@@ -373,8 +357,6 @@ window.onBluetoothPowerState = function(enabled) {
     isDeviceFound = false;
     isDeviceSelected = false;
     isConnecting = false;
-    connectResultStatus = null;
-    if (connectTimerId) { clearTimeout(connectTimerId); connectTimerId = null; }
     if (connectTimeoutId) { clearTimeout(connectTimeoutId); connectTimeoutId = null; }
 
     if (txtBt) {
@@ -412,8 +394,11 @@ window.onBLEStatus = function(connected, message) {
     if (label) label.textContent = 'BLE TERHUBUNG';
 
     if (isConnecting) {
-      connectResultStatus = 'SUCCESS';
-      checkAndFinalizeConnect();
+      const elapsed = Date.now() - connectStartTime;
+      const remaining = Math.max(0, 3000 - elapsed);
+      setTimeout(() => {
+        finalizeSuccess();
+      }, remaining);
     } else {
       if (gate) gate.classList.remove('active');
     }
@@ -432,8 +417,11 @@ window.onBLEStatus = function(connected, message) {
     );
 
     if (isConnecting && isFailure) {
-      connectResultStatus = 'FAILED';
-      checkAndFinalizeConnect();
+      const elapsed = Date.now() - connectStartTime;
+      const remaining = Math.max(0, 3000 - elapsed);
+      setTimeout(() => {
+        finalizeFailed();
+      }, remaining);
     } else {
       const isNotFound = message && message.toLowerCase().includes('tidak ditemukan');
       const txtScan = document.getElementById('txtScanState');

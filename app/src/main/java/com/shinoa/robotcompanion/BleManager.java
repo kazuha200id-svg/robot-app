@@ -57,7 +57,7 @@ public class BleManager {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     public BleManager(Context context) {
-        this.context = context;
+        this.context = context.getApplicationContext();
         this.bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     }
 
@@ -80,24 +80,9 @@ public class BleManager {
         }
 
         stopScan();
+        discoveredDevice = null;
 
-        // 1. Deteksi awal jika ada perangkat yang pernah dipasangkan (paired)
-        try {
-            if (bluetoothAdapter.getBondedDevices() != null) {
-                for (BluetoothDevice bonded : bluetoothAdapter.getBondedDevices()) {
-                    String bName = bonded.getName();
-                    if (bName != null && (bName.contains("Robot") || bName.contains("ESP32") || bName.contains("Desk"))) {
-                        if (discoveredDevice == null) {
-                            discoveredDevice = bonded;
-                            notifyDeviceDiscovered("Robot Desk", bonded.getAddress());
-                        }
-                        break;
-                    }
-                }
-            }
-        } catch (Exception ignored) {}
-
-        // 2. Pemindaian sinyal aktif BLE realtime
+        // Pemindaian sinyal aktif BLE realtime
         bleScanner = bluetoothAdapter.getBluetoothLeScanner();
         if (bleScanner == null) {
             notifyStatus(false, "Scanner BLE tidak tersedia");
@@ -136,9 +121,10 @@ public class BleManager {
     public void connectToDiscoveredDevice() {
         stopScan();
         if (discoveredDevice != null) {
+            // Beri jeda 200ms setelah stopScan agar stack BLE Android siap connect
             mainHandler.postDelayed(() -> {
                 connectToDevice(discoveredDevice);
-            }, 100);
+            }, 200);
         } else {
             isAutoConnectWhenFound = true;
             startScan();
@@ -192,7 +178,7 @@ public class BleManager {
                 notifyDeviceDiscovered("Robot Desk", device.getAddress());
                 if (isAutoConnectWhenFound) {
                     isAutoConnectWhenFound = false;
-                    mainHandler.postDelayed(() -> connectToDevice(device), 100);
+                    mainHandler.postDelayed(() -> connectToDevice(device), 200);
                 }
             }
         }
@@ -204,7 +190,14 @@ public class BleManager {
         }
     };
 
+    private int connectAttempts = 0;
+
     private void connectToDevice(BluetoothDevice device) {
+        if (device == null) {
+            notifyStatus(false, "Perangkat tidak valid");
+            return;
+        }
+
         if (bluetoothGatt != null) {
             try {
                 bluetoothGatt.disconnect();
@@ -212,11 +205,20 @@ public class BleManager {
             } catch (Exception ignored) {}
             bluetoothGatt = null;
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            bluetoothGatt = device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE);
-        } else {
-            bluetoothGatt = device.connectGatt(context, false, gattCallback);
-        }
+
+        notifyStatus(false, "Menghubungkan ke Robot Desk...");
+
+        mainHandler.postDelayed(() -> {
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    bluetoothGatt = device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE);
+                } else {
+                    bluetoothGatt = device.connectGatt(context, false, gattCallback);
+                }
+            } catch (Exception e) {
+                notifyStatus(false, "Gagal memulai koneksi: " + e.getMessage());
+            }
+        }, 100);
     }
 
     public void disconnect() {
@@ -231,20 +233,24 @@ public class BleManager {
         rxChar = null;
         txChar = null;
         isConnected = false;
+        connectAttempts = 0;
     }
 
     private final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-            if (newState == BluetoothProfile.STATE_CONNECTED) {
+            Log.d(TAG, "BLE onConnectionStateChange: status=" + status + ", newState=" + newState);
+
+            if (status == BluetoothGatt.GATT_SUCCESS && newState == BluetoothProfile.STATE_CONNECTED) {
+                connectAttempts = 0;
                 mainHandler.postDelayed(() -> {
                     try {
                         if (gatt != null) {
                             gatt.discoverServices();
                         }
                     } catch (Exception ignored) {}
-                }, 250);
-            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                }, 300);
+            } else if (newState == BluetoothProfile.STATE_DISCONNECTED || status != BluetoothGatt.GATT_SUCCESS) {
                 isConnected = false;
                 rxChar = null;
                 txChar = null;
@@ -254,6 +260,20 @@ public class BleManager {
                     } catch (Exception ignored) {}
                 }
                 bluetoothGatt = null;
+
+                // Auto-retry sekali jika status 133 atau kegagalan awal handshake
+                if (status != BluetoothGatt.GATT_SUCCESS && connectAttempts < 1 && discoveredDevice != null) {
+                    connectAttempts++;
+                    Log.w(TAG, "Handshake BLE gagal (status " + status + "), mencoba ulang (" + connectAttempts + "/1)...");
+                    mainHandler.postDelayed(() -> {
+                        if (discoveredDevice != null && !isConnected) {
+                            connectToDevice(discoveredDevice);
+                        }
+                    }, 400);
+                    return;
+                }
+
+                connectAttempts = 0;
                 notifyStatus(false, "Terputus dari Robot");
             }
         }
@@ -266,7 +286,6 @@ public class BleManager {
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                // Cari service NUS secara case-insensitive
                 BluetoothGattService foundService = null;
                 for (BluetoothGattService s : gatt.getServices()) {
                     if (s.getUuid().toString().equalsIgnoreCase(NUS_SERVICE_UUID.toString())) {
@@ -286,6 +305,20 @@ public class BleManager {
 
                     if (rxChar != null) {
                         isConnected = true;
+                        connectAttempts = 0;
+
+                        // Aktifkan notifikasi pada TX Characteristic
+                        if (txChar != null) {
+                            try {
+                                gatt.setCharacteristicNotification(txChar, true);
+                                BluetoothGattDescriptor desc = txChar.getDescriptor(CCCD_UUID);
+                                if (desc != null) {
+                                    desc.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                                    gatt.writeDescriptor(desc);
+                                }
+                            } catch (Exception ignored) {}
+                        }
+
                         notifyStatus(true, "Tersambung ke Robot");
 
                         // Negosiasikan MTU setelah servis ditemukan

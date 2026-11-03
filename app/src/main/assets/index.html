@@ -63,11 +63,9 @@
         <div class="setup-status-card">
           <div class="status-card-header-row">
             <span class="status-card-label">PERANGKAT TERDETEKSI</span>
-            <!-- Tombol Pindai Ulang di Pojok Kanan Atas -->
+            <!-- Tombol Pindai Ulang di Pojok Kanan Atas (Murni Teks tanpa Icon) -->
             <button id="btnManualScan" class="neon-btn-corner" onclick="retryAutoScan()" title="Pindai Ulang">
-              <svg id="scanCornerIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"></path>
-              </svg>
+              <span id="scanCornerSpinner" class="corner-spinner" style="display: none;"></span>
               <span id="scanCornerLabel">PINDAI</span>
             </button>
           </div>
@@ -103,14 +101,9 @@
             </div>
           </div>
 
-          <!-- Tombol Hubungkan dengan Jarak Lapang -->
+          <!-- Tombol Hubungkan murni teks tanpa icon emoji/salin -->
           <button id="btnConnectRobot" class="neon-btn-action full connect-action-btn disabled" onclick="connectToFoundRobot()" disabled>
-            <span id="btnConnectIcon">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle; margin-right: 6px;">
-                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-              </svg>
-            </span>
+            <span id="btnConnectSpinner" class="neon-btn-spinner" style="display: none;"></span>
             <span id="btnConnectLabel">HUBUNGKAN</span>
           </button>
         </div>

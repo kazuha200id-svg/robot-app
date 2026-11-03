@@ -1182,9 +1182,15 @@ input[type="range"]::-webkit-slider-thumb {
   box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
 }
 
-.neon-btn-corner.scanning svg,
-.spin-icon {
+.corner-spinner {
+  width: 9px;
+  height: 9px;
+  border: 1.5px solid rgba(0, 240, 255, 0.3);
+  border-top-color: var(--neon-cyan);
+  border-radius: 50%;
   animation: spinCornerAnim 0.75s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
 }
 
 @keyframes spinCornerAnim {
