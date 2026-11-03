@@ -60,7 +60,7 @@
           <div class="status-card-header-row">
             <span class="status-card-label">PERANGKAT TERDETEKSI</span>
             <!-- Tombol Pindai Ulang di Pojok Kanan Atas (Murni Teks tanpa Icon) -->
-            <button id="btnManualScan" class="neon-btn-corner disabled" onclick="retryAutoScan()" title="Pindai Ulang" disabled>
+            <button id="btnManualScan" class="neon-btn-corner scanning disabled" onclick="retryAutoScan()" title="Pindai Ulang" disabled>
               <span id="scanCornerSpinner" class="corner-spinner" style="display: inline-block;"></span>
               <span id="scanCornerLabel">PINDAI ULANG</span>
             </button>
@@ -119,7 +119,7 @@
         <!-- 7 TOMBOL KOTAK FITUR UTAMA (SESUAI URUTAN KIRI KE KANAN BAWAH) -->
         <div id="menuFeatureGrid" class="menu-feature-grid">
           <!-- BARIS 1 KIRI: EXPRESI WAJAH -->
-          <button type="button" class="menu-action-card" onclick="openFeaturePage('face')">
+          <button id="btnMenuFace" type="button" class="menu-action-card" onclick="selectRobotMenuFeature('face', this)">
             <div class="card-icon-wrap">
               <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
                 <circle cx="12" cy="12" r="10"></circle>
@@ -132,7 +132,7 @@
           </button>
 
           <!-- BARIS 1 KANAN: JAM DIGITAL -->
-          <button type="button" class="menu-action-card" onclick="openFeaturePage('clock')">
+          <button id="btnMenuClock" type="button" class="menu-action-card" onclick="selectRobotMenuFeature('clock', this)">
             <div class="card-icon-wrap">
               <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
                 <circle cx="12" cy="12" r="10"></circle>
@@ -143,7 +143,7 @@
           </button>
 
           <!-- BARIS 2 KIRI: ALARM -->
-          <button type="button" class="menu-action-card" onclick="openFeaturePage('alarm')">
+          <button id="btnMenuAlarm" type="button" class="menu-action-card" onclick="selectRobotMenuFeature('alarm', this)">
             <div class="card-icon-wrap">
               <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
                 <circle cx="12" cy="13" r="8"></circle>
@@ -154,7 +154,7 @@
           </button>
 
           <!-- BARIS 2 KANAN: STOPWATCH -->
-          <button type="button" class="menu-action-card" onclick="openFeaturePage('stopwatch')">
+          <button id="btnMenuStopwatch" type="button" class="menu-action-card" onclick="selectRobotMenuFeature('stopwatch', this)">
             <div class="card-icon-wrap">
               <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
                 <circle cx="12" cy="14" r="8"></circle>
@@ -166,7 +166,7 @@
           </button>
 
           <!-- BARIS 3 KIRI: INFO CUACA -->
-          <button type="button" class="menu-action-card" onclick="openFeaturePage('weather')">
+          <button id="btnMenuWeather" type="button" class="menu-action-card" onclick="selectRobotMenuFeature('weather', this)">
             <div class="card-icon-wrap">
               <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
                 <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
@@ -176,7 +176,7 @@
           </button>
 
           <!-- BARIS 3 KANAN: SUBTITLE -->
-          <button type="button" class="menu-action-card" onclick="openFeaturePage('subtitle')">
+          <button id="btnMenuSubtitle" type="button" class="menu-action-card" onclick="selectRobotMenuFeature('subtitle', this)">
             <div class="card-icon-wrap">
               <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
                 <rect x="2" y="6" width="20" height="12" rx="2"></rect>
@@ -187,7 +187,7 @@
           </button>
 
           <!-- BARIS 4 BAWAH: MENU GAME (SPAN 2 KOLOM) -->
-          <button type="button" class="menu-action-card full-width" onclick="openFeaturePage('game')">
+          <button id="btnMenuGame" type="button" class="menu-action-card full-width" onclick="selectRobotMenuFeature('game', this)">
             <div class="card-icon-wrap">
               <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
                 <rect x="2" y="6" width="20" height="12" rx="3"></rect>
@@ -198,114 +198,6 @@
             </div>
             <span class="card-title">MENU GAME</span>
           </button>
-        </div>
-
-        <!-- SUBPAGE: HALAMAN BARU KHUSUS PER FITUR (MONITOR LAYAR OLED) -->
-        <div id="featureDetailPage" class="feature-detail-page" style="display: none;">
-          <div class="subpage-nav-bar">
-            <button type="button" class="btn-subpage-back" onclick="closeFeaturePage()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <polyline points="15 18 9 12 15 6"></polyline>
-              </svg>
-              <span>KEMBALI</span>
-            </button>
-            <h3 id="featureSubpageTitle" class="subpage-title">EXPRESI WAJAH</h3>
-          </div>
-
-          <!-- THE OLED MONITOR DISPLAY (CUMA TAMPILAN AJA, GAK BISA DISENTUH & GAK ADA AKSI) -->
-          <div class="oled-stage-wrapper">
-            <div class="oled-stage-bezel">
-              <!-- Content for Expresi Wajah -->
-              <div id="stageFaceView" class="stage-oled-view" style="display: none;">
-                <div class="oled-face-stage-wrap" id="stageFaceSvgWrap">
-                  <svg viewBox="0 0 100 50" class="oled-face-svg-lg">
-                    <rect x="15" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3"></rect>
-                    <rect x="57" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3"></rect>
-                  </svg>
-                </div>
-                <div class="stage-oled-label" id="stageFaceMoodLabel">MOOD: SENANG</div>
-              </div>
-
-              <!-- Content for Jam Digital -->
-              <div id="stageClockView" class="stage-oled-view" style="display: none;">
-                <div class="oled-header-tiny">
-                  <span id="stageOledTzLabel">WIB</span>
-                  <span>BAT 100%</span>
-                </div>
-                <div class="oled-stage-big-time" id="stageClockDigits">12:30:00</div>
-                <div class="oled-sub-date" id="stageClockDate">RABU, 04 NOV</div>
-              </div>
-
-              <!-- Content for Alarm -->
-              <div id="stageAlarmView" class="stage-oled-view" style="display: none;">
-                <div class="oled-header-tiny">
-                  <span>ALARM</span>
-                  <svg viewBox="0 0 24 24" class="oled-tiny-icon" fill="none" stroke="#00F0FF" stroke-width="2">
-                    <circle cx="12" cy="13" r="8"></circle>
-                    <path d="M12 9v4l2 2M5 3L2 6M22 6l-3-3"></path>
-                  </svg>
-                </div>
-                <div class="oled-stage-big-time" id="stageAlarmDigits">06:30</div>
-                <div class="oled-alarm-badge" id="stageAlarmBadge">ON &bull; TIAP HARI</div>
-              </div>
-
-              <!-- Content for Stopwatch -->
-              <div id="stageStopwatchView" class="stage-oled-view" style="display: none;">
-                <div class="oled-header-tiny">
-                  <span>STOPWATCH</span>
-                  <span>LAP 01</span>
-                </div>
-                <div class="oled-stage-big-time oled-mono" id="stageStopwatchDigits">00:00:00</div>
-                <div class="oled-sw-bar-track">
-                  <div class="oled-sw-bar-fill"></div>
-                </div>
-              </div>
-
-              <!-- Content for Info Cuaca -->
-              <div id="stageWeatherView" class="stage-oled-view" style="display: none;">
-                <div class="oled-weather-row">
-                  <div class="oled-weather-left">
-                    <div class="oled-weather-city" id="stageWeatherCity">JAKARTA</div>
-                    <div class="oled-weather-temp" id="stageWeatherTemp">29°C</div>
-                  </div>
-                  <div class="oled-weather-divider"></div>
-                  <div class="oled-weather-right">
-                    <div class="oled-weather-info" id="stageWeatherCond">CERAH</div>
-                    <div class="oled-weather-sub">Lembap: 65%</div>
-                    <div class="oled-weather-sub">Angin: 12km</div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Content for Subtitle -->
-              <div id="stageSubtitleView" class="stage-oled-view" style="display: none;">
-                <div class="oled-header-tiny">
-                  <span>SUBTITLE YOUTUBE</span>
-                  <span>♪ ♫</span>
-                </div>
-                <div class="oled-marquee-text" id="stageSubtitleMsg">HELLO ROBOT DESK!</div>
-                <div class="oled-footer-tiny"><span>TEKS BERJALAN AKTIF</span></div>
-              </div>
-
-              <!-- Content for Menu Game -->
-              <div id="stageGameView" class="stage-oled-view" style="display: none;">
-                <div class="oled-header-tiny">
-                  <span>ARCADE 9-IN-1</span>
-                  <span>MENU GAME</span>
-                </div>
-                <div class="oled-game-pixels">
-                  <div class="dino-pixel"></div>
-                  <div class="cactus-pixel"></div>
-                  <div class="bird-pixel"></div>
-                </div>
-                <div class="oled-score-line">SELECT GAME &bull; 10 ARCADE READY</div>
-              </div>
-            </div>
-
-            <div class="oled-monitor-caption">
-              <span>LAYAR FISIK OLED ESP32 (DISPLAY MONITOR)</span>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -436,7 +328,7 @@
 
         <div class="robot-screens-grid">
           <!-- 1. BARIS 1 KIRI: EXPRESI WAJAH -->
-          <div class="oled-screen-card" onclick="switchMainTab('pageMenu', document.getElementById('tabBtnMenu')); openFeaturePage('face');">
+          <div class="oled-screen-card">
             <div class="oled-display-bezel">
               <div class="oled-screen-content oled-face-view">
                 <div class="oled-face-wrap" id="oledFaceSvgWrap">
@@ -455,7 +347,7 @@
           </div>
 
           <!-- 2. BARIS 1 KANAN: JAM DIGITAL -->
-          <div class="oled-screen-card" onclick="switchMainTab('pageMenu', document.getElementById('tabBtnMenu')); openFeaturePage('clock');">
+          <div class="oled-screen-card">
             <div class="oled-display-bezel">
               <div class="oled-screen-content oled-clock-view">
                 <div class="oled-header-tiny">
@@ -473,7 +365,7 @@
           </div>
 
           <!-- 3. BARIS 2 KIRI: ALARM -->
-          <div class="oled-screen-card" onclick="switchMainTab('pageMenu', document.getElementById('tabBtnMenu')); openFeaturePage('alarm');">
+          <div class="oled-screen-card">
             <div class="oled-display-bezel">
               <div class="oled-screen-content oled-alarm-view">
                 <div class="oled-header-tiny">
@@ -494,7 +386,7 @@
           </div>
 
           <!-- 4. BARIS 2 KANAN: STOPWATCH -->
-          <div class="oled-screen-card" onclick="switchMainTab('pageMenu', document.getElementById('tabBtnMenu')); openFeaturePage('stopwatch');">
+          <div class="oled-screen-card">
             <div class="oled-display-bezel">
               <div class="oled-screen-content oled-stopwatch-view">
                 <div class="oled-header-tiny">
@@ -514,7 +406,7 @@
           </div>
 
           <!-- 5. BARIS 3 KIRI: INFO CUACA -->
-          <div class="oled-screen-card" onclick="switchMainTab('pageMenu', document.getElementById('tabBtnMenu')); openFeaturePage('weather');">
+          <div class="oled-screen-card">
             <div class="oled-display-bezel">
               <div class="oled-screen-content oled-weather-view">
                 <div class="oled-weather-row">
@@ -538,7 +430,7 @@
           </div>
 
           <!-- 6. BARIS 3 KANAN: SUBTITLE -->
-          <div class="oled-screen-card" onclick="switchMainTab('pageMenu', document.getElementById('tabBtnMenu')); openFeaturePage('subtitle');">
+          <div class="oled-screen-card">
             <div class="oled-display-bezel">
               <div class="oled-screen-content oled-msg-view">
                 <div class="oled-header-tiny">
@@ -556,7 +448,7 @@
           </div>
 
           <!-- 7. BARIS 4: MENU GAME (SPAN 2 KOLOM) -->
-          <div class="oled-screen-card full-width" onclick="switchMainTab('pageMenu', document.getElementById('tabBtnMenu')); openFeaturePage('game');">
+          <div class="oled-screen-card full-width">
             <div class="oled-display-bezel">
               <div class="oled-screen-content oled-game-view">
                 <div class="oled-header-tiny">

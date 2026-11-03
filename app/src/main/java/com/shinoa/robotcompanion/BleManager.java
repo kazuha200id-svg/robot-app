@@ -40,6 +40,7 @@ public class BleManager {
         void onStatus(boolean connected, String statusMessage);
         void onDataReceived(String json);
         void onDeviceDiscovered(String name, String address);
+        void onScanStarted();
         void onScanStopped();
     }
 
@@ -112,6 +113,11 @@ public class BleManager {
 
         notifyStatus(false, "Memindai Robot Desk...");
         isScanning = true;
+        mainHandler.post(() -> {
+            if (listener != null) {
+                listener.onScanStarted();
+            }
+        });
 
         ScanSettings settings = new ScanSettings.Builder()
                 .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
@@ -134,6 +140,10 @@ public class BleManager {
                 bleScanner.startScan(scanCallback);
             } catch (Exception ignored) {}
         }
+    }
+
+    public boolean isScanning() {
+        return isScanning;
     }
 
     public void startScanAndConnect() {
@@ -162,17 +172,20 @@ public class BleManager {
     }
 
     private void stopScan() {
+        boolean wasScanning = isScanning;
         if (isScanning && bleScanner != null) {
             try {
                 bleScanner.stopScan(scanCallback);
             } catch (Exception ignored) {}
             isScanning = false;
         }
-        mainHandler.post(() -> {
-            if (listener != null) {
-                listener.onScanStopped();
-            }
-        });
+        if (wasScanning) {
+            mainHandler.post(() -> {
+                if (listener != null) {
+                    listener.onScanStopped();
+                }
+            });
+        }
     }
 
     private final ScanCallback scanCallback = new ScanCallback() {

@@ -42,11 +42,6 @@ function switchMainTab(pageId, btn) {
 
   currentMainTab = pageId;
 
-  // Reset feature subpage when switching tabs
-  if (typeof closeFeaturePage === 'function') {
-    closeFeaturePage();
-  }
-
   // Toggle pages
   document.querySelectorAll('.page').forEach(page => {
     page.classList.toggle('active', page.id === pageId);
@@ -115,9 +110,28 @@ let isConnecting = false;
 let connectStartTime = 0;
 let connectTimeoutId = null;
 let isScanAnimating = true;
+let isBleScanning = true;
 let scanStartTime = Date.now();
 let scanMinTimerId = null;
 const MIN_SCAN_ANIMATION_MS = 2500; // Minimal durasi animasi pindai ulang 2.5 detik
+
+function setManualScanButtonDisabled(disabled) {
+  const btnScan = document.getElementById('btnManualScan');
+  const scanSpinner = document.getElementById('scanCornerSpinner');
+  if (btnScan) {
+    btnScan.disabled = disabled;
+    if (disabled) {
+      btnScan.classList.add('scanning', 'disabled');
+      btnScan.setAttribute('disabled', 'disabled');
+    } else {
+      btnScan.classList.remove('scanning', 'disabled');
+      btnScan.removeAttribute('disabled');
+    }
+  }
+  if (scanSpinner) {
+    scanSpinner.style.display = disabled ? 'inline-block' : 'none';
+  }
+}
 
 function toggleSelectDevice() {
   if (!isDeviceFound || isConnecting) return;
@@ -261,7 +275,19 @@ function requestEnableBluetooth() {
 }
 
 function retryAutoScan() {
-  if (isScanAnimating) return;
+  // Cegah tombol pindai ulang dipencet saat sedang mendeteksi robot
+  if (isBleScanning || isScanAnimating) {
+    showNeonToast('Sedang mendeteksi Robot Desk...');
+    return;
+  }
+  if (window.AndroidBLE && typeof window.AndroidBLE.isScanning === 'function') {
+    if (window.AndroidBLE.isScanning()) {
+      showNeonToast('Sedang mendeteksi Robot Desk...');
+      return;
+    }
+  }
+
+  isBleScanning = true;
   isScanAnimating = true;
   scanStartTime = Date.now();
   if (scanMinTimerId) {
@@ -274,21 +300,13 @@ function retryAutoScan() {
   isConnecting = false;
   if (connectTimeoutId) { clearTimeout(connectTimeoutId); connectTimeoutId = null; }
 
-  const btnScan = document.getElementById('btnManualScan');
-  const scanSpinner = document.getElementById('scanCornerSpinner');
-  const scanLabel = document.getElementById('scanCornerLabel');
+  // Matikan dan kunci mutlak tombol PINDAI ULANG
+  setManualScanButtonDisabled(true);
+
   const scanningBox = document.getElementById('deviceScanningBox');
   const itemBox = document.getElementById('deviceItemBox');
   const txtScan = document.getElementById('txtScanState');
   const spinner = document.getElementById('scanSpinner');
-
-  // Matikan dan nonaktifkan tombol PINDAI ULANG agar tidak bisa dipencet saat sedang mencari
-  if (btnScan) {
-    btnScan.disabled = true;
-    btnScan.classList.add('scanning', 'disabled');
-  }
-  if (scanSpinner) scanSpinner.style.display = 'inline-block';
-  if (scanLabel) scanLabel.textContent = 'PINDAI ULANG';
 
   if (scanningBox) scanningBox.style.display = 'flex';
   if (itemBox) {
@@ -311,9 +329,17 @@ function retryAutoScan() {
     showNeonToast('Mencari (Mock)');
     setTimeout(() => {
       window.onDeviceDiscovered('Robot Desk', 'Siap Terhubung');
-    }, 1800);
+    }, 2200);
   }
 }
+
+// CALLBACK: SCAN STARTED
+window.onScanStarted = function() {
+  isBleScanning = true;
+  isScanAnimating = true;
+  scanStartTime = Date.now();
+  setManualScanButtonDisabled(true);
+};
 
 // CALLBACK: DISCOVERED DEVICE (Diberikan animasi minimal agar tidak langsung)
 window.onDeviceDiscovered = function(name, address) {
@@ -327,20 +353,16 @@ window.onDeviceDiscovered = function(name, address) {
     const itemBox = document.getElementById('deviceItemBox');
     const nameEl = document.getElementById('detectedDevName');
     const subEl = document.getElementById('detectedDevSub');
-    const btnScan = document.getElementById('btnManualScan');
-    const scanSpinner = document.getElementById('scanCornerSpinner');
-    const scanLabel = document.getElementById('scanCornerLabel');
 
     if (nameEl) nameEl.textContent = name || 'Robot Desk';
     if (subEl) subEl.textContent = address ? `Bluetooth (${address})` : 'Bluetooth Siap Terhubung';
 
-    if (btnScan) {
-      btnScan.disabled = false;
-      btnScan.classList.remove('scanning', 'disabled');
+    const isNativeStillScanning = window.AndroidBLE && typeof window.AndroidBLE.isScanning === 'function' && window.AndroidBLE.isScanning();
+    if (!isNativeStillScanning) {
+      isBleScanning = false;
+      isScanAnimating = false;
+      setManualScanButtonDisabled(false);
     }
-    if (scanSpinner) scanSpinner.style.display = 'none';
-    if (scanLabel) scanLabel.textContent = 'PINDAI ULANG';
-    isScanAnimating = false;
 
     if (scanningBox) scanningBox.style.display = 'none';
     if (itemBox) {
@@ -359,17 +381,9 @@ window.onScanStopped = function() {
 
   if (scanMinTimerId) clearTimeout(scanMinTimerId);
   scanMinTimerId = setTimeout(() => {
-    const btnScan = document.getElementById('btnManualScan');
-    const scanSpinner = document.getElementById('scanCornerSpinner');
-    const scanLabel = document.getElementById('scanCornerLabel');
-
-    if (btnScan) {
-      btnScan.disabled = false;
-      btnScan.classList.remove('scanning', 'disabled');
-    }
-    if (scanSpinner) scanSpinner.style.display = 'none';
-    if (scanLabel) scanLabel.textContent = 'PINDAI ULANG';
+    isBleScanning = false;
     isScanAnimating = false;
+    setManualScanButtonDisabled(false);
   }, remaining);
 };
 
@@ -491,6 +505,23 @@ window.onBLEReceived = function(jsonStr) {
       const modeEl = document.getElementById('teleActiveMode');
       if (modeEl) modeEl.textContent = data.mode_name;
     }
+    if (typeof data.mode === 'number') {
+      const modeBtnMap = {
+        0: 'btnMenuFace',
+        1: 'btnMenuClock',
+        2: 'btnMenuWeather',
+        3: 'btnMenuSubtitle',
+        4: 'btnMenuGame',
+        7: 'btnMenuStopwatch',
+        8: 'btnMenuAlarm'
+      };
+      const activeId = modeBtnMap[data.mode];
+      if (activeId) {
+        document.querySelectorAll('.menu-action-card').forEach(c => c.classList.remove('active'));
+        const el = document.getElementById(activeId);
+        if (el) el.classList.add('active');
+      }
+    }
     if (typeof data.asleep === 'boolean') {
       const sleepEl = document.getElementById('teleSleepState');
       if (sleepEl) sleepEl.textContent = data.asleep ? 'Robot Tidur' : 'Robot Aktif (Bangun)';
@@ -550,87 +581,53 @@ function updateOledFacePreview(idx) {
   if (label) {
     label.textContent = `MOOD: ${item.name}`;
   }
-
-  // Update tampilan di Halaman Baru Fitur
-  const stageWrap = document.getElementById('stageFaceSvgWrap');
-  const stageLabel = document.getElementById('stageFaceMoodLabel');
-  if (stageWrap) {
-    stageWrap.innerHTML = `<svg viewBox="0 0 100 50" class="oled-face-svg-lg">${item.svg}</svg>`;
-  }
-  if (stageLabel) {
-    stageLabel.textContent = `MOOD: ${item.name}`;
-  }
 }
 
-// BUKA HALAMAN BARU PER FITUR TOMBOL YANG DIPENCET
-function openFeaturePage(featureId) {
-  const menuGrid = document.getElementById('menuFeatureGrid');
-  const titleBar = document.getElementById('menuTitleBar');
-  const subpage = document.getElementById('featureDetailPage');
-  const subpageTitle = document.getElementById('featureSubpageTitle');
-
-  // Sembunyikan grid menu dan title bar
-  if (menuGrid) menuGrid.style.display = 'none';
-  if (titleBar) titleBar.style.display = 'none';
-
-  // Sembunyikan semua tampilan layar stage dulu
-  document.querySelectorAll('.stage-oled-view').forEach(v => v.style.display = 'none');
-
-  if (featureId === 'face') {
-    if (subpageTitle) subpageTitle.textContent = 'EXPRESI WAJAH';
-    const view = document.getElementById('stageFaceView');
-    if (view) view.style.display = 'flex';
-    updateOledFacePreview(currentFaceIndex || 0);
-    sendFace(currentFaceIndex || 0, null);
-  } else if (featureId === 'clock') {
-    if (subpageTitle) subpageTitle.textContent = 'JAM DIGITAL';
-    const view = document.getElementById('stageClockView');
-    if (view) view.style.display = 'flex';
-    updateOledClockTick();
-    sendDeviceMode(1);
-  } else if (featureId === 'alarm') {
-    if (subpageTitle) subpageTitle.textContent = 'ALARM ROBOT';
-    const view = document.getElementById('stageAlarmView');
-    if (view) view.style.display = 'flex';
-    updateOledAlarmPreview();
-    sendDeviceMode(8);
-  } else if (featureId === 'stopwatch') {
-    if (subpageTitle) subpageTitle.textContent = 'STOPWATCH';
-    const view = document.getElementById('stageStopwatchView');
-    if (view) view.style.display = 'flex';
-    sendDeviceMode(7);
-  } else if (featureId === 'weather') {
-    if (subpageTitle) subpageTitle.textContent = 'INFO CUACA';
-    const view = document.getElementById('stageWeatherView');
-    if (view) view.style.display = 'flex';
-    updateOledWeatherPreview();
-    sendDeviceMode(2);
-  } else if (featureId === 'subtitle') {
-    if (subpageTitle) subpageTitle.textContent = 'SUBTITLE';
-    const view = document.getElementById('stageSubtitleView');
-    if (view) view.style.display = 'flex';
-    sendDeviceMode(3);
-  } else if (featureId === 'game') {
-    if (subpageTitle) subpageTitle.textContent = 'MENU GAME';
-    const view = document.getElementById('stageGameView');
-    if (view) view.style.display = 'flex';
-    sendDeviceMode(4);
+// PILIH FITUR DI MENU ROBOT -> LAYAR ESP32 OTOMATIS BERPINDAH KE HALAMAN FITUR TERSEBUT
+function selectRobotMenuFeature(featureKey, btnEl) {
+  if (!isBleConnected) {
+    showNeonToast('Wajib Terhubung Robot');
+    return;
   }
 
-  // Tampilkan subpage
-  if (subpage) subpage.style.display = 'flex';
-  triggerHaptic(30);
-}
+  // Berikan visual active state pada kartu menu yang dipilih
+  document.querySelectorAll('.menu-action-card').forEach(c => c.classList.remove('active'));
+  if (btnEl) {
+    btnEl.classList.add('active');
+  }
 
-// KEMBALI DARI HALAMAN FITUR KE MENU KOTAK-KOTAK
-function closeFeaturePage() {
-  const menuGrid = document.getElementById('menuFeatureGrid');
-  const titleBar = document.getElementById('menuTitleBar');
-  const subpage = document.getElementById('featureDetailPage');
+  triggerHaptic(35);
 
-  if (subpage) subpage.style.display = 'none';
-  if (menuGrid) menuGrid.style.display = 'grid';
-  if (titleBar) titleBar.style.display = 'flex';
+  if (featureKey === 'face') {
+    // Mode Animasi (0) dan kirim ekspresi wajah ke layar fisik OLED ESP32
+    sendCommand({ c: 'm', v: 0 });
+    sendCommand({ c: 'f', v: currentFaceIndex || 0 });
+    showNeonToast('Layar ESP32: Expresi Wajah');
+  } else if (featureKey === 'clock') {
+    // Mode Jam Digital (1)
+    sendCommand({ c: 'm', v: 1 });
+    showNeonToast('Layar ESP32: Jam Digital');
+  } else if (featureKey === 'alarm') {
+    // Mode Alarm (8)
+    sendCommand({ c: 'm', v: 8 });
+    showNeonToast('Layar ESP32: Alarm');
+  } else if (featureKey === 'stopwatch') {
+    // Mode Stopwatch (7)
+    sendCommand({ c: 'm', v: 7 });
+    showNeonToast('Layar ESP32: Stopwatch');
+  } else if (featureKey === 'weather') {
+    // Mode Info Cuaca (2)
+    sendCommand({ c: 'm', v: 2 });
+    showNeonToast('Layar ESP32: Info Cuaca');
+  } else if (featureKey === 'subtitle') {
+    // Mode Subtitle (3)
+    sendCommand({ c: 'm', v: 3 });
+    showNeonToast('Layar ESP32: Subtitle');
+  } else if (featureKey === 'game') {
+    // Mode Menu Game Arcade (4)
+    sendCommand({ c: 'm', v: 4 });
+    showNeonToast('Layar ESP32: Menu Game');
+  }
 }
 
 // Ganti Ekspresi Wajah (0..12)

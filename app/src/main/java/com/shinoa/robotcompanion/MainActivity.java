@@ -474,6 +474,11 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
         public boolean isConnected() {
             return bleManager.isConnected();
         }
+
+        @JavascriptInterface
+        public boolean isScanning() {
+            return bleManager != null && bleManager.isScanning();
+        }
     }
 
     @Override
@@ -482,6 +487,15 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
             String safeName = (name != null ? name : "Robot Desk").replace("'", "\\'");
             String safeAddr = (address != null ? address : "").replace("'", "\\'");
             webView.evaluateJavascript("if (window.onDeviceDiscovered) window.onDeviceDiscovered('" + safeName + "', '" + safeAddr + "');", null);
+        });
+    }
+
+    @Override
+    public void onScanStarted() {
+        runOnUiThread(() -> {
+            if (webView != null) {
+                webView.evaluateJavascript("if (window.onScanStarted) window.onScanStarted();", null);
+            }
         });
     }
 
