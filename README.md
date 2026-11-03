@@ -1,6 +1,6 @@
 # Robot Companion Controller App
 
-Aplikasi Android resmi untuk **ESP32-C3 Desk Companion Robot**.
+Aplikasi Android resmi untuk **Robot Desk**.
 
 ## ✨ Fitur Utama
 - **Tema Desain**: 100% Monokrom **Biru Neon (Electric Cyan `#00F0FF`)**

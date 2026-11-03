@@ -42,7 +42,6 @@
         </div>
 
         <h1 class="setup-title">ROBOT DESK</h1>
-        <p class="setup-tagline">KONEKSI BLUETOOTH WAJIB</p>
 
         <!-- Card: Status Bluetooth HP -->
         <div id="boxBtPower" class="setup-status-card">
@@ -56,22 +55,31 @@
             </div>
           </div>
           <button id="btnEnableBt" class="neon-btn-action full mt-8" onclick="requestEnableBluetooth()">
-            ⚡ AKTIFKAN BLUETOOTH
+            AKTIFKAN BLUETOOTH
           </button>
         </div>
 
-        <!-- Card: Status Pemindaian Robot -->
+        <!-- Card: Status Pemindaian & Koneksi Robot -->
         <div class="setup-status-card">
-          <div class="status-card-row">
-            <div id="scanSpinner" class="neon-spinner"></div>
-            <div class="status-card-text">
-              <span class="status-card-label">STATUS ROBOT</span>
-              <span id="txtScanState" class="status-card-state">Mencari Sinyal Robot...</span>
+          <div class="status-card-header-row">
+            <div class="status-card-row">
+              <div id="scanSpinner" class="neon-spinner"></div>
+              <div class="status-card-text">
+                <span class="status-card-label">STATUS ROBOT</span>
+                <span id="txtScanState" class="status-card-state">Memindai Robot Desk...</span>
+              </div>
             </div>
+            <!-- Tombol Pindai Ulang di Pojok Kanan Atas -->
+            <button id="btnManualScan" class="neon-btn-corner" onclick="retryAutoScan()" title="Pindai Ulang">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"></path>
+              </svg>
+              <span>PINDAI</span>
+            </button>
           </div>
-          <p class="setup-note">Pastikan ESP32 Robot Desk menyala di dekat Anda.</p>
-          <button id="btnManualScan" class="neon-btn-subtle full mt-8" onclick="retryAutoScan()">
-            🔄 PINDAI ULANG ROBOT
+          <p class="setup-note">Pastikan Robot Desk menyala di dekat Anda.</p>
+          <button id="btnConnectRobot" class="neon-btn-action full mt-8 disabled" onclick="connectToFoundRobot()" disabled>
+            HUBUNGKAN
           </button>
         </div>
 
@@ -312,7 +320,7 @@
             </div>
           </div>
 
-          <!-- Memori ESP32 -->
+          <!-- Memori Robot Desk -->
           <div class="hud-tile">
             <div class="tile-icon-box">
               <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><line x1="8" y1="2" x2="8" y2="4"></line><line x1="16" y1="2" x2="16" y2="4"></line></svg>
@@ -411,7 +419,7 @@
               <span class="config-title">SINKRONISASI JAM</span>
             </div>
             <div class="action-btn-row">
-              <button class="neon-btn-action full" onclick="syncClock()">SINKRONKAN JAM HP KE ESP32</button>
+              <button class="neon-btn-action full" onclick="syncClock()">SINKRONKAN JAM HP KE ROBOT DESK</button>
             </div>
           </div>
 

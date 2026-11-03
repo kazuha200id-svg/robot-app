@@ -104,6 +104,36 @@ function sendCommand(cmdObject) {
 }
 
 // ================= 4. STRICT BLUETOOTH SETUP GATE HANDLERS =================
+let isDeviceFound = false;
+
+function setDeviceFound(found) {
+  isDeviceFound = found;
+  const btnConnect = document.getElementById('btnConnectRobot');
+  if (btnConnect) {
+    btnConnect.disabled = !found;
+    if (found) {
+      btnConnect.classList.remove('disabled');
+    } else {
+      btnConnect.classList.add('disabled');
+    }
+  }
+}
+
+function connectToFoundRobot() {
+  if (!isDeviceFound) {
+    showNeonToast('Robot Desk belum ditemukan');
+    return;
+  }
+  if (window.AndroidBLE && typeof window.AndroidBLE.connect === 'function') {
+    window.AndroidBLE.connect();
+    showNeonToast('Menghubungkan...');
+  } else {
+    showNeonToast('Menghubungkan (Mock)');
+    setTimeout(() => window.onBLEStatus(true, 'Tersambung (Mock)'), 1000);
+  }
+  triggerHaptic(30);
+}
+
 function requestEnableBluetooth() {
   if (window.AndroidBLE && typeof window.AndroidBLE.enableBluetooth === 'function') {
     window.AndroidBLE.enableBluetooth();
@@ -116,14 +146,22 @@ function requestEnableBluetooth() {
 }
 
 function retryAutoScan() {
+  setDeviceFound(false);
+  const txtScan = document.getElementById('txtScanState');
+  const spinner = document.getElementById('scanSpinner');
+  if (txtScan) txtScan.textContent = 'Memindai Robot Desk...';
+  if (spinner) spinner.style.display = 'block';
+
   if (window.AndroidBLE && typeof window.AndroidBLE.connect === 'function') {
     window.AndroidBLE.connect();
-    const txtScan = document.getElementById('txtScanState');
-    if (txtScan) txtScan.textContent = 'Memindai Ulang Robot...';
     showNeonToast('Memindai Robot Desk');
   } else {
     showNeonToast('Memindai (Mock)');
-    setTimeout(() => window.onBLEStatus(true, 'Tersambung (Mock)'), 1500);
+    setTimeout(() => {
+      setDeviceFound(true);
+      if (txtScan) txtScan.textContent = 'Robot Desk Ditemukan';
+      if (spinner) spinner.style.display = 'none';
+    }, 2000);
   }
   triggerHaptic(30);
 }
@@ -143,9 +181,10 @@ window.onBluetoothPowerState = function(enabled) {
     }
     if (btnEnable) btnEnable.style.display = 'none';
     if (boxBt) boxBt.classList.add('ready');
-    if (txtScan && !isBleConnected) txtScan.textContent = 'Mencari Sinyal Robot Desk...';
+    if (txtScan && !isBleConnected) txtScan.textContent = 'Memindai Robot Desk...';
     if (spinner && !isBleConnected) spinner.style.display = 'block';
   } else {
+    setDeviceFound(false);
     if (txtBt) {
       txtBt.textContent = 'TIDAK AKTIF';
       txtBt.className = 'status-card-state warning';
@@ -171,6 +210,7 @@ window.onBLEStatus = function(connected, message) {
   const spinner = document.getElementById('scanSpinner');
 
   if (connected) {
+    setDeviceFound(true);
     if (dot) dot.className = 'pulse-dot online';
     if (label) label.textContent = 'BLE TERHUBUNG';
     if (gate) gate.classList.remove('active'); // BUKA DASHBOARD UTAMA
@@ -179,11 +219,24 @@ window.onBLEStatus = function(connected, message) {
     // Request initial telemetry
     setTimeout(() => sendCommand({ c: 's' }), 400);
   } else {
+    const isNotFound = message && message.toLowerCase().includes('tidak ditemukan');
+    const isFound = message && (message.toLowerCase().includes('ditemukan') || message.toLowerCase().includes('menghubungkan ke'));
+
+    if (isFound) {
+      setDeviceFound(true);
+      if (spinner) spinner.style.display = 'none';
+    } else if (isNotFound) {
+      setDeviceFound(false);
+      if (spinner) spinner.style.display = 'none';
+    } else {
+      setDeviceFound(false);
+      if (spinner) spinner.style.display = 'block';
+    }
+
     if (dot) dot.className = 'pulse-dot';
     if (label) label.textContent = 'BLE TERPUTUS';
     if (gate) gate.classList.add('active'); // KUNCI TOTAL DASHBOARD
-    if (txtScan) txtScan.textContent = message ? message : 'Mencari Sinyal Robot...';
-    if (spinner) spinner.style.display = 'block';
+    if (txtScan) txtScan.textContent = message ? message : 'Memindai Robot Desk...';
   }
 };
 
@@ -405,9 +458,9 @@ function testBuzzerSound() {
   }
 }
 
-// Restart ESP32
+// Restart Robot Desk
 function restartRobot() {
-  if (confirm('Restart mikrokontroler ESP32 sekarang?')) {
+  if (confirm('Restart Robot Desk sekarang?')) {
     sendCommand({ cmd: 'reboot' });
     showNeonToast('Robot Restart...');
     triggerHaptic(60);

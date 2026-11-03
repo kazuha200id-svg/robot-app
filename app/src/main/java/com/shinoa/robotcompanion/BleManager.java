@@ -98,7 +98,7 @@ public class BleManager {
             return;
         }
 
-        notifyStatus(false, "Memindai Robot ESP32...");
+        notifyStatus(false, "Memindai Robot Desk...");
         isScanning = true;
 
         ScanSettings settings = new ScanSettings.Builder()
@@ -109,7 +109,7 @@ public class BleManager {
             if (isScanning) {
                 stopScan();
                 if (!isConnected) {
-                    notifyStatus(false, "Robot tidak ditemukan. Pastikan robot menyala!");
+                    notifyStatus(false, "Robot Desk tidak ditemukan. Pastikan robot menyala!");
                 }
             }
         }, 12000);
@@ -159,7 +159,7 @@ public class BleManager {
 
             if (matchName || matchUuid) {
                 stopScan();
-                notifyStatus(false, "Menghubungkan ke " + (name != null ? name : "ESP32 C3 Robot") + "...");
+                notifyStatus(false, "Menghubungkan ke " + (name != null ? name : "Robot Desk") + "...");
                 connectToDevice(device);
             }
         }
