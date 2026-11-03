@@ -105,33 +105,72 @@ function sendCommand(cmdObject) {
 
 // ================= 4. STRICT BLUETOOTH SETUP GATE HANDLERS =================
 let isDeviceFound = false;
+let isDeviceSelected = false;
+let isConnectingState = false;
 
-function setDeviceFound(found) {
-  isDeviceFound = found;
-  const btnConnect = document.getElementById('btnConnectRobot');
-  if (btnConnect) {
-    btnConnect.disabled = !found;
-    if (found) {
-      btnConnect.classList.remove('disabled');
+function toggleSelectDevice() {
+  if (!isDeviceFound) return;
+  isDeviceSelected = !isDeviceSelected;
+
+  const itemBox = document.getElementById('deviceItemBox');
+  if (itemBox) {
+    if (isDeviceSelected) {
+      itemBox.classList.add('selected');
     } else {
-      btnConnect.classList.add('disabled');
+      itemBox.classList.remove('selected');
+    }
+  }
+
+  updateConnectButtonState();
+  triggerHaptic(25);
+}
+
+function updateConnectButtonState() {
+  const btn = document.getElementById('btnConnectRobot');
+  const label = document.getElementById('btnConnectLabel');
+  const icon = document.getElementById('btnConnectIcon');
+  if (!btn) return;
+
+  if (isConnectingState) {
+    btn.disabled = true;
+    btn.className = 'neon-btn-action full mt-10 btn-state-connecting';
+    if (label) label.textContent = 'MENYAMBUNGKAN...';
+    if (icon) icon.innerHTML = '<div class="neon-btn-spinner"></div>';
+  } else if (isDeviceFound && isDeviceSelected) {
+    btn.disabled = false;
+    btn.className = 'neon-btn-action full mt-10';
+    if (label) label.textContent = 'HUBUNGKAN';
+    if (icon) {
+      icon.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle;margin-right:6px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>';
+    }
+  } else {
+    btn.disabled = true;
+    btn.className = 'neon-btn-action full mt-10 disabled';
+    if (label) label.textContent = 'HUBUNGKAN';
+    if (icon) {
+      icon.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle;margin-right:6px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>';
     }
   }
 }
 
 function connectToFoundRobot() {
-  if (!isDeviceFound) {
-    showNeonToast('Robot Desk belum ditemukan');
+  if (!isDeviceFound || !isDeviceSelected) {
+    showNeonToast('Pilih Robot Desk terlebih dahulu');
     return;
   }
+
+  isConnectingState = true;
+  updateConnectButtonState();
+  triggerHaptic(30);
+
   if (window.AndroidBLE && typeof window.AndroidBLE.connect === 'function') {
     window.AndroidBLE.connect();
-    showNeonToast('Menghubungkan...');
   } else {
-    showNeonToast('Menghubungkan (Mock)');
-    setTimeout(() => window.onBLEStatus(true, 'Tersambung (Mock)'), 1000);
+    // Mock simulation
+    setTimeout(() => {
+      window.onBLEStatus(true, 'Tersambung (Mock)');
+    }, 1500);
   }
-  triggerHaptic(30);
 }
 
 function requestEnableBluetooth() {
@@ -146,25 +185,58 @@ function requestEnableBluetooth() {
 }
 
 function retryAutoScan() {
-  setDeviceFound(false);
+  isDeviceFound = false;
+  isDeviceSelected = false;
+  isConnectingState = false;
+
+  const scanningBox = document.getElementById('deviceScanningBox');
+  const itemBox = document.getElementById('deviceItemBox');
   const txtScan = document.getElementById('txtScanState');
   const spinner = document.getElementById('scanSpinner');
+
+  if (scanningBox) scanningBox.style.display = 'flex';
+  if (itemBox) {
+    itemBox.style.display = 'none';
+    itemBox.classList.remove('selected');
+  }
   if (txtScan) txtScan.textContent = 'Memindai Robot Desk...';
   if (spinner) spinner.style.display = 'block';
 
-  if (window.AndroidBLE && typeof window.AndroidBLE.connect === 'function') {
+  updateConnectButtonState();
+  triggerHaptic(30);
+
+  if (window.AndroidBLE && typeof window.AndroidBLE.startScan === 'function') {
+    window.AndroidBLE.startScan();
+    showNeonToast('Memindai Robot Desk');
+  } else if (window.AndroidBLE && typeof window.AndroidBLE.connect === 'function') {
     window.AndroidBLE.connect();
     showNeonToast('Memindai Robot Desk');
   } else {
     showNeonToast('Memindai (Mock)');
     setTimeout(() => {
-      setDeviceFound(true);
-      if (txtScan) txtScan.textContent = 'Robot Desk Ditemukan';
-      if (spinner) spinner.style.display = 'none';
-    }, 2000);
+      window.onDeviceDiscovered('Robot Desk', 'Siap Terhubung');
+    }, 1800);
   }
-  triggerHaptic(30);
 }
+
+// CALLBACK: DISCOVERED DEVICE
+window.onDeviceDiscovered = function(name, address) {
+  isDeviceFound = true;
+  const scanningBox = document.getElementById('deviceScanningBox');
+  const itemBox = document.getElementById('deviceItemBox');
+  const nameEl = document.getElementById('detectedDevName');
+  const subEl = document.getElementById('detectedDevSub');
+
+  if (nameEl) nameEl.textContent = name || 'Robot Desk';
+  if (subEl) subEl.textContent = address ? `Bluetooth (${address})` : 'Bluetooth Siap Terhubung';
+
+  if (scanningBox) scanningBox.style.display = 'none';
+  if (itemBox) {
+    itemBox.style.display = 'flex';
+  }
+
+  updateConnectButtonState();
+};
 
 // BLUETOOTH POWER STATE CALLBACK FROM NATIVE ANDROID
 window.onBluetoothPowerState = function(enabled) {
@@ -173,6 +245,7 @@ window.onBluetoothPowerState = function(enabled) {
   const boxBt = document.getElementById('boxBtPower');
   const txtScan = document.getElementById('txtScanState');
   const spinner = document.getElementById('scanSpinner');
+  const gate = document.getElementById('setupGate');
 
   if (enabled) {
     if (txtBt) {
@@ -181,21 +254,35 @@ window.onBluetoothPowerState = function(enabled) {
     }
     if (btnEnable) btnEnable.style.display = 'none';
     if (boxBt) boxBt.classList.add('ready');
-    if (txtScan && !isBleConnected) txtScan.textContent = 'Memindai Robot Desk...';
-    if (spinner && !isBleConnected) spinner.style.display = 'block';
+    if (txtScan && !isBleConnected && !isDeviceFound) {
+      txtScan.textContent = 'Memindai Robot Desk...';
+      if (spinner) spinner.style.display = 'block';
+    }
   } else {
-    setDeviceFound(false);
+    isDeviceFound = false;
+    isDeviceSelected = false;
+    isConnectingState = false;
+
     if (txtBt) {
       txtBt.textContent = 'TIDAK AKTIF';
       txtBt.className = 'status-card-state warning';
     }
     if (btnEnable) btnEnable.style.display = 'block';
     if (boxBt) boxBt.classList.remove('ready');
+
+    const scanningBox = document.getElementById('deviceScanningBox');
+    const itemBox = document.getElementById('deviceItemBox');
+    if (scanningBox) scanningBox.style.display = 'flex';
+    if (itemBox) {
+      itemBox.style.display = 'none';
+      itemBox.classList.remove('selected');
+    }
     if (txtScan) txtScan.textContent = 'Nyalakan Bluetooth untuk mulai';
     if (spinner) spinner.style.display = 'none';
 
+    updateConnectButtonState();
+
     // Strict Lock dashboard when Bluetooth is off
-    const gate = document.getElementById('setupGate');
     if (gate) gate.classList.add('active');
   }
 };
@@ -206,37 +293,71 @@ window.onBLEStatus = function(connected, message) {
   const dot = document.getElementById('bleDot');
   const label = document.getElementById('bleStatusLabel');
   const gate = document.getElementById('setupGate');
-  const txtScan = document.getElementById('txtScanState');
-  const spinner = document.getElementById('scanSpinner');
+  const btn = document.getElementById('btnConnectRobot');
+  const btnLabel = document.getElementById('btnConnectLabel');
+  const btnIcon = document.getElementById('btnConnectIcon');
 
   if (connected) {
-    setDeviceFound(true);
+    isConnectingState = false;
     if (dot) dot.className = 'pulse-dot online';
     if (label) label.textContent = 'BLE TERHUBUNG';
-    if (gate) gate.classList.remove('active'); // BUKA DASHBOARD UTAMA
-    showNeonToast('Robot Tersambung');
-    syncClockQuiet();
-    // Request initial telemetry
-    setTimeout(() => sendCommand({ c: 's' }), 400);
-  } else {
-    const isNotFound = message && message.toLowerCase().includes('tidak ditemukan');
-    const isFound = message && (message.toLowerCase().includes('ditemukan') || message.toLowerCase().includes('menghubungkan ke'));
 
-    if (isFound) {
-      setDeviceFound(true);
-      if (spinner) spinner.style.display = 'none';
-    } else if (isNotFound) {
-      setDeviceFound(false);
-      if (spinner) spinner.style.display = 'none';
-    } else {
-      setDeviceFound(false);
-      if (spinner) spinner.style.display = 'block';
+    // Animasi BERHASIL pada tombol
+    if (btn) {
+      btn.disabled = true;
+      btn.className = 'neon-btn-action full mt-10 btn-state-success';
+      if (btnLabel) btnLabel.textContent = 'BERHASIL';
+      if (btnIcon) {
+        btnIcon.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#00FF88" stroke-width="3" style="vertical-align:middle;margin-right:6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+      }
     }
 
+    triggerHaptic(40);
+    showNeonToast('Robot Tersambung');
+
+    // Masuk ke aplikasi setelah jeda ~600ms
+    setTimeout(() => {
+      if (gate) gate.classList.remove('active');
+      syncClockQuiet();
+      setTimeout(() => sendCommand({ c: 's' }), 400);
+    }, 600);
+
+  } else {
     if (dot) dot.className = 'pulse-dot';
     if (label) label.textContent = 'BLE TERPUTUS';
-    if (gate) gate.classList.add('active'); // KUNCI TOTAL DASHBOARD
-    if (txtScan) txtScan.textContent = message ? message : 'Memindai Robot Desk...';
+    if (gate) gate.classList.add('active'); // Kunci total dashboard jika terputus
+
+    if (isConnectingState) {
+      isConnectingState = false;
+      if (btn) {
+        btn.disabled = true;
+        btn.className = 'neon-btn-action full mt-10 btn-state-failed';
+        if (btnLabel) btnLabel.textContent = 'GAGAL TERHUBUNG';
+        if (btnIcon) {
+          btnIcon.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#FF3366" stroke-width="2.5" style="vertical-align:middle;margin-right:6px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+        }
+      }
+      triggerHaptic(50);
+      showNeonToast(message || 'Gagal Menghubungkan');
+
+      // Setelah 2 detik, kembalikan tombol ke keadaan HUBUNGKAN (tetap terpilih agar mudah coba lagi)
+      setTimeout(() => {
+        updateConnectButtonState();
+      }, 2000);
+
+    } else {
+      const isNotFound = message && message.toLowerCase().includes('tidak ditemukan');
+      const txtScan = document.getElementById('txtScanState');
+      const spinner = document.getElementById('scanSpinner');
+
+      if (isNotFound) {
+        if (txtScan) txtScan.textContent = 'Robot Desk Tidak Ditemukan';
+        if (spinner) spinner.style.display = 'none';
+      } else if (message) {
+        if (txtScan) txtScan.textContent = message;
+      }
+      updateConnectButtonState();
+    }
   }
 };
 

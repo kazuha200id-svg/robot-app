@@ -38,6 +38,7 @@ public class BleManager {
     public interface BleListener {
         void onStatus(boolean connected, String statusMessage);
         void onDataReceived(String json);
+        void onDeviceDiscovered(String name, String address);
     }
 
     private final Context context;
@@ -50,6 +51,7 @@ public class BleManager {
 
     private boolean isScanning = false;
     private boolean isConnected = false;
+    private BluetoothDevice discoveredDevice = null;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     public BleManager(Context context) {
@@ -69,29 +71,30 @@ public class BleManager {
         return bluetoothAdapter != null && bluetoothAdapter.isEnabled();
     }
 
-    public void startScanAndConnect() {
+    public void startScan() {
         if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {
-            notifyStatus(false, "Bluetooth HP belum aktif!");
+            notifyStatus(false, "Bluetooth belum aktif!");
             return;
         }
 
-        disconnect();
+        stopScan();
 
-        // 1. Periksa apakah sudah ter-pairing di pengaturan Bluetooth HP
+        // 1. Periksa apakah sudah ter-pairing di pengaturan Bluetooth
         try {
             if (bluetoothAdapter.getBondedDevices() != null) {
                 for (BluetoothDevice bonded : bluetoothAdapter.getBondedDevices()) {
                     String bName = bonded.getName();
                     if (bName != null && (bName.contains("Robot") || bName.contains("ESP32") || bName.contains("Desk"))) {
-                        notifyStatus(false, "Menghubungkan ke " + bName + " (Paired)...");
-                        connectToDevice(bonded);
+                        discoveredDevice = bonded;
+                        notifyDeviceDiscovered("Robot Desk", bonded.getAddress());
+                        notifyStatus(false, "Robot Desk terdeteksi (Paired)");
                         return;
                     }
                 }
             }
         } catch (Exception ignored) {}
 
-        // 2. Pemindaian BLE tanpa filter perangkat keras yang kaku
+        // 2. Pemindaian BLE
         bleScanner = bluetoothAdapter.getBluetoothLeScanner();
         if (bleScanner == null) {
             notifyStatus(false, "Scanner BLE tidak tersedia");
@@ -108,20 +111,41 @@ public class BleManager {
         mainHandler.postDelayed(() -> {
             if (isScanning) {
                 stopScan();
-                if (!isConnected) {
+                if (discoveredDevice == null && !isConnected) {
                     notifyStatus(false, "Robot Desk tidak ditemukan. Pastikan robot menyala!");
                 }
             }
         }, 12000);
 
         try {
-            // Scan tanpa filter agar kompatibel dengan seluruh merk HP Android
             bleScanner.startScan(null, settings, scanCallback);
         } catch (Exception e) {
             try {
                 bleScanner.startScan(scanCallback);
             } catch (Exception ignored) {}
         }
+    }
+
+    public void startScanAndConnect() {
+        startScan();
+    }
+
+    public void connectToDiscoveredDevice() {
+        if (discoveredDevice != null) {
+            stopScan();
+            notifyStatus(false, "Menghubungkan ke Robot Desk...");
+            connectToDevice(discoveredDevice);
+        } else {
+            startScan();
+        }
+    }
+
+    private void notifyDeviceDiscovered(String name, String address) {
+        mainHandler.post(() -> {
+            if (listener != null) {
+                listener.onDeviceDiscovered(name, address);
+            }
+        });
     }
 
     private void stopScan() {
@@ -159,8 +183,9 @@ public class BleManager {
 
             if (matchName || matchUuid) {
                 stopScan();
-                notifyStatus(false, "Menghubungkan ke " + (name != null ? name : "Robot Desk") + "...");
-                connectToDevice(device);
+                discoveredDevice = device;
+                notifyDeviceDiscovered("Robot Desk", device.getAddress());
+                notifyStatus(false, "Robot Desk terdeteksi");
             }
         }
 
@@ -172,6 +197,13 @@ public class BleManager {
     };
 
     private void connectToDevice(BluetoothDevice device) {
+        if (bluetoothGatt != null) {
+            try {
+                bluetoothGatt.disconnect();
+                bluetoothGatt.close();
+            } catch (Exception ignored) {}
+            bluetoothGatt = null;
+        }
         bluetoothGatt = device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE);
     }
 

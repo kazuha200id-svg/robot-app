@@ -45,7 +45,7 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
                     runOnUiThread(() -> {
                         webView.evaluateJavascript("if (window.onBluetoothPowerState) window.onBluetoothPowerState(true);", null);
                         checkAndRequestPermissions();
-                        bleManager.startScanAndConnect();
+                        bleManager.startScan();
                     });
                 } else if (state == BluetoothAdapter.STATE_OFF) {
                     runOnUiThread(() -> {
@@ -92,7 +92,7 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
                 boolean btEnabled = bleManager.isBluetoothEnabled();
                 webView.evaluateJavascript("if (window.onBluetoothPowerState) window.onBluetoothPowerState(" + btEnabled + ");", null);
                 if (btEnabled) {
-                    bleManager.startScanAndConnect();
+                    bleManager.startScan();
                 }
             }
         });
@@ -117,7 +117,7 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
             boolean btEnabled = bleManager.isBluetoothEnabled();
             webView.evaluateJavascript("if (window.onBluetoothPowerState) window.onBluetoothPowerState(" + btEnabled + ");", null);
             if (btEnabled && !bleManager.isConnected()) {
-                bleManager.startScanAndConnect();
+                bleManager.startScan();
             }
         }
     }
@@ -155,7 +155,7 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
                 }
             }
             if (allGranted && bleManager.isBluetoothEnabled()) {
-                bleManager.startScanAndConnect();
+                bleManager.startScan();
             } else if (!allGranted) {
                 Toast.makeText(this, "Izin Bluetooth diperlukan untuk menghubungkan robot", Toast.LENGTH_LONG).show();
             }
@@ -181,10 +181,18 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
         }
 
         @JavascriptInterface
+        public void startScan() {
+            runOnUiThread(() -> {
+                checkAndRequestPermissions();
+                bleManager.startScan();
+            });
+        }
+
+        @JavascriptInterface
         public void connect() {
             runOnUiThread(() -> {
                 checkAndRequestPermissions();
-                bleManager.startScanAndConnect();
+                bleManager.connectToDiscoveredDevice();
             });
         }
 
@@ -209,6 +217,15 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
         public boolean isConnected() {
             return bleManager.isConnected();
         }
+    }
+
+    @Override
+    public void onDeviceDiscovered(String name, String address) {
+        runOnUiThread(() -> {
+            String safeName = (name != null ? name : "Robot Desk").replace("'", "\\'");
+            String safeAddr = (address != null ? address : "").replace("'", "\\'");
+            webView.evaluateJavascript("if (window.onDeviceDiscovered) window.onDeviceDiscovered('" + safeName + "', '" + safeAddr + "');", null);
+        });
     }
 
     @Override
