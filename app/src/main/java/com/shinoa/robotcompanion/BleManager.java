@@ -73,17 +73,29 @@ public class BleManager {
 
         disconnect();
 
+        // 1. Periksa apakah sudah ter-pairing di pengaturan Bluetooth HP
+        try {
+            if (bluetoothAdapter.getBondedDevices() != null) {
+                for (BluetoothDevice bonded : bluetoothAdapter.getBondedDevices()) {
+                    String bName = bonded.getName();
+                    if (bName != null && (bName.contains("Robot") || bName.contains("ESP32") || bName.contains("Desk"))) {
+                        notifyStatus(false, "Menghubungkan ke " + bName + " (Paired)...");
+                        connectToDevice(bonded);
+                        return;
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+
+        // 2. Pemindaian BLE tanpa filter perangkat keras yang kaku
         bleScanner = bluetoothAdapter.getBluetoothLeScanner();
         if (bleScanner == null) {
             notifyStatus(false, "Scanner BLE tidak tersedia");
             return;
         }
 
-        notifyStatus(false, "Memindai ESP32 C3 Robot...");
+        notifyStatus(false, "Memindai Robot ESP32...");
         isScanning = true;
-
-        List<ScanFilter> filters = new ArrayList<>();
-        filters.add(new ScanFilter.Builder().setDeviceName("ESP32 C3 Robot").build());
 
         ScanSettings settings = new ScanSettings.Builder()
                 .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
@@ -96,13 +108,15 @@ public class BleManager {
                     notifyStatus(false, "Robot tidak ditemukan. Pastikan robot menyala!");
                 }
             }
-        }, 10000);
+        }, 12000);
 
         try {
-            bleScanner.startScan(filters, settings, scanCallback);
+            // Scan tanpa filter agar kompatibel dengan seluruh merk HP Android
+            bleScanner.startScan(null, settings, scanCallback);
         } catch (Exception e) {
-            // Fallback scan without filter if device name filter fails
-            bleScanner.startScan(scanCallback);
+            try {
+                bleScanner.startScan(scanCallback);
+            } catch (Exception ignored) {}
         }
     }
 
@@ -118,11 +132,30 @@ public class BleManager {
     private final ScanCallback scanCallback = new ScanCallback() {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
+            if (!isScanning) return;
             BluetoothDevice device = result.getDevice();
-            String name = device.getName();
-            if (name != null && (name.contains("ESP32") || name.contains("Robot"))) {
+            String name = null;
+            if (result.getScanRecord() != null) {
+                name = result.getScanRecord().getDeviceName();
+            }
+            if (name == null) {
+                name = device.getName();
+            }
+
+            boolean matchName = (name != null && (name.contains("Robot") || name.contains("ESP32") || name.contains("Desk")));
+            boolean matchUuid = false;
+            if (result.getScanRecord() != null && result.getScanRecord().getServiceUuids() != null) {
+                for (ParcelUuid pUuid : result.getScanRecord().getServiceUuids()) {
+                    if (pUuid != null && pUuid.getUuid().equals(NUS_SERVICE_UUID)) {
+                        matchUuid = true;
+                        break;
+                    }
+                }
+            }
+
+            if (matchName || matchUuid) {
                 stopScan();
-                notifyStatus(false, "Menghubungkan ke " + name + "...");
+                notifyStatus(false, "Menghubungkan ke " + (name != null ? name : "ESP32 C3 Robot") + "...");
                 connectToDevice(device);
             }
         }

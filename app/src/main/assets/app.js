@@ -1,21 +1,22 @@
 /* ========================================================
-   CYBER NEON BLUE CONTROLLER LOGIC (MULTI-PAGE SYSTEM)
+   ROBOT COMPANION APP CONTROLLER (LOGIC-SYNCHRONIZED)
    ======================================================== */
 
 let isBleConnected = false;
 let currentFaceIndex = 0;
-let isRobotAsleep = false;
-let currentActivePage = 'pageStatus';
+let currentActivePage = 'pageFaces';
 
-// TOAST HELPER
+// TOAST NOTIFICATION HELPER
 function showNeonToast(message) {
   const toast = document.getElementById('neonToast');
+  if (!toast) return;
   document.getElementById('toastText').textContent = message;
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), 2200);
   triggerHaptic(20);
 }
 
+// HAPTIC FEEDBACK
 function triggerHaptic(durationMs = 25) {
   if (window.AndroidBLE && typeof window.AndroidBLE.vibrate === 'function') {
     window.AndroidBLE.vibrate(durationMs);
@@ -24,25 +25,25 @@ function triggerHaptic(durationMs = 25) {
   }
 }
 
-// MULTI-PAGE NAVIGATION (NON-SCROLLABLE)
+// MULTI-PAGE NAVIGATION (NON-SCROLLABLE FULL VIEWPORT)
 function switchPage(pageId) {
   currentActivePage = pageId;
 
-  // Toggle page visibility
+  // Toggle pages
   document.querySelectorAll('.page').forEach(page => {
     page.classList.toggle('active', page.id === pageId);
   });
 
-  // Toggle bottom tab button active states
-  document.querySelectorAll('.nav-tab-btn').forEach(btn => {
-    const fn = btn.getAttribute('onclick');
-    btn.classList.toggle('active', fn && fn.includes(pageId));
+  // Toggle bottom nav tab states
+  document.querySelectorAll('.nav-tab').forEach(tab => {
+    const fn = tab.getAttribute('onclick');
+    tab.classList.toggle('active', fn && fn.includes(pageId));
   });
 
   triggerHaptic(15);
 }
 
-// BLE SEND COMMAND WRAPPER
+// NATIVE BLE DISPATCH WRAPPER
 function sendCommand(cmdObject) {
   const jsonStr = JSON.stringify(cmdObject);
   if (window.AndroidBLE && typeof window.AndroidBLE.send === 'function') {
@@ -52,14 +53,14 @@ function sendCommand(cmdObject) {
     }
     return success;
   } else {
-    // For browser testing / mock
+    // Mock for browser testing
     console.log('[MOCK BLE SEND]', jsonStr);
     showNeonToast('Perintah Terkirim (Mock)');
     return true;
   }
 }
 
-// BLE CONNECTION TOGGLE
+// TOGGLE BLE CONNECTION
 function toggleBleConnection() {
   if (isBleConnected) {
     if (window.AndroidBLE && typeof window.AndroidBLE.disconnect === 'function') {
@@ -69,7 +70,7 @@ function toggleBleConnection() {
   } else {
     if (window.AndroidBLE && typeof window.AndroidBLE.connect === 'function') {
       window.AndroidBLE.connect();
-      showNeonToast('Memindai ESP32 C3 Robot...');
+      showNeonToast('Memindai Robot ESP32...');
     } else {
       showNeonToast('Modul BLE Siap');
     }
@@ -77,7 +78,7 @@ function toggleBleConnection() {
   triggerHaptic(30);
 }
 
-// BLE CALLBACK FROM NATIVE JAVA
+// BLE CALLBACK FROM ANDROID JAVA
 window.onBLEStatus = function(connected, message) {
   isBleConnected = connected;
   const dot = document.getElementById('bleDot');
@@ -89,7 +90,8 @@ window.onBLEStatus = function(connected, message) {
     label.textContent = 'BLE TERHUBUNG';
     btnText.textContent = 'PUTUSKAN';
     showNeonToast('Robot Tersambung');
-    requestTelemetry();
+    // Sinkronkan jam otomatis saat pertama kali tersambung
+    syncClockQuiet();
   } else {
     dot.className = 'pulse-dot';
     label.textContent = message ? message.toUpperCase() : 'BLE TERPUTUS';
@@ -100,174 +102,126 @@ window.onBLEStatus = function(connected, message) {
 window.onBLEReceived = function(jsonStr) {
   try {
     const data = JSON.parse(jsonStr);
-    updateTelemetry(data);
+    if (data.alarm) {
+      if (typeof data.alarm.hour === 'number') document.getElementById('alarmHour').value = data.alarm.hour;
+      if (typeof data.alarm.min === 'number') document.getElementById('alarmMin').value = data.alarm.min;
+      if (typeof data.alarm.enabled === 'boolean') document.getElementById('alarmEnabledToggle').checked = data.alarm.enabled;
+      if (typeof data.alarm.daily === 'boolean') document.getElementById('alarmDailyToggle').checked = data.alarm.daily;
+    }
   } catch (e) {
-    console.log('[BLE RAW RECEIVE]', jsonStr);
+    console.error('Failed to parse incoming BLE JSON', e);
   }
 };
 
-// TELEMETRY UPDATER
-function updateTelemetry(data) {
-  if (!data) return;
+// ================= ACTION HANDLERS =================
 
-  // RAM telemetry with 2 decimals
-  if (data.ram) {
-    const freePct = data.ram.free_pct.toFixed(2);
-    const usedPct = data.ram.used_pct.toFixed(2);
-    const freeKb = (data.ram.heap_free / 1024).toFixed(1);
-    const usedKb = (data.ram.heap_used / 1024).toFixed(1);
+// 1. Ganti Ekspresi Wajah OLED (0..12)
+function sendFace(faceIndex, elem) {
+  currentFaceIndex = faceIndex;
+  document.querySelectorAll('.face-card').forEach(c => c.classList.remove('active'));
+  if (elem) elem.classList.add('active');
 
-    document.getElementById('lblRamFreePct').textContent = `${freePct}%`;
-    document.getElementById('lblRamUsedPct').textContent = `${usedPct}%`;
-    document.getElementById('lblRamFreeKB').textContent = `${freeKb} KB`;
-    document.getElementById('lblRamUsedKB').textContent = `${usedKb} KB`;
-    document.getElementById('ramProgressBar').style.width = `${freePct}%`;
-  }
-
-  // Active Mode
-  if (typeof data.mode !== 'undefined') {
-    document.getElementById('lblActiveModeId').textContent = `Mode #${data.mode}`;
-    document.getElementById('lblActiveModeName').textContent = data.mode_name || 'Animasi';
-  }
-
-  // Uptime
-  if (data.uptime_sec) {
-    const h = Math.floor(data.uptime_sec / 3600);
-    const m = Math.floor((data.uptime_sec % 3600) / 60);
-    const s = data.uptime_sec % 60;
-    document.getElementById('lblDeviceUptime').textContent = 
-      `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  }
-
-  // Sleep State
-  if (typeof data.asleep !== 'undefined') {
-    isRobotAsleep = data.asleep;
-    document.getElementById('lblAsleepState').textContent = isRobotAsleep ? 'Tidur Zzz' : 'Siaga';
-    document.getElementById('lblAsleepSub').textContent = isRobotAsleep ? 'Hemat Daya' : 'Aktif';
-    document.getElementById('lblSleepBtnText').textContent = isRobotAsleep ? 'BANGUNKAN' : 'TIDURKAN';
-  }
-
-  // Face
-  if (typeof data.face !== 'undefined') {
-    highlightFace(data.face);
-  }
-
-  // Alarm
-  if (data.alarm) {
-    document.getElementById('alarmHourIn').value = data.alarm.hour;
-    document.getElementById('alarmMinIn').value = data.alarm.min;
-    document.getElementById('toggleAlarmEnable').checked = data.alarm.enabled;
-    document.getElementById('toggleAlarmDaily').checked = data.alarm.daily;
-  }
+  sendCommand({ cmd: 'face', val: faceIndex });
+  showNeonToast('Ekspresi Diganti');
+  triggerHaptic(25);
 }
 
-function requestTelemetry() {
-  sendCommand({ cmd: 'status' });
+// 2. Ganti Mode Robot (Game, Jam, Cuaca, dll)
+function sendDeviceMode(modeIndex) {
+  sendCommand({ cmd: 'mode', val: modeIndex });
+  showNeonToast('Mode Robot Diaktifkan');
+  triggerHaptic(30);
 }
 
-// FACE ACTIONS
-function selectFace(faceIdx) {
-  highlightFace(faceIdx);
-  showNeonToast(`Ekspresi #${faceIdx} Aktif`);
-  sendCommand({ cmd: 'face', val: faceIdx });
-}
-
-function highlightFace(idx) {
-  currentFaceIndex = idx;
-  const items = document.querySelectorAll('.face-item');
-  items.forEach((item, i) => item.classList.toggle('active-face', i === idx));
-}
-
-function sendTrigger(type) {
-  showNeonToast(`Reaksi ${type.toUpperCase()}`);
-  sendCommand({ cmd: type });
-}
-
-// MARQUEE ACTIONS
-function submitMarquee() {
-  const text = document.getElementById('inputMarqueeText').value.trim();
-  if (!text) {
-    showNeonToast('Ketik pesan terlebih dahulu');
-    return;
-  }
-  showNeonToast('Teks Terkirim ke Layar');
-  sendCommand({ cmd: 'msg', text: text, source: 'HP', playing: true });
-}
-
-function applyMarqueePreset(text) {
-  document.getElementById('inputMarqueeText').value = text;
-  submitMarquee();
-}
-
-// CLOCK & ALARM
-function syncPhoneClock() {
-  const epoch = Math.floor(Date.now() / 1000);
-  showNeonToast('Menyinkronkan Jam...');
-  sendCommand({ cmd: 'time', epoch: epoch });
-}
-
-function saveAlarmConfig() {
-  const hour = parseInt(document.getElementById('alarmHourIn').value) || 0;
-  const min = parseInt(document.getElementById('alarmMinIn').value) || 0;
-  const en = document.getElementById('toggleAlarmEnable').checked;
-  const daily = document.getElementById('toggleAlarmDaily').checked;
-
-  showNeonToast(`Alarm ${String(hour).padStart(2,'0')}:${String(min).padStart(2,'0')} Disimpan`);
-  sendCommand({ cmd: 'alarm', hour: hour, min: min, en: en, daily: daily });
-}
-
-function testAlarmSound() {
-  showNeonToast('Uji Suara Alarm Buzzer');
-  sendCommand({ cmd: 'alarm_test' });
-}
-
-// GAME & VIRTUAL GAMEPAD
-function launchGameMode(modeVal) {
-  showNeonToast(`Memulai Mode #${modeVal}`);
-  sendCommand({ cmd: 'mode', val: modeVal });
-}
-
-function pressAction(e) {
-  if (e) e.preventDefault();
-  triggerHaptic(35);
+// 3. Tombol Aksi Game (Virtual Action / Jump Tap)
+function sendActionTap() {
   sendCommand({ cmd: 'action' });
+  triggerHaptic(40);
 }
 
-function releaseAction(e) {
-  if (e) e.preventDefault();
+// 4. Sinkronisasi Jam HP ke ESP32
+function syncClock() {
+  const epochSec = Math.floor(Date.now() / 1000);
+  sendCommand({ cmd: 'time', epoch: epochSec });
+  showNeonToast('Jam Berhasil Disinkronkan');
+  triggerHaptic(35);
 }
 
-// SYSTEM & HARDWARE
-function toggleSleepMode() {
-  if (isRobotAsleep) {
-    showNeonToast('Membangunkan Robot');
-    sendCommand({ cmd: 'wake' });
-  } else {
-    showNeonToast('Memasuki Mode Tidur');
-    sendCommand({ cmd: 'sleep' });
-  }
+function syncClockQuiet() {
+  const epochSec = Math.floor(Date.now() / 1000);
+  sendCommand({ cmd: 'time', epoch: epochSec });
 }
 
-function testBuzzerAudio() {
-  showNeonToast('Tes Frekuensi Buzzer');
+// 5. Simpan Pengaturan Alarm
+function saveAlarmSettings() {
+  const hour = parseInt(document.getElementById('alarmHour').value, 10) || 0;
+  const min = parseInt(document.getElementById('alarmMin').value, 10) || 0;
+  const en = document.getElementById('alarmEnabledToggle').checked;
+  const daily = document.getElementById('alarmDailyToggle').checked;
+
+  sendCommand({
+    cmd: 'alarm',
+    hour: Math.max(0, Math.min(23, hour)),
+    min: Math.max(0, Math.min(59, min)),
+    en: en,
+    daily: daily
+  });
+
+  showNeonToast(en ? 'Alarm Disimpan & Aktif' : 'Alarm Dinonaktifkan');
+  triggerHaptic(35);
+}
+
+// 6. Tes Buzzer Alarm
+function testAlarmBuzzer() {
+  sendCommand({ cmd: 'alarm_test' });
+  showNeonToast('Menguji Suara Alarm');
+  triggerHaptic(40);
+}
+
+// 7. Interaksi Fisik Virtual (Tepuk, Elus, Goyang)
+function sendTouchTap() {
+  sendCommand({ cmd: 'tap' });
+  showNeonToast('Tepuk Kepala Virtual');
+  triggerHaptic(30);
+}
+
+function sendPetting() {
+  sendCommand({ cmd: 'pet' });
+  showNeonToast('Elus Sayang Robot');
+  triggerHaptic(45);
+}
+
+function sendShake() {
+  sendCommand({ cmd: 'tilt' });
+  showNeonToast('Goyang Robot Virtual');
+  triggerHaptic(50);
+}
+
+// 8. Manajemen Tidur & Bangun
+function sendSleep() {
+  sendCommand({ cmd: 'sleep' });
+  showNeonToast('Robot Masuk Mode Tidur');
+  triggerHaptic(30);
+}
+
+function sendWake() {
+  sendCommand({ cmd: 'wake' });
+  showNeonToast('Robot Dibangunkan');
+  triggerHaptic(35);
+}
+
+// 9. Tes Suara Buzzer Umum
+function testBuzzerSound() {
   sendCommand({ cmd: 'buzzer', freq: 2400, dur: 120 });
+  showNeonToast('Bunyi Nada Buzzer');
+  triggerHaptic(30);
 }
 
-function testHapticMotor() {
-  showNeonToast('Tes Motor Getar');
-  sendCommand({ cmd: 'vibrate', dur: 180 });
-}
-
-function restartDevice() {
-  if (confirm('Konfirmasi Restart Robot ESP32?')) {
-    showNeonToast('Merestart Robot...');
-    sendCommand({ cmd: 'reboot' });
+// 10. Restart Robot
+function restartRobot() {
+  if (confirm('Restart mikrokontroler ESP32 sekarang?')) {
+    sendCommand({ cmd: 'restart' });
+    showNeonToast('Robot Sedang Restart...');
+    triggerHaptic(60);
   }
 }
-
-// Auto telemetry poller every 3.5s if connected
-setInterval(() => {
-  if (isBleConnected) {
-    sendCommand({ cmd: 'status' });
-  }
-}, 3500);
