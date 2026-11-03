@@ -42,6 +42,11 @@ function switchMainTab(pageId, btn) {
 
   currentMainTab = pageId;
 
+  // Reset feature subpage when switching tabs
+  if (typeof closeFeaturePage === 'function') {
+    closeFeaturePage();
+  }
+
   // Toggle pages
   document.querySelectorAll('.page').forEach(page => {
     page.classList.toggle('active', page.id === pageId);
@@ -545,6 +550,87 @@ function updateOledFacePreview(idx) {
   if (label) {
     label.textContent = `MOOD: ${item.name}`;
   }
+
+  // Update tampilan di Halaman Baru Fitur
+  const stageWrap = document.getElementById('stageFaceSvgWrap');
+  const stageLabel = document.getElementById('stageFaceMoodLabel');
+  if (stageWrap) {
+    stageWrap.innerHTML = `<svg viewBox="0 0 100 50" class="oled-face-svg-lg">${item.svg}</svg>`;
+  }
+  if (stageLabel) {
+    stageLabel.textContent = `MOOD: ${item.name}`;
+  }
+}
+
+// BUKA HALAMAN BARU PER FITUR TOMBOL YANG DIPENCET
+function openFeaturePage(featureId) {
+  const menuGrid = document.getElementById('menuFeatureGrid');
+  const titleBar = document.getElementById('menuTitleBar');
+  const subpage = document.getElementById('featureDetailPage');
+  const subpageTitle = document.getElementById('featureSubpageTitle');
+
+  // Sembunyikan grid menu dan title bar
+  if (menuGrid) menuGrid.style.display = 'none';
+  if (titleBar) titleBar.style.display = 'none';
+
+  // Sembunyikan semua tampilan layar stage dulu
+  document.querySelectorAll('.stage-oled-view').forEach(v => v.style.display = 'none');
+
+  if (featureId === 'face') {
+    if (subpageTitle) subpageTitle.textContent = 'EXPRESI WAJAH';
+    const view = document.getElementById('stageFaceView');
+    if (view) view.style.display = 'flex';
+    updateOledFacePreview(currentFaceIndex || 0);
+    sendFace(currentFaceIndex || 0, null);
+  } else if (featureId === 'clock') {
+    if (subpageTitle) subpageTitle.textContent = 'JAM DIGITAL';
+    const view = document.getElementById('stageClockView');
+    if (view) view.style.display = 'flex';
+    updateOledClockTick();
+    sendDeviceMode(1);
+  } else if (featureId === 'alarm') {
+    if (subpageTitle) subpageTitle.textContent = 'ALARM ROBOT';
+    const view = document.getElementById('stageAlarmView');
+    if (view) view.style.display = 'flex';
+    updateOledAlarmPreview();
+    sendDeviceMode(8);
+  } else if (featureId === 'stopwatch') {
+    if (subpageTitle) subpageTitle.textContent = 'STOPWATCH';
+    const view = document.getElementById('stageStopwatchView');
+    if (view) view.style.display = 'flex';
+    sendDeviceMode(7);
+  } else if (featureId === 'weather') {
+    if (subpageTitle) subpageTitle.textContent = 'INFO CUACA';
+    const view = document.getElementById('stageWeatherView');
+    if (view) view.style.display = 'flex';
+    updateOledWeatherPreview();
+    sendDeviceMode(2);
+  } else if (featureId === 'subtitle') {
+    if (subpageTitle) subpageTitle.textContent = 'SUBTITLE';
+    const view = document.getElementById('stageSubtitleView');
+    if (view) view.style.display = 'flex';
+    sendDeviceMode(3);
+  } else if (featureId === 'game') {
+    if (subpageTitle) subpageTitle.textContent = 'MENU GAME';
+    const view = document.getElementById('stageGameView');
+    if (view) view.style.display = 'flex';
+    sendDeviceMode(4);
+  }
+
+  // Tampilkan subpage
+  if (subpage) subpage.style.display = 'flex';
+  triggerHaptic(30);
+}
+
+// KEMBALI DARI HALAMAN FITUR KE MENU KOTAK-KOTAK
+function closeFeaturePage() {
+  const menuGrid = document.getElementById('menuFeatureGrid');
+  const titleBar = document.getElementById('menuTitleBar');
+  const subpage = document.getElementById('featureDetailPage');
+
+  if (subpage) subpage.style.display = 'none';
+  if (menuGrid) menuGrid.style.display = 'grid';
+  if (titleBar) titleBar.style.display = 'flex';
 }
 
 // Ganti Ekspresi Wajah (0..12)
@@ -626,17 +712,28 @@ function updateOledAlarmPreview() {
 
   const timeEl = document.getElementById('oledAlarmTimePreview');
   const badgeEl = document.getElementById('oledAlarmBadgePreview');
+  const stageTimeEl = document.getElementById('stageAlarmDigits');
+  const stageBadgeEl = document.getElementById('stageAlarmBadge');
 
-  if (timeEl && h && m) {
+  if (h && m) {
     const hh = String(parseInt(h.value, 10) || 0).padStart(2, '0');
     const mm = String(parseInt(m.value, 10) || 0).padStart(2, '0');
-    timeEl.textContent = `${hh}:${mm}`;
+    const timeText = `${hh}:${mm}`;
+    if (timeEl) timeEl.textContent = timeText;
+    if (stageTimeEl) stageTimeEl.textContent = timeText;
   }
-  if (badgeEl && en && daily) {
+  if (en && daily) {
     const isEn = en.checked;
     const isDaily = daily.checked;
-    badgeEl.textContent = `${isEn ? 'ON' : 'OFF'} \u2022 ${isDaily ? 'TIAP HARI' : 'SEKALI'}`;
-    badgeEl.style.opacity = isEn ? '1' : '0.45';
+    const badgeText = `${isEn ? 'ON' : 'OFF'} \u2022 ${isDaily ? 'TIAP HARI' : 'SEKALI'}`;
+    if (badgeEl) {
+      badgeEl.textContent = badgeText;
+      badgeEl.style.opacity = isEn ? '1' : '0.45';
+    }
+    if (stageBadgeEl) {
+      stageBadgeEl.textContent = badgeText;
+      stageBadgeEl.style.opacity = isEn ? '1' : '0.45';
+    }
   }
 }
 
@@ -688,7 +785,9 @@ let currentTempUnit = 'C';
 function updateOledClockTick() {
   const clockEl = document.getElementById('oledClockPreview');
   const dateEl = document.getElementById('oledDatePreview');
-  if (!clockEl && !dateEl) return;
+  const stageClockEl = document.getElementById('stageClockDigits');
+  const stageDateEl = document.getElementById('stageClockDate');
+  const stageTzEl = document.getElementById('stageOledTzLabel');
 
   const now = new Date();
   const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
@@ -709,15 +808,22 @@ function updateOledClockTick() {
   }
 
   if (clockEl) clockEl.textContent = timeStr;
+  if (stageClockEl) stageClockEl.textContent = timeStr;
 
-  if (dateEl) {
-    const days = ['MIN', 'SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB'];
-    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MEI', 'JUN', 'JUL', 'AGU', 'SEP', 'OKT', 'NOV', 'DES'];
-    const dayName = days[targetTime.getDay()];
-    const dateNum = String(targetTime.getDate()).padStart(2, '0');
-    const monthName = months[targetTime.getMonth()];
-    dateEl.textContent = `${dayName}, ${dateNum} ${monthName}`;
-  }
+  const days = ['MIN', 'SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB'];
+  const months = ['JAN', 'FEB', 'MAR', 'APR', 'MEI', 'JUN', 'JUL', 'AGU', 'SEP', 'OKT', 'NOV', 'DES'];
+  const dayName = days[targetTime.getDay()];
+  const dateNum = String(targetTime.getDate()).padStart(2, '0');
+  const monthName = months[targetTime.getMonth()];
+  const dateStr = `${dayName}, ${dateNum} ${monthName}`;
+
+  if (dateEl) dateEl.textContent = dateStr;
+  if (stageDateEl) stageDateEl.textContent = dateStr;
+
+  const sel = document.getElementById('selTimezoneWorld');
+  const selectedText = sel ? sel.options[sel.selectedIndex]?.text : '';
+  const tzCode = selectedText ? selectedText.split(' ')[0] : 'WIB';
+  if (stageTzEl) stageTzEl.textContent = tzCode;
 }
 
 setInterval(updateOledClockTick, 1000);
@@ -788,6 +894,22 @@ function syncClockQuiet() {
   sendCommand({ cmd: 'time', epoch: epochSec, tz: currentTimezoneOffset, fmt: currentTimeFormat });
 }
 
+// SINKRONISASI TAMPILAN CUACA OLED
+function updateOledWeatherPreview(city) {
+  const cityEl = document.getElementById('oledCityPreview');
+  const tempEl = document.getElementById('oledTempPreview');
+  const stageCityEl = document.getElementById('stageWeatherCity');
+  const stageTempEl = document.getElementById('stageWeatherTemp');
+  const cityInput = document.getElementById('cfgCityInput');
+  const cityName = (city || (cityInput ? cityInput.value : 'JAKARTA')).toUpperCase();
+  const tempText = currentTempUnit === 'F' ? '84°F' : '29°C';
+
+  if (cityEl) cityEl.textContent = cityName;
+  if (stageCityEl) stageCityEl.textContent = cityName;
+  if (tempEl) tempEl.textContent = tempText;
+  if (stageTempEl) stageTempEl.textContent = tempText;
+}
+
 // Pengaturan Satuan Suhu (°C / °F)
 function setTempUnit(unit) {
   currentTempUnit = unit;
@@ -796,8 +918,7 @@ function setTempUnit(unit) {
   if (btnC) btnC.classList.toggle('active', unit === 'C');
   if (btnF) btnF.classList.toggle('active', unit === 'F');
 
-  const tempPreview = document.getElementById('oledTempPreview');
-  if (tempPreview) tempPreview.textContent = unit === 'C' ? '29°C' : '84°F';
+  updateOledWeatherPreview();
 
   localStorage.setItem('robot_cfg_temp_unit', unit);
   sendCommand({ cmd: 'temp_unit', unit: unit });
@@ -811,8 +932,7 @@ function saveCitySetting() {
   const city = (input ? input.value.trim() : '') || 'Jakarta';
   localStorage.setItem('robot_cfg_city', city);
 
-  const cityPreview = document.getElementById('oledCityPreview');
-  if (cityPreview) cityPreview.textContent = city.toUpperCase();
+  updateOledWeatherPreview(city);
 
   const ok = sendCommand({ cmd: 'weather_city', city: city, unit: currentTempUnit });
   if (ok) {
