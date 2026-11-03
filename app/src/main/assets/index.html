@@ -9,7 +9,7 @@
 <body>
   <div class="app-shell">
 
-    <!-- TOP HEADER -->
+    <!-- HEADER STATUS BAR -->
     <header class="app-header">
       <div class="brand-cluster">
         <svg class="header-logo-svg" viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
@@ -34,469 +34,402 @@
       </button>
     </header>
 
-    <!-- MAIN VIEWPORT (MULTI-PAGE CONTAINER) -->
+    <!-- MAIN VIEWPORT (4 PAGES SYSTEM) -->
     <main class="main-viewport">
 
-      <!-- ================= PAGE 1: STUDIO WAJAH ================= -->
-      <section id="pageFaces" class="page active">
-        <div class="page-title-banner">
-          <h2>STUDIO WAJAH</h2>
-          <span class="sub-badge">13 EKSPRESI MATA OLED</span>
+      <!-- ================= PAGE 1: MENU (REMOTE LAYAR ROBOT) ================= -->
+      <section id="pageMenu" class="page active">
+        <div class="section-title-bar">
+          <h2>MENU LAYAR ROBOT</h2>
+          <span class="hud-badge">REMOTE KONTROL</span>
         </div>
 
-        <div class="faces-grid">
-          <!-- Face 0: Neutral Blink -->
-          <button class="face-card active" onclick="sendFace(0, this)">
-            <div class="eye-preview">
-              <svg viewBox="0 0 100 50" class="eye-svg">
-                <rect x="15" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3"></rect>
-                <rect x="57" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3"></rect>
+        <div class="menu-feature-grid">
+          <!-- Jam Digital -->
+          <button class="menu-action-card" onclick="sendDeviceMode(1)">
+            <div class="card-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
               </svg>
             </div>
-            <span class="face-label">Neutral Blink</span>
+            <div class="card-meta">
+              <span class="card-title">JAM DIGITAL</span>
+              <span class="card-desc">Buka jam besar di OLED</span>
+            </div>
           </button>
 
-          <!-- Face 1: Serious Wink -->
-          <button class="face-card" onclick="sendFace(1, this)">
-            <div class="eye-preview">
-              <svg viewBox="0 0 100 50" class="eye-svg">
-                <rect x="15" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3"></rect>
-                <line x1="57" y1="25" x2="85" y2="25" stroke="#00F0FF" stroke-width="4" stroke-linecap="round"></line>
+          <!-- Cuaca -->
+          <button class="menu-action-card" onclick="sendDeviceMode(2)">
+            <div class="card-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
+                <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
               </svg>
             </div>
-            <span class="face-label">Serious Wink</span>
+            <div class="card-meta">
+              <span class="card-title">INFO CUACA</span>
+              <span class="card-desc">Suhu & cuaca kota</span>
+            </div>
           </button>
 
-          <!-- Face 2: Sleepy Zzz -->
-          <button class="face-card" onclick="sendFace(2, this)">
-            <div class="eye-preview">
-              <svg viewBox="0 0 100 50" class="eye-svg">
-                <path d="M15 28 Q29 38 43 28" fill="none" stroke="#00F0FF" stroke-width="3.5" stroke-linecap="round"></path>
-                <path d="M57 28 Q71 38 85 28" fill="none" stroke="#00F0FF" stroke-width="3.5" stroke-linecap="round"></path>
-                <text x="75" y="15" fill="#00F0FF" font-size="11" font-weight="bold">Z</text>
+          <!-- Teks Berjalan -->
+          <button class="menu-action-card" onclick="sendDeviceMode(3)">
+            <div class="card-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
+                <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+                <line x1="6" y1="12" x2="18" y2="12" stroke-dasharray="2 2"></line>
               </svg>
             </div>
-            <span class="face-label">Sleepy Zzz</span>
+            <div class="card-meta">
+              <span class="card-title">TEKS BERJALAN</span>
+              <span class="card-desc">Tampilkan pesan di OLED</span>
+            </div>
           </button>
 
-          <!-- Face 3: Crying Sad -->
-          <button class="face-card" onclick="sendFace(3, this)">
-            <div class="eye-preview">
-              <svg viewBox="0 0 100 50" class="eye-svg">
-                <path d="M15 25 Q29 15 43 25" fill="none" stroke="#00F0FF" stroke-width="3.5" stroke-linecap="round"></path>
-                <path d="M57 25 Q71 15 85 25" fill="none" stroke="#00F0FF" stroke-width="3.5" stroke-linecap="round"></path>
-                <path d="M29 32 Q25 40 29 45 Q33 40 29 32" fill="#00F0FF"></path>
-                <path d="M71 32 Q67 40 71 45 Q75 40 71 32" fill="#00F0FF"></path>
+          <!-- Stopwatch -->
+          <button class="menu-action-card" onclick="sendDeviceMode(7)">
+            <div class="card-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
+                <circle cx="12" cy="14" r="8"></circle>
+                <line x1="12" y1="2" x2="12" y2="6"></line>
+                <line x1="12" y1="14" x2="15" y2="11"></line>
               </svg>
             </div>
-            <span class="face-label">Crying Sad</span>
+            <div class="card-meta">
+              <span class="card-title">STOPWATCH</span>
+              <span class="card-desc">Pencatat waktu presisi</span>
+            </div>
           </button>
 
-          <!-- Face 4: Sad Pout -->
-          <button class="face-card" onclick="sendFace(4, this)">
-            <div class="eye-preview">
-              <svg viewBox="0 0 100 50" class="eye-svg">
-                <line x1="15" y1="20" x2="43" y2="28" stroke="#00F0FF" stroke-width="3.5" stroke-linecap="round"></line>
-                <line x1="85" y1="20" x2="57" y2="28" stroke="#00F0FF" stroke-width="3.5" stroke-linecap="round"></line>
+          <!-- Menu Game di Layar -->
+          <button class="menu-action-card" onclick="sendDeviceMode(4)">
+            <div class="card-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
+                <rect x="2" y="6" width="20" height="12" rx="3"></rect>
+                <line x1="6" y1="12" x2="10" y2="12"></line>
+                <line x1="8" y1="10" x2="8" y2="14"></line>
+                <circle cx="16" cy="10" r="1" fill="#00F0FF"></circle>
               </svg>
             </div>
-            <span class="face-label">Sad Pout</span>
+            <div class="card-meta">
+              <span class="card-title">MENU GAME OLED</span>
+              <span class="card-desc">Pilih game di layar robot</span>
+            </div>
           </button>
 
-          <!-- Face 5: Cute Face -->
-          <button class="face-card" onclick="sendFace(5, this)">
-            <div class="eye-preview">
-              <svg viewBox="0 0 100 50" class="eye-svg">
-                <path d="M15 30 Q29 12 43 30" fill="none" stroke="#00F0FF" stroke-width="3.5" stroke-linecap="round"></path>
-                <path d="M57 30 Q71 12 85 30" fill="none" stroke="#00F0FF" stroke-width="3.5" stroke-linecap="round"></path>
+          <!-- Wajah Netral -->
+          <button class="menu-action-card" onclick="sendFace(0, null)">
+            <div class="card-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="9" y1="10" x2="9.01" y2="10" stroke-width="3"></line>
+                <line x1="15" y1="10" x2="15.01" y2="10" stroke-width="3"></line>
+                <path d="M8 15h8"></path>
               </svg>
             </div>
-            <span class="face-label">Cute Face</span>
-          </button>
-
-          <!-- Face 6: Kissou Kiss -->
-          <button class="face-card" onclick="sendFace(6, this)">
-            <div class="eye-preview">
-              <svg viewBox="0 0 100 50" class="eye-svg">
-                <line x1="15" y1="25" x2="43" y2="25" stroke="#00F0FF" stroke-width="3.5" stroke-linecap="round"></line>
-                <path d="M57 30 Q71 14 85 30" fill="none" stroke="#00F0FF" stroke-width="3.5" stroke-linecap="round"></path>
-                <path d="M48 36 Q52 32 48 28" fill="none" stroke="#00F0FF" stroke-width="2.5" stroke-linecap="round"></path>
-              </svg>
-            </div>
-            <span class="face-label">Kissou Kiss</span>
-          </button>
-
-          <!-- Face 7: Mini Love -->
-          <button class="face-card" onclick="sendFace(7, this)">
-            <div class="eye-preview">
-              <svg viewBox="0 0 100 50" class="eye-svg">
-                <path d="M29 18 A 6 6 0 0 0 20 22 Q 29 36 29 36 Q 29 36 38 22 A 6 6 0 0 0 29 18" fill="none" stroke="#00F0FF" stroke-width="2.5"></path>
-                <path d="M71 18 A 6 6 0 0 0 62 22 Q 71 36 71 36 Q 71 36 80 22 A 6 6 0 0 0 71 18" fill="none" stroke="#00F0FF" stroke-width="2.5"></path>
-              </svg>
-            </div>
-            <span class="face-label">Mini Love</span>
-          </button>
-
-          <!-- Face 8: Anime Love -->
-          <button class="face-card" onclick="sendFace(8, this)">
-            <div class="eye-preview">
-              <svg viewBox="0 0 100 50" class="eye-svg">
-                <rect x="15" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="2.5"></rect>
-                <rect x="57" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="2.5"></rect>
-                <polygon points="29,18 31,23 36,25 31,27 29,32 27,27 22,25 27,23" fill="#00F0FF"></polygon>
-                <polygon points="71,18 73,23 78,25 73,27 71,32 69,27 64,25 69,23" fill="#00F0FF"></polygon>
-              </svg>
-            </div>
-            <span class="face-label">Anime Love</span>
-          </button>
-
-          <!-- Face 9: Dizzy Eyes -->
-          <button class="face-card" onclick="sendFace(9, this)">
-            <div class="eye-preview">
-              <svg viewBox="0 0 100 50" class="eye-svg">
-                <line x1="20" y1="15" x2="38" y2="35" stroke="#00F0FF" stroke-width="3.5" stroke-linecap="round"></line>
-                <line x1="38" y1="15" x2="20" y2="35" stroke="#00F0FF" stroke-width="3.5" stroke-linecap="round"></line>
-                <line x1="62" y1="15" x2="80" y2="35" stroke="#00F0FF" stroke-width="3.5" stroke-linecap="round"></line>
-                <line x1="80" y1="15" x2="62" y2="35" stroke="#00F0FF" stroke-width="3.5" stroke-linecap="round"></line>
-              </svg>
-            </div>
-            <span class="face-label">Dizzy Eyes</span>
-          </button>
-
-          <!-- Face 10: Angry Face -->
-          <button class="face-card" onclick="sendFace(10, this)">
-            <div class="eye-preview">
-              <svg viewBox="0 0 100 50" class="eye-svg">
-                <line x1="14" y1="14" x2="43" y2="24" stroke="#00F0FF" stroke-width="4" stroke-linecap="round"></line>
-                <line x1="86" y1="14" x2="57" y2="24" stroke="#00F0FF" stroke-width="4" stroke-linecap="round"></line>
-                <rect x="18" y="26" width="22" height="14" rx="4" fill="none" stroke="#00F0FF" stroke-width="2.5"></rect>
-                <rect x="60" y="26" width="22" height="14" rx="4" fill="none" stroke="#00F0FF" stroke-width="2.5"></rect>
-              </svg>
-            </div>
-            <span class="face-label">Angry Face</span>
-          </button>
-
-          <!-- Face 11: Left Glance -->
-          <button class="face-card" onclick="sendFace(11, this)">
-            <div class="eye-preview">
-              <svg viewBox="0 0 100 50" class="eye-svg">
-                <rect x="15" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="2.5"></rect>
-                <rect x="57" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="2.5"></rect>
-                <rect x="17" y="16" width="12" height="18" rx="4" fill="#00F0FF"></rect>
-                <rect x="59" y="16" width="12" height="18" rx="4" fill="#00F0FF"></rect>
-              </svg>
-            </div>
-            <span class="face-label">Left Glance</span>
-          </button>
-
-          <!-- Face 12: Love Heart -->
-          <button class="face-card" onclick="sendFace(12, this)">
-            <div class="eye-preview">
-              <svg viewBox="0 0 100 50" class="eye-svg">
-                <path d="M29 14 A 8 8 0 0 0 17 22 Q 29 40 29 40 Q 29 40 41 22 A 8 8 0 0 0 29 14" fill="#00F0FF"></path>
-                <path d="M71 14 A 8 8 0 0 0 59 22 Q 71 40 71 40 Q 71 40 83 22 A 8 8 0 0 0 71 14" fill="#00F0FF"></path>
-              </svg>
-            </div>
-            <span class="face-label">Love Heart</span>
-          </button>
-        </div>
-      </section>
-
-      <!-- ================= PAGE 2: PUSAT GAME ================= -->
-      <section id="pageGames" class="page">
-        <div class="page-title-banner">
-          <h2>PUSAT GAME</h2>
-          <span class="sub-badge">10 GAME ARCADE RETRO</span>
-        </div>
-
-        <!-- Menu Selector Card -->
-        <button class="menu-arcade-card" onclick="sendDeviceMode(4)">
-          <div class="game-card-content">
-            <svg class="game-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
-              <rect x="2" y="6" width="20" height="12" rx="3"></rect>
-              <line x1="6" y1="12" x2="10" y2="12"></line>
-              <line x1="8" y1="10" x2="8" y2="14"></line>
-              <circle cx="16" cy="10" r="1" fill="#00F0FF"></circle>
-              <circle cx="18" cy="13" r="1" fill="#00F0FF"></circle>
-            </svg>
-            <div class="game-text">
-              <span class="game-title">TAMPILKAN MENU GAME DI OLED</span>
-              <span class="game-desc">Buka daftar pilihan game di layar robot</span>
-            </div>
-          </div>
-        </button>
-
-        <!-- 10 Games Grid -->
-        <div class="games-grid">
-          <!-- 1: Flappy Bird (Mode 5) -->
-          <button class="game-card" onclick="sendDeviceMode(5)">
-            <svg class="game-vector" viewBox="0 0 40 40" fill="none" stroke="#00F0FF" stroke-width="2">
-              <rect x="10" y="14" width="18" height="14" rx="4"></rect>
-              <rect x="24" y="18" width="8" height="6" fill="#00F0FF"></rect>
-              <circle cx="20" cy="18" r="2" fill="#00F0FF"></circle>
-              <path d="M8 20L14 20"></path>
-            </svg>
-            <span class="game-name">Flappy Bird</span>
-          </button>
-
-          <!-- 2: Dino Game (Mode 6) -->
-          <button class="game-card" onclick="sendDeviceMode(6)">
-            <svg class="game-vector" viewBox="0 0 40 40" fill="none" stroke="#00F0FF" stroke-width="2">
-              <path d="M14 30V18H24V22H28V14H20V10H28V12H32V20H26V26H28V30H24V26H18V30Z" fill="none" stroke="#00F0FF"></path>
-              <line x1="6" y1="32" x2="34" y2="32"></line>
-            </svg>
-            <span class="game-name">Dino Game</span>
-          </button>
-
-          <!-- 3: Copter Game (Mode 9) -->
-          <button class="game-card" onclick="sendDeviceMode(9)">
-            <svg class="game-vector" viewBox="0 0 40 40" fill="none" stroke="#00F0FF" stroke-width="2">
-              <line x1="8" y1="10" x2="32" y2="10" stroke-width="2.5"></line>
-              <line x1="20" y1="10" x2="20" y2="15"></line>
-              <rect x="12" y="15" width="16" height="12" rx="4"></rect>
-              <line x1="12" y1="21" x2="4" y2="21"></line>
-              <line x1="4" y1="18" x2="4" y2="24"></line>
-              <line x1="10" y1="31" x2="30" y2="31"></line>
-            </svg>
-            <span class="game-name">Copter Game</span>
-          </button>
-
-          <!-- 4: Gravity Runner (Mode 10) -->
-          <button class="game-card" onclick="sendDeviceMode(10)">
-            <svg class="game-vector" viewBox="0 0 40 40" fill="none" stroke="#00F0FF" stroke-width="2">
-              <line x1="6" y1="8" x2="34" y2="8" stroke-dasharray="2 2"></line>
-              <line x1="6" y1="32" x2="34" y2="32"></line>
-              <circle cx="20" cy="18" r="3"></circle>
-              <path d="M20 21L20 27L16 32M20 27L24 32"></path>
-              <path d="M16 23L24 23"></path>
-            </svg>
-            <span class="game-name">Gravity Runner</span>
-          </button>
-
-          <!-- 5: Pin Circle (Mode 11) -->
-          <button class="game-card" onclick="sendDeviceMode(11)">
-            <svg class="game-vector" viewBox="0 0 40 40" fill="none" stroke="#00F0FF" stroke-width="2">
-              <circle cx="20" cy="20" r="8" fill="#00F0FF" fill-opacity="0.2"></circle>
-              <line x1="20" y1="12" x2="20" y2="4"></line>
-              <circle cx="20" cy="4" r="2" fill="#00F0FF"></circle>
-              <line x1="20" y1="28" x2="20" y2="36"></line>
-              <circle cx="20" cy="36" r="2" fill="#00F0FF"></circle>
-            </svg>
-            <span class="game-name">Pin Circle</span>
-          </button>
-
-          <!-- 6: Orbit Jumper (Mode 12) -->
-          <button class="game-card" onclick="sendDeviceMode(12)">
-            <svg class="game-vector" viewBox="0 0 40 40" fill="none" stroke="#00F0FF" stroke-width="2">
-              <circle cx="20" cy="20" r="10" stroke-dasharray="3 3"></circle>
-              <circle cx="20" cy="20" r="5" fill="#00F0FF"></circle>
-              <circle cx="28" cy="12" r="3" fill="#00F0FF"></circle>
-            </svg>
-            <span class="game-name">Orbit Jumper</span>
-          </button>
-
-          <!-- 7: Tower Stacker (Mode 13) -->
-          <button class="game-card" onclick="sendDeviceMode(13)">
-            <svg class="game-vector" viewBox="0 0 40 40" fill="none" stroke="#00F0FF" stroke-width="2">
-              <rect x="10" y="28" width="20" height="6" rx="1"></rect>
-              <rect x="12" y="20" width="16" height="6" rx="1"></rect>
-              <rect x="15" y="12" width="12" height="6" rx="1" fill="#00F0FF" fill-opacity="0.3"></rect>
-            </svg>
-            <span class="game-name">Tower Stacker</span>
-          </button>
-
-          <!-- 8: Radar Defender (Mode 14) -->
-          <button class="game-card" onclick="sendDeviceMode(14)">
-            <svg class="game-vector" viewBox="0 0 40 40" fill="none" stroke="#00F0FF" stroke-width="2">
-              <circle cx="20" cy="20" r="14"></circle>
-              <circle cx="20" cy="20" r="8"></circle>
-              <line x1="20" y1="20" x2="30" y2="10"></line>
-              <circle cx="28" cy="13" r="1.5" fill="#00F0FF"></circle>
-            </svg>
-            <span class="game-name">Radar Defender</span>
-          </button>
-
-          <!-- 9: Hoop Dunk (Mode 15) -->
-          <button class="game-card" onclick="sendDeviceMode(15)">
-            <svg class="game-vector" viewBox="0 0 40 40" fill="none" stroke="#00F0FF" stroke-width="2">
-              <ellipse cx="26" cy="22" rx="9" ry="3"></ellipse>
-              <line x1="35" y1="16" x2="35" y2="28" stroke-width="3"></line>
-              <circle cx="12" cy="14" r="5" fill="#00F0FF" fill-opacity="0.3"></circle>
-              <path d="M14 17 Q 20 18 24 21" stroke-dasharray="2 2"></path>
-            </svg>
-            <span class="game-name">Hoop Dunk</span>
-          </button>
-
-          <!-- 10: Orbit Pong (Mode 16) -->
-          <button class="game-card" onclick="sendDeviceMode(16)">
-            <svg class="game-vector" viewBox="0 0 40 40" fill="none" stroke="#00F0FF" stroke-width="2">
-              <circle cx="20" cy="20" r="14"></circle>
-              <path d="M12 32 A 14 14 0 0 0 28 32" stroke-width="4" stroke="#00F0FF"></path>
-              <circle cx="20" cy="14" r="2.5" fill="#00F0FF"></circle>
-            </svg>
-            <span class="game-name">Orbit Pong</span>
-          </button>
-        </div>
-
-        <!-- STICKY ACTION BUTTON (GAMEPAD TAP) -->
-        <div class="action-pad-container">
-          <button class="neon-action-pad" onclick="sendActionTap()">
-            <div class="pad-inner">
-              <svg viewBox="0 0 24 24" class="pad-svg" fill="none" stroke="#00F0FF" stroke-width="2.5">
-                <polygon points="12 2 15 8 21 9 17 14 18 20 12 17 6 20 7 14 3 9 9 8 12 2"></polygon>
-              </svg>
-              <span>AKSI / LOMPAT (VIRTUAL TAP)</span>
+            <div class="card-meta">
+              <span class="card-title">MODE ANIMASI</span>
+              <span class="card-desc">Kembali ke wajah robot</span>
             </div>
           </button>
         </div>
       </section>
 
-      <!-- ================= PAGE 3: JAM & FITUR ================= -->
-      <section id="pageClock" class="page">
-        <div class="page-title-banner">
-          <h2>JAM & FITUR</h2>
-          <span class="sub-badge">SINKRONISASI & ALARM</span>
+      <!-- ================= PAGE 2: ARCADE (WAJAH & GAME) ================= -->
+      <section id="pageArcade" class="page">
+        <!-- Sub-Pillar Switcher -->
+        <div class="sub-tab-bar">
+          <button id="btnSubFaces" class="sub-tab-btn active" onclick="switchArcadeSubView('faces')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"></path></svg>
+            <span>13 EKSPRESI WAJAH</span>
+          </button>
+          <button id="btnSubGames" class="sub-tab-btn" onclick="switchArcadeSubView('games')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="3"></rect><line x1="6" y1="12" x2="10" y2="12"></line><line x1="8" y1="10" x2="8" y2="14"></line><circle cx="16" cy="10" r="1" fill="currentColor"></circle></svg>
+            <span>10 GAME ARCADE</span>
+          </button>
         </div>
 
-        <!-- Mode Cards -->
-        <div class="feature-mode-cards">
-          <div class="feature-card">
-            <div class="feature-info">
-              <span class="feature-name">JAM DIGITAL</span>
-              <span class="feature-sub">Tampilkan jam besar di layar OLED</span>
-            </div>
-            <div class="feature-actions">
-              <button class="neon-btn-small" onclick="sendDeviceMode(1)">TAMPILKAN</button>
-              <button class="neon-btn-small primary" onclick="syncClock()">SINKRON JAM HP</button>
-            </div>
-          </div>
-
-          <div class="feature-card">
-            <div class="feature-info">
-              <span class="feature-name">STOPWATCH</span>
-              <span class="feature-sub">Pencatat waktu presisi</span>
-            </div>
-            <div class="feature-actions">
-              <button class="neon-btn-small" onclick="sendDeviceMode(7)">BUKA STOPWATCH</button>
-            </div>
-          </div>
-
-          <div class="feature-card">
-            <div class="feature-info">
-              <span class="feature-name">INFORMASI CUACA</span>
-              <span class="feature-sub">Layar animasi temperatur & cuaca</span>
-            </div>
-            <div class="feature-actions">
-              <button class="neon-btn-small" onclick="sendDeviceMode(2)">BUKA CUACA</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Alarm Configuration -->
-        <div class="alarm-config-panel">
-          <div class="panel-header">
-            <svg viewBox="0 0 24 24" class="panel-icon" fill="none" stroke="#00F0FF" stroke-width="2">
-              <circle cx="12" cy="13" r="8"></circle>
-              <path d="M12 9v4l2 2M5 3L2 6M22 6l-3-3"></path>
-            </svg>
-            <span class="panel-title">PENGATURAN ALARM ROBOT</span>
-          </div>
-
-          <div class="alarm-time-picker">
-            <div class="time-digit-box">
-              <label>JAM</label>
-              <input type="number" id="alarmHour" min="0" max="23" value="06">
-            </div>
-            <span class="time-colon">:</span>
-            <div class="time-digit-box">
-              <label>MENIT</label>
-              <input type="number" id="alarmMin" min="0" max="59" value="30">
-            </div>
-          </div>
-
-          <div class="alarm-switches">
-            <label class="neon-switch-row">
-              <span>Aktifkan Alarm</span>
-              <input type="checkbox" id="alarmEnabledToggle" checked>
-              <span class="slider"></span>
-            </label>
-            <label class="neon-switch-row">
-              <span>Ulangi Setiap Hari</span>
-              <input type="checkbox" id="alarmDailyToggle" checked>
-              <span class="slider"></span>
-            </label>
-          </div>
-
-          <div class="alarm-btn-cluster">
-            <button class="neon-btn-action" onclick="saveAlarmSettings()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              SIMPAN ALARM
+        <!-- SUBVIEW A: 13 WAJAH OLED -->
+        <div id="subViewFaces" class="arcade-subview active">
+          <div class="faces-grid">
+            <button class="face-card active" onclick="sendFace(0, this)">
+              <div class="eye-preview"><svg viewBox="0 0 100 50"><rect x="15" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3"></rect><rect x="57" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3"></rect></svg></div>
+              <span>Neutral Blink</span>
             </button>
-            <button class="neon-btn-subtle" onclick="testAlarmBuzzer()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
-              TES ALARM
+            <button class="face-card" onclick="sendFace(1, this)">
+              <div class="eye-preview"><svg viewBox="0 0 100 50"><rect x="15" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3"></rect><line x1="57" y1="25" x2="85" y2="25" stroke="#00F0FF" stroke-width="4" stroke-linecap="round"></line></svg></div>
+              <span>Serious Wink</span>
+            </button>
+            <button class="face-card" onclick="sendFace(2, this)">
+              <div class="eye-preview"><svg viewBox="0 0 100 50"><path d="M15 28 Q29 38 43 28" fill="none" stroke="#00F0FF" stroke-width="3.5"></path><path d="M57 28 Q71 38 85 28" fill="none" stroke="#00F0FF" stroke-width="3.5"></path><text x="75" y="15" fill="#00F0FF" font-size="11" font-weight="bold">Z</text></svg></div>
+              <span>Sleepy Zzz</span>
+            </button>
+            <button class="face-card" onclick="sendFace(3, this)">
+              <div class="eye-preview"><svg viewBox="0 0 100 50"><path d="M15 25 Q29 15 43 25" fill="none" stroke="#00F0FF" stroke-width="3.5"></path><path d="M57 25 Q71 15 85 25" fill="none" stroke="#00F0FF" stroke-width="3.5"></path><path d="M29 32 Q25 40 29 45 Q33 40 29 32" fill="#00F0FF"></path><path d="M71 32 Q67 40 71 45 Q75 40 71 32" fill="#00F0FF"></path></svg></div>
+              <span>Crying Sad</span>
+            </button>
+            <button class="face-card" onclick="sendFace(4, this)">
+              <div class="eye-preview"><svg viewBox="0 0 100 50"><line x1="15" y1="20" x2="43" y2="28" stroke="#00F0FF" stroke-width="3.5"></line><line x1="85" y1="20" x2="57" y2="28" stroke="#00F0FF" stroke-width="3.5"></line></svg></div>
+              <span>Sad Pout</span>
+            </button>
+            <button class="face-card" onclick="sendFace(5, this)">
+              <div class="eye-preview"><svg viewBox="0 0 100 50"><path d="M15 30 Q29 12 43 30" fill="none" stroke="#00F0FF" stroke-width="3.5"></path><path d="M57 30 Q71 12 85 30" fill="none" stroke="#00F0FF" stroke-width="3.5"></path></svg></div>
+              <span>Cute Face</span>
+            </button>
+            <button class="face-card" onclick="sendFace(6, this)">
+              <div class="eye-preview"><svg viewBox="0 0 100 50"><line x1="15" y1="25" x2="43" y2="25" stroke="#00F0FF" stroke-width="3.5"></line><path d="M57 30 Q71 14 85 30" fill="none" stroke="#00F0FF" stroke-width="3.5"></path><path d="M48 36 Q52 32 48 28" fill="none" stroke="#00F0FF" stroke-width="2.5"></path></svg></div>
+              <span>Kissou Kiss</span>
+            </button>
+            <button class="face-card" onclick="sendFace(7, this)">
+              <div class="eye-preview"><svg viewBox="0 0 100 50"><path d="M29 18 A 6 6 0 0 0 20 22 Q 29 36 29 36 Q 29 36 38 22 A 6 6 0 0 0 29 18" fill="none" stroke="#00F0FF" stroke-width="2.5"></path><path d="M71 18 A 6 6 0 0 0 62 22 Q 71 36 71 36 Q 71 36 80 22 A 6 6 0 0 0 71 18" fill="none" stroke="#00F0FF" stroke-width="2.5"></path></svg></div>
+              <span>Mini Love</span>
+            </button>
+            <button class="face-card" onclick="sendFace(8, this)">
+              <div class="eye-preview"><svg viewBox="0 0 100 50"><rect x="15" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="2.5"></rect><rect x="57" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="2.5"></rect><polygon points="29,18 31,23 36,25 31,27 29,32 27,27 22,25 27,23" fill="#00F0FF"></polygon><polygon points="71,18 73,23 78,25 73,27 71,32 69,27 64,25 69,23" fill="#00F0FF"></polygon></svg></div>
+              <span>Anime Love</span>
+            </button>
+            <button class="face-card" onclick="sendFace(9, this)">
+              <div class="eye-preview"><svg viewBox="0 0 100 50"><line x1="20" y1="15" x2="38" y2="35" stroke="#00F0FF" stroke-width="3.5"></line><line x1="38" y1="15" x2="20" y2="35" stroke="#00F0FF" stroke-width="3.5"></line><line x1="62" y1="15" x2="80" y2="35" stroke="#00F0FF" stroke-width="3.5"></line><line x1="80" y1="15" x2="62" y2="35" stroke="#00F0FF" stroke-width="3.5"></line></svg></div>
+              <span>Dizzy Eyes</span>
+            </button>
+            <button class="face-card" onclick="sendFace(10, this)">
+              <div class="eye-preview"><svg viewBox="0 0 100 50"><line x1="14" y1="14" x2="43" y2="24" stroke="#00F0FF" stroke-width="4"></line><line x1="86" y1="14" x2="57" y2="24" stroke="#00F0FF" stroke-width="4"></line><rect x="18" y="26" width="22" height="14" rx="4" fill="none" stroke="#00F0FF" stroke-width="2.5"></rect><rect x="60" y="26" width="22" height="14" rx="4" fill="none" stroke="#00F0FF" stroke-width="2.5"></rect></svg></div>
+              <span>Angry Face</span>
+            </button>
+            <button class="face-card" onclick="sendFace(11, this)">
+              <div class="eye-preview"><svg viewBox="0 0 100 50"><rect x="15" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="2.5"></rect><rect x="57" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="2.5"></rect><rect x="17" y="16" width="12" height="18" rx="4" fill="#00F0FF"></rect><rect x="59" y="16" width="12" height="18" rx="4" fill="#00F0FF"></rect></svg></div>
+              <span>Left Glance</span>
+            </button>
+            <button class="face-card" onclick="sendFace(12, this)">
+              <div class="eye-preview"><svg viewBox="0 0 100 50"><path d="M29 14 A 8 8 0 0 0 17 22 Q 29 40 29 40 Q 29 40 41 22 A 8 8 0 0 0 29 14" fill="#00F0FF"></path><path d="M71 14 A 8 8 0 0 0 59 22 Q 71 40 71 40 Q 71 40 83 22 A 8 8 0 0 0 71 14" fill="#00F0FF"></path></svg></div>
+              <span>Love Heart</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- SUBVIEW B: 10 GAME ARCADE + GAMEPAD -->
+        <div id="subViewGames" class="arcade-subview">
+          <div class="games-grid">
+            <button class="game-btn" onclick="sendDeviceMode(5)">
+              <svg viewBox="0 0 40 40"><rect x="10" y="14" width="18" height="14" rx="4"></rect><rect x="24" y="18" width="8" height="6" fill="#00F0FF"></rect><circle cx="20" cy="18" r="2" fill="#00F0FF"></circle><path d="M8 20L14 20"></path></svg>
+              <span>Flappy Bird</span>
+            </button>
+            <button class="game-btn" onclick="sendDeviceMode(6)">
+              <svg viewBox="0 0 40 40"><path d="M14 30V18H24V22H28V14H20V10H28V12H32V20H26V26H28V30H24V26H18V30Z" fill="none" stroke="#00F0FF"></path><line x1="6" y1="32" x2="34" y2="32"></line></svg>
+              <span>Dino Game</span>
+            </button>
+            <button class="game-btn" onclick="sendDeviceMode(9)">
+              <svg viewBox="0 0 40 40"><line x1="8" y1="10" x2="32" y2="10" stroke-width="2.5"></line><line x1="20" y1="10" x2="20" y2="15"></line><rect x="12" y="15" width="16" height="12" rx="4"></rect><line x1="12" y1="21" x2="4" y2="21"></line><line x1="4" y1="18" x2="4" y2="24"></line><line x1="10" y1="31" x2="30" y2="31"></line></svg>
+              <span>Copter Game</span>
+            </button>
+            <button class="game-btn" onclick="sendDeviceMode(10)">
+              <svg viewBox="0 0 40 40"><line x1="6" y1="8" x2="34" y2="8" stroke-dasharray="2 2"></line><line x1="6" y1="32" x2="34" y2="32"></line><circle cx="20" cy="18" r="3"></circle><path d="M20 21L20 27L16 32M20 27L24 32"></path></svg>
+              <span>Gravity Run</span>
+            </button>
+            <button class="game-btn" onclick="sendDeviceMode(11)">
+              <svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="8" fill="#00F0FF" fill-opacity="0.2"></circle><line x1="20" y1="12" x2="20" y2="4"></line><circle cx="20" cy="4" r="2" fill="#00F0FF"></circle><line x1="20" y1="28" x2="20" y2="36"></line><circle cx="20" cy="36" r="2" fill="#00F0FF"></circle></svg>
+              <span>Pin Circle</span>
+            </button>
+            <button class="game-btn" onclick="sendDeviceMode(12)">
+              <svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="10" stroke-dasharray="3 3"></circle><circle cx="20" cy="20" r="5" fill="#00F0FF"></circle><circle cx="28" cy="12" r="3" fill="#00F0FF"></circle></svg>
+              <span>Orbit Jumper</span>
+            </button>
+            <button class="game-btn" onclick="sendDeviceMode(13)">
+              <svg viewBox="0 0 40 40"><rect x="10" y="28" width="20" height="6" rx="1"></rect><rect x="12" y="20" width="16" height="6" rx="1"></rect><rect x="15" y="12" width="12" height="6" rx="1" fill="#00F0FF" fill-opacity="0.3"></rect></svg>
+              <span>Tower Stack</span>
+            </button>
+            <button class="game-btn" onclick="sendDeviceMode(14)">
+              <svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="14"></circle><circle cx="20" cy="20" r="8"></circle><line x1="20" y1="20" x2="30" y2="10"></line></svg>
+              <span>Radar Defend</span>
+            </button>
+            <button class="game-btn" onclick="sendDeviceMode(15)">
+              <svg viewBox="0 0 40 40"><ellipse cx="26" cy="22" rx="9" ry="3"></ellipse><line x1="35" y1="16" x2="35" y2="28" stroke-width="3"></line><circle cx="12" cy="14" r="5" fill="#00F0FF" fill-opacity="0.3"></circle></svg>
+              <span>Hoop Dunk</span>
+            </button>
+            <button class="game-btn" onclick="sendDeviceMode(16)">
+              <svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="14"></circle><path d="M12 32 A 14 14 0 0 0 28 32" stroke-width="4"></path><circle cx="20" cy="14" r="2.5" fill="#00F0FF"></circle></svg>
+              <span>Orbit Pong</span>
+            </button>
+          </div>
+
+          <!-- STICKY ACTION BUTTON (GAMEPAD TAP) -->
+          <div class="action-pad-wrap">
+            <button class="neon-action-pad" onclick="sendActionTap()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2.5"><polygon points="12 2 15 8 21 9 17 14 18 20 12 17 6 20 7 14 3 9 9 8 12 2"></polygon></svg>
+              <span>AKSI / LOMPAT GAMEPAD</span>
             </button>
           </div>
         </div>
       </section>
 
-      <!-- ================= PAGE 4: KONTROL ROBOT ================= -->
-      <section id="pageControl" class="page">
-        <div class="page-title-banner">
-          <h2>KONTROL ROBOT</h2>
-          <span class="sub-badge">SENSOR & PERANGKAT KERAS</span>
+      <!-- ================= PAGE 3: ROBOT (INFO STATUS & SENSOR) ================= -->
+      <section id="pageRobot" class="page">
+        <div class="section-title-bar">
+          <h2>STATUS ROBOT</h2>
+          <span class="hud-badge">TELEMETRI REAL-TIME</span>
         </div>
 
-        <div class="control-groups">
-          <!-- Sentuhan Kepala -->
-          <div class="control-panel-box">
-            <span class="panel-label">INTERAKSI SENTUHAN VIRTUAL</span>
-            <div class="touch-action-grid">
-              <button class="neon-touch-btn" onclick="sendTouchTap()">
+        <div class="telemetry-stack">
+          <!-- Status Mode -->
+          <div class="hud-tile">
+            <div class="tile-icon-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="12" cy="12" r="3"></circle></svg>
+            </div>
+            <div class="tile-info">
+              <span class="tile-label">MODE AKTIF SAAT INI</span>
+              <span id="teleActiveMode" class="tile-val">Animasi Wajah</span>
+            </div>
+          </div>
+
+          <!-- Status Daya & Tidur -->
+          <div class="hud-tile">
+            <div class="tile-icon-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            </div>
+            <div class="tile-info">
+              <span class="tile-label">KONDISI DAYA</span>
+              <span id="teleSleepState" class="tile-val">Robot Aktif (Bangun)</span>
+            </div>
+            <div class="tile-action">
+              <button class="btn-micro" onclick="sendSleep()">TIDUR</button>
+              <button class="btn-micro primary" onclick="sendWake()">BANGUN</button>
+            </div>
+          </div>
+
+          <!-- Memori ESP32 -->
+          <div class="hud-tile">
+            <div class="tile-icon-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><line x1="8" y1="2" x2="8" y2="4"></line><line x1="16" y1="2" x2="16" y2="4"></line></svg>
+            </div>
+            <div class="tile-info">
+              <span class="tile-label">SISA MEMORI SRAM (HEAP)</span>
+              <span class="tile-val">278.9 KB (85.1% Bebas)</span>
+            </div>
+          </div>
+
+          <!-- Interaksi Fisik Virtual -->
+          <div class="hud-panel-box">
+            <span class="panel-tag">SIMULASI SENSOR FISIK</span>
+            <div class="sensor-btn-cluster">
+              <button class="neon-sensor-btn" onclick="sendTouchTap()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v6M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8M18 11a2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"></path></svg>
                 <span>TEPUK KEPALA</span>
               </button>
-
-              <button class="neon-touch-btn" onclick="sendPetting()">
+              <button class="neon-sensor-btn" onclick="sendPetting()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
                 <span>ELUS SAYANG</span>
               </button>
-
-              <button class="neon-touch-btn" onclick="sendShake()">
+              <button class="neon-sensor-btn" onclick="sendShake()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M2 12h20M2 6h20M2 18h20"></path></svg>
                 <span>GOYANGKAN</span>
               </button>
             </div>
           </div>
+        </div>
+      </section>
 
-          <!-- Daya & Bangun -->
-          <div class="control-panel-box">
-            <span class="panel-label">MANAJEMEN DAYA & TIDUR</span>
-            <div class="touch-action-grid">
-              <button class="neon-touch-btn" onclick="sendSleep()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-                <span>MODE TIDUR</span>
-              </button>
+      <!-- ================= PAGE 4: SETTING (PENGATURAN PARAMETER) ================= -->
+      <section id="pageSetting" class="page">
+        <div class="section-title-bar">
+          <h2>PENGATURAN FITUR</h2>
+          <span class="hud-badge">KONFIGURASI</span>
+        </div>
 
-              <button class="neon-touch-btn" onclick="sendWake()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-                <span>BANGUNKAN</span>
-              </button>
+        <div class="settings-scroll-stack">
+          <!-- 1. Pengaturan Cuaca (Kota) -->
+          <div class="config-card">
+            <div class="config-header">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>
+              <span class="config-title">PENGATURAN KOTA CUACA</span>
+            </div>
+            <div class="input-inline-wrap">
+              <input type="text" id="cfgCityInput" placeholder="Ketik nama kota..." value="Jakarta">
+              <button class="neon-btn-action" onclick="saveCitySetting()">SIMPAN</button>
+            </div>
+            <!-- Preset Cepat Kota -->
+            <div class="chip-preset-row">
+              <button class="chip-preset" onclick="setPresetCity('Jakarta')">Jakarta</button>
+              <button class="chip-preset" onclick="setPresetCity('Bandung')">Bandung</button>
+              <button class="chip-preset" onclick="setPresetCity('Surabaya')">Surabaya</button>
+              <button class="chip-preset" onclick="setPresetCity('Yogyakarta')">Yogya</button>
+              <button class="chip-preset" onclick="setPresetCity('Bali')">Bali</button>
             </div>
           </div>
 
-          <!-- Audio & Layar -->
-          <div class="control-panel-box">
-            <span class="panel-label">AUDIO & KECERAHAN OLED</span>
-            <div class="hardware-controls-row">
-              <button class="neon-btn-action" onclick="testBuzzerSound()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
-                TES NADA BUZZER
-              </button>
-              <button class="neon-btn-subtle" onclick="restartRobot()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
-                RESTART ROBOT
-              </button>
+          <!-- 2. Pengaturan Teks Berjalan (Subtitle) -->
+          <div class="config-card">
+            <div class="config-header">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"></rect><line x1="6" y1="12" x2="18" y2="12"></line></svg>
+              <span class="config-title">TEKS PESAN BERJALAN (SUBTITLE)</span>
+            </div>
+            <div class="input-inline-wrap">
+              <input type="text" id="cfgSubtitleInput" placeholder="Ketik pesan untuk OLED..." maxlength="64">
+              <button class="neon-btn-action" onclick="sendCustomSubtitle()">KIRIM</button>
+            </div>
+          </div>
+
+          <!-- 3. Pengaturan Alarm Robot -->
+          <div class="config-card">
+            <div class="config-header">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l2 2M5 3L2 6M22 6l-3-3"></path></svg>
+              <span class="config-title">ALARM BANGUN ROBOT</span>
+            </div>
+            <div class="alarm-picker-box">
+              <div class="picker-digit"><label>JAM</label><input type="number" id="alarmHour" min="0" max="23" value="06"></div>
+              <span class="picker-sep">:</span>
+              <div class="picker-digit"><label>MENIT</label><input type="number" id="alarmMin" min="0" max="59" value="30"></div>
+            </div>
+            <div class="alarm-switches-box">
+              <label class="neon-switch"><span>Aktifkan Alarm</span><input type="checkbox" id="alarmEnabledToggle" checked><span class="slider"></span></label>
+              <label class="neon-switch"><span>Ulangi Setiap Hari</span><input type="checkbox" id="alarmDailyToggle" checked><span class="slider"></span></label>
+            </div>
+            <div class="dual-btn-row">
+              <button class="neon-btn-action" onclick="saveAlarmSettings()">SIMPAN ALARM</button>
+              <button class="neon-btn-subtle" onclick="testAlarmBuzzer()">TES ALARM</button>
+            </div>
+          </div>
+
+          <!-- 4. Pengaturan Jam -->
+          <div class="config-card">
+            <div class="config-header">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <span class="config-title">SINKRONISASI JAM</span>
+            </div>
+            <div class="action-btn-row">
+              <button class="neon-btn-action full" onclick="syncClock()">SINKRONKAN JAM HP KE ESP32</button>
+            </div>
+          </div>
+
+          <!-- 5. Perangkat Keras (Hardware & Audio) -->
+          <div class="config-card">
+            <div class="config-header">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+              <span class="config-title">PENGATURAN PERANGKAT KERAS</span>
+            </div>
+
+            <!-- Kecerahan OLED -->
+            <div class="slider-control-box">
+              <div class="slider-label-row">
+                <span>Kecerahan Layar OLED</span>
+                <span id="txtOledBrightness">100%</span>
+              </div>
+              <input type="range" id="sliderBrightness" min="10" max="255" value="255" oninput="changeOledBrightness(this.value)">
+            </div>
+
+            <!-- Auto Sleep Timeout -->
+            <div class="chips-control-box">
+              <span class="sub-label">Waktu Istirahat Otomatis (Auto-Sleep)</span>
+              <div class="chip-preset-row">
+                <button class="chip-preset" onclick="setAutoSleep(60, this)">1 Menit</button>
+                <button class="chip-preset" onclick="setAutoSleep(180, this)">3 Menit</button>
+                <button class="chip-preset active" onclick="setAutoSleep(300, this)">5 Menit</button>
+                <button class="chip-preset" onclick="setAutoSleep(0, this)">Selalu Nyala</button>
+              </div>
+            </div>
+
+            <div class="dual-btn-row mt-8">
+              <button class="neon-btn-subtle" onclick="testBuzzerSound()">TES BUZZER</button>
+              <button class="neon-btn-subtle danger" onclick="restartRobot()">RESTART ROBOT</button>
             </div>
           </div>
         </div>
@@ -504,50 +437,55 @@
 
     </main>
 
-    <!-- BOTTOM NAVIGATION (4 TABS) -->
+    <!-- BOTTOM NAVIGATION (4 PILAR KOKOH) -->
     <nav class="bottom-nav">
-      <button class="nav-tab active" onclick="switchPage('pageFaces')">
+      <!-- 1. MENU -->
+      <button id="tabBtnMenu" class="nav-tab active" onclick="switchMainTab('pageMenu', this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"></circle>
-          <path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"></path>
+          <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+          <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+          <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+          <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
         </svg>
-        <span>WAJAH</span>
+        <span>MENU</span>
       </button>
 
-      <button class="nav-tab" onclick="switchPage('pageGames')">
+      <!-- 2. ARCADE -->
+      <button id="tabBtnArcade" class="nav-tab" onclick="switchMainTab('pageArcade', this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="2" y="6" width="20" height="12" rx="3"></rect>
           <line x1="6" y1="12" x2="10" y2="12"></line>
           <line x1="8" y1="10" x2="8" y2="14"></line>
-          <circle cx="15" cy="11" r="1" fill="currentColor"></circle>
+          <circle cx="16" cy="10" r="1" fill="currentColor"></circle>
           <circle cx="18" cy="13" r="1" fill="currentColor"></circle>
         </svg>
-        <span>GAME</span>
+        <span>ARCADE</span>
       </button>
 
-      <button class="nav-tab" onclick="switchPage('pageClock')">
+      <!-- 3. ROBOT -->
+      <button id="tabBtnRobot" class="nav-tab" onclick="switchMainTab('pageRobot', this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"></circle>
-          <polyline points="12 6 12 12 16 14"></polyline>
-        </svg>
-        <span>JAM</span>
-      </button>
-
-      <button class="nav-tab" onclick="switchPage('pageControl')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="4" y="4" width="16" height="16" rx="2"></rect>
-          <rect x="9" y="9" width="6" height="6"></rect>
-          <line x1="9" y1="1" x2="9" y2="4"></line>
-          <line x1="15" y1="1" x2="15" y2="4"></line>
-          <line x1="9" y1="20" x2="9" y2="23"></line>
-          <line x1="15" y1="20" x2="15" y2="23"></line>
+          <rect x="4" y="6" width="16" height="14" rx="3"></rect>
+          <line x1="12" y1="2" x2="12" y2="6"></line>
+          <circle cx="9" cy="12" r="1.5" fill="currentColor"></circle>
+          <circle cx="15" cy="12" r="1.5" fill="currentColor"></circle>
+          <path d="M9 16h6"></path>
         </svg>
         <span>ROBOT</span>
       </button>
+
+      <!-- 4. SETTING -->
+      <button id="tabBtnSetting" class="nav-tab" onclick="switchMainTab('pageSetting', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        <span>SETTING</span>
+      </button>
     </nav>
 
-    <!-- NOTIFICATION TOAST -->
-    <div id="neonToast" class="neon-toast">
+    <!-- STRICT 1-LINE TOAST NOTIFICATION -->
+    <div id="neonToast" class="neon-toast-single">
       <span id="toastText">Robot Tersambung</span>
     </div>
 
