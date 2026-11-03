@@ -189,14 +189,26 @@ public class BleManager {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
-                notifyStatus(false, "Mencari layanan robot...");
-                gatt.discoverServices();
+                notifyStatus(false, "Terhubung, mencari layanan robot...");
+                mainHandler.postDelayed(() -> {
+                    try {
+                        if (gatt != null) {
+                            gatt.requestMtu(256);
+                            gatt.discoverServices();
+                        }
+                    } catch (Exception ignored) {}
+                }, 300);
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 isConnected = false;
                 rxChar = null;
                 txChar = null;
                 notifyStatus(false, "Terputus dari Robot");
             }
+        }
+
+        @Override
+        public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
+            Log.d(TAG, "BLE MTU dinegosiasikan ke: " + mtu);
         }
 
         @Override
@@ -218,10 +230,10 @@ public class BleManager {
 
                     isConnected = true;
                     notifyStatus(true, "Tersambung ke Robot");
-                    // Minta telemetri awal
-                    sendCommand("{\"cmd\":\"status\"}");
+                    // Minta telemetri awal setelah jeda singkat
+                    mainHandler.postDelayed(() -> sendCommand("{\"cmd\":\"status\"}"), 400);
                 } else {
-                    notifyStatus(false, "Layanan NUS tidak ditemukan");
+                    notifyStatus(false, "Layanan robot tidak ditemukan");
                 }
             }
         }
@@ -242,13 +254,30 @@ public class BleManager {
 
     public boolean sendCommand(String jsonCommand) {
         if (!isConnected || bluetoothGatt == null || rxChar == null) {
+            Log.e(TAG, "Gagal kirim: isConnected=" + isConnected + ", rxChar=" + rxChar);
             return false;
         }
         try {
             byte[] bytes = (jsonCommand + "\n").getBytes(StandardCharsets.UTF_8);
-            rxChar.setValue(bytes);
-            rxChar.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
-            return bluetoothGatt.writeCharacteristic(rxChar);
+            boolean writeOk;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                int res = bluetoothGatt.writeCharacteristic(rxChar, bytes, BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
+                writeOk = (res == android.bluetooth.BluetoothStatusCodes.SUCCESS);
+                if (!writeOk) {
+                    res = bluetoothGatt.writeCharacteristic(rxChar, bytes, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+                    writeOk = (res == android.bluetooth.BluetoothStatusCodes.SUCCESS);
+                }
+            } else {
+                rxChar.setValue(bytes);
+                rxChar.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
+                writeOk = bluetoothGatt.writeCharacteristic(rxChar);
+                if (!writeOk) {
+                    rxChar.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+                    writeOk = bluetoothGatt.writeCharacteristic(rxChar);
+                }
+            }
+            Log.d(TAG, "sendCommand: " + jsonCommand + " -> " + writeOk);
+            return writeOk;
         } catch (Exception e) {
             Log.e(TAG, "Gagal kirim command: " + e.getMessage());
             return false;

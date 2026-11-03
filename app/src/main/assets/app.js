@@ -48,8 +48,12 @@ function sendCommand(cmdObject) {
   const jsonStr = JSON.stringify(cmdObject);
   if (window.AndroidBLE && typeof window.AndroidBLE.send === 'function') {
     const success = window.AndroidBLE.send(jsonStr);
-    if (!success && !isBleConnected) {
-      showNeonToast('Bluetooth Belum Terhubung');
+    if (!success) {
+      if (!isBleConnected) {
+        showNeonToast('Bluetooth Belum Terhubung');
+      } else {
+        showNeonToast('Gagal Mengirim ke Robot');
+      }
     }
     return success;
   } else {
@@ -90,7 +94,6 @@ window.onBLEStatus = function(connected, message) {
     label.textContent = 'BLE TERHUBUNG';
     btnText.textContent = 'PUTUSKAN';
     showNeonToast('Robot Tersambung');
-    // Sinkronkan jam otomatis saat pertama kali tersambung
     syncClockQuiet();
   } else {
     dot.className = 'pulse-dot';
@@ -121,16 +124,20 @@ function sendFace(faceIndex, elem) {
   document.querySelectorAll('.face-card').forEach(c => c.classList.remove('active'));
   if (elem) elem.classList.add('active');
 
-  sendCommand({ cmd: 'face', val: faceIndex });
-  showNeonToast('Ekspresi Diganti');
-  triggerHaptic(25);
+  const ok = sendCommand({ cmd: 'face', val: faceIndex });
+  if (ok) {
+    showNeonToast('Ekspresi Diganti');
+    triggerHaptic(25);
+  }
 }
 
 // 2. Ganti Mode Robot (Game, Jam, Cuaca, dll)
 function sendDeviceMode(modeIndex) {
-  sendCommand({ cmd: 'mode', val: modeIndex });
-  showNeonToast('Mode Robot Diaktifkan');
-  triggerHaptic(30);
+  const ok = sendCommand({ cmd: 'mode', val: modeIndex });
+  if (ok) {
+    showNeonToast('Mode Robot Diaktifkan');
+    triggerHaptic(30);
+  }
 }
 
 // 3. Tombol Aksi Game (Virtual Action / Jump Tap)
