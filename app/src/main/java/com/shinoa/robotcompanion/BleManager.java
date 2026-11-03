@@ -51,11 +51,12 @@ public class BleManager {
 
     private boolean isScanning = false;
     private boolean isConnected = false;
+    private boolean isAutoConnectWhenFound = false;
     private BluetoothDevice discoveredDevice = null;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     public BleManager(Context context) {
-        this.context = context.getApplicationContext();
+        this.context = context;
         this.bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     }
 
@@ -79,22 +80,23 @@ public class BleManager {
 
         stopScan();
 
-        // 1. Periksa apakah sudah ter-pairing di pengaturan Bluetooth
+        // 1. Deteksi awal jika ada perangkat yang pernah dipasangkan (paired)
         try {
             if (bluetoothAdapter.getBondedDevices() != null) {
                 for (BluetoothDevice bonded : bluetoothAdapter.getBondedDevices()) {
                     String bName = bonded.getName();
                     if (bName != null && (bName.contains("Robot") || bName.contains("ESP32") || bName.contains("Desk"))) {
-                        discoveredDevice = bonded;
-                        notifyDeviceDiscovered("Robot Desk", bonded.getAddress());
-                        notifyStatus(false, "Robot Desk terdeteksi (Paired)");
-                        return;
+                        if (discoveredDevice == null) {
+                            discoveredDevice = bonded;
+                            notifyDeviceDiscovered("Robot Desk", bonded.getAddress());
+                        }
+                        break;
                     }
                 }
             }
         } catch (Exception ignored) {}
 
-        // 2. Pemindaian BLE
+        // 2. Pemindaian sinyal aktif BLE realtime
         bleScanner = bluetoothAdapter.getBluetoothLeScanner();
         if (bleScanner == null) {
             notifyStatus(false, "Scanner BLE tidak tersedia");
@@ -131,11 +133,13 @@ public class BleManager {
     }
 
     public void connectToDiscoveredDevice() {
+        stopScan();
         if (discoveredDevice != null) {
-            stopScan();
-            notifyStatus(false, "Menghubungkan ke Robot Desk...");
-            connectToDevice(discoveredDevice);
+            mainHandler.postDelayed(() -> {
+                connectToDevice(discoveredDevice);
+            }, 100);
         } else {
+            isAutoConnectWhenFound = true;
             startScan();
         }
     }
@@ -185,7 +189,10 @@ public class BleManager {
                 stopScan();
                 discoveredDevice = device;
                 notifyDeviceDiscovered("Robot Desk", device.getAddress());
-                notifyStatus(false, "Robot Desk terdeteksi");
+                if (isAutoConnectWhenFound) {
+                    isAutoConnectWhenFound = false;
+                    mainHandler.postDelayed(() -> connectToDevice(device), 100);
+                }
             }
         }
 
@@ -204,7 +211,11 @@ public class BleManager {
             } catch (Exception ignored) {}
             bluetoothGatt = null;
         }
-        bluetoothGatt = device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            bluetoothGatt = device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE);
+        } else {
+            bluetoothGatt = device.connectGatt(context, false, gattCallback);
+        }
     }
 
     public void disconnect() {
@@ -225,18 +236,23 @@ public class BleManager {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
-                notifyStatus(false, "Terhubung, mencari layanan robot...");
                 mainHandler.postDelayed(() -> {
                     try {
                         if (gatt != null) {
                             gatt.discoverServices();
                         }
                     } catch (Exception ignored) {}
-                }, 350);
+                }, 250);
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 isConnected = false;
                 rxChar = null;
                 txChar = null;
+                if (gatt != null) {
+                    try {
+                        gatt.close();
+                    } catch (Exception ignored) {}
+                }
+                bluetoothGatt = null;
                 notifyStatus(false, "Terputus dari Robot");
             }
         }

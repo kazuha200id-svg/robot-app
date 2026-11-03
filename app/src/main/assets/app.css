@@ -1177,6 +1177,21 @@ input[type="range"]::-webkit-slider-thumb {
   color: #000;
 }
 
+.neon-btn-corner.scanning {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+}
+
+.neon-btn-corner.scanning svg,
+.spin-icon {
+  animation: spinCornerAnim 0.75s linear infinite;
+}
+
+@keyframes spinCornerAnim {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 .neon-btn-action.disabled,
 .neon-btn-action:disabled {
   opacity: 0.35 !important;
@@ -1268,14 +1283,18 @@ input[type="range"]::-webkit-slider-thumb {
 /* ================= DETECTED DEVICE & SELECTION ================= */
 .detected-devices-wrap {
   width: 100%;
-  margin: 10px 0 2px 0;
+  margin: 14px 0 16px 0;
+}
+
+.connect-action-btn {
+  margin-top: 14px !important;
 }
 
 .device-state-box {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 12px;
+  padding: 12px 14px;
   background: rgba(10, 18, 34, 0.6);
   border: 1px dashed rgba(0, 240, 255, 0.25);
   border-radius: var(--radius-md);
@@ -1305,7 +1324,7 @@ input[type="range"]::-webkit-slider-thumb {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
+  padding: 12px 14px;
   background: rgba(8, 16, 30, 0.85);
   border: 1px solid rgba(0, 240, 255, 0.25);
   border-radius: var(--radius-md);
@@ -1313,6 +1332,7 @@ input[type="range"]::-webkit-slider-thumb {
   transition: all 0.2s ease;
   user-select: none;
   -webkit-user-select: none;
+  margin-bottom: 2px;
 }
 
 .device-select-item:active {
