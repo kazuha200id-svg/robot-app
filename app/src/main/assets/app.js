@@ -676,6 +676,39 @@ window.onBLEReceived = function(jsonStr) {
       if (sleepEl) sleepEl.textContent = data.asleep ? 'Robot Tidur' : 'Robot Aktif (Bangun)';
     }
 
+    // Clock config sync
+    if (data.clock) {
+      if (typeof data.clock.fmt_12h === 'boolean') {
+        currentClockFormat12H = data.clock.fmt_12h;
+        const btn24 = document.getElementById('btnClockFmt24');
+        const btn12 = document.getElementById('btnClockFmt12');
+        if (btn24) btn24.classList.toggle('active', !currentClockFormat12H);
+        if (btn12) btn12.classList.toggle('active', currentClockFormat12H);
+      }
+      if (typeof data.clock.show_sec === 'boolean') {
+        currentClockShowSec = data.clock.show_sec;
+        const toggleBtn = document.getElementById('btnToggleClockSec');
+        const labelEl = document.getElementById('btnClockSecLabel');
+        if (toggleBtn) toggleBtn.classList.toggle('active', currentClockShowSec);
+        if (labelEl) {
+          labelEl.textContent = currentClockShowSec ? 'DETIK: DITAMPILKAN (HH:MM:SS)' : 'DETIK: DISEMBUNYIKAN (HH:MM)';
+        }
+      }
+      if (typeof data.clock.tz === 'number') {
+        currentClockTzOffsetMin = data.clock.tz;
+        const matched = WORLD_TIMEZONES.find(t => t.offsetMin === currentClockTzOffsetMin);
+        if (matched) {
+          currentClockTzTitle = matched.title;
+          currentClockTzSub = matched.cities;
+          const titleEl = document.getElementById('clockActiveTzTitle');
+          const subEl = document.getElementById('clockActiveTzSub');
+          if (titleEl) titleEl.textContent = matched.title;
+          if (subEl) subEl.textContent = matched.cities;
+        }
+      }
+      updateOledClockTick();
+    }
+
     // Alarm config sync
     if (data.alarm) {
       if (typeof data.alarm.hour === 'number') {
@@ -1481,66 +1514,271 @@ let currentTimeFormat = 24;
 let currentTimezoneOffset = 7;
 let currentTempUnit = 'C';
 
+// Konfigurasi Fitur Jam Digital Robot
+let currentClockFormat12H = false; // false = 24 Jam, true = 12 Jam AM/PM
+let currentClockShowSec = true;    // true = tampil detik, false = sembunyikan detik
+let currentClockTzOffsetMin = 420; // Default WIB = UTC+07:00 (+420 menit)
+let currentClockTzTitle = 'UTC+07:00 • WIB (Jakarta, Bangkok)';
+let currentClockTzSub = 'Asia/Jakarta';
+
+// Daftar Lengkap Seluruh Zona Waktu Dunia (UTC-12:00 s/d UTC+14:00)
+const WORLD_TIMEZONES = [
+  { offsetMin: -720, label: 'UTC-12:00', title: 'UTC-12:00 • Baker Island (AoE)', cities: 'Baker Island, Howland Island' },
+  { offsetMin: -660, label: 'UTC-11:00', title: 'UTC-11:00 • Samoa Standard (SST)', cities: 'Pago Pago, Niue, Midway' },
+  { offsetMin: -600, label: 'UTC-10:00', title: 'UTC-10:00 • Hawaii (HST)', cities: 'Honolulu, Tahiti, Rarotonga' },
+  { offsetMin: -540, label: 'UTC-09:00', title: 'UTC-09:00 • Alaska (AKST)', cities: 'Anchorage, Juneau, Gambier' },
+  { offsetMin: -480, label: 'UTC-08:00', title: 'UTC-08:00 • Pasifik (PST)', cities: 'Los Angeles, San Francisco, Vancouver' },
+  { offsetMin: -420, label: 'UTC-07:00', title: 'UTC-07:00 • Mountain (MST)', cities: 'Denver, Phoenix, Calgary, Salt Lake' },
+  { offsetMin: -360, label: 'UTC-06:00', title: 'UTC-06:00 • Central (CST)', cities: 'Chicago, Houston, Dallas, Mexico City' },
+  { offsetMin: -300, label: 'UTC-05:00', title: 'UTC-05:00 • Eastern (EST)', cities: 'New York, Washington DC, Toronto, Bogota' },
+  { offsetMin: -240, label: 'UTC-04:00', title: 'UTC-04:00 • Atlantic (AST)', cities: 'Santiago, Santo Domingo, Halifax, Caracas' },
+  { offsetMin: -210, label: 'UTC-03:30', title: 'UTC-03:30 • Newfoundland (NST)', cities: 'St. John\'s, Labrador' },
+  { offsetMin: -180, label: 'UTC-03:00', title: 'UTC-03:00 • Brasilia / Argentina', cities: 'Sao Paulo, Buenos Aires, Montevideo' },
+  { offsetMin: -120, label: 'UTC-02:00', title: 'UTC-02:00 • Atlantik Tengah', cities: 'South Georgia, Fernando de Noronha' },
+  { offsetMin: -60,  label: 'UTC-01:00', title: 'UTC-01:00 • Azores / Tanjung Verde', cities: 'Ponta Delgada, Praia' },
+  { offsetMin: 0,    label: 'UTC+00:00', title: 'UTC+00:00 • GMT / WET (London)', cities: 'London, Dublin, Lisbon, Reykjavik, Accra' },
+  { offsetMin: 60,   label: 'UTC+01:00', title: 'UTC+01:00 • Eropa Tengah (CET)', cities: 'Paris, Berlin, Roma, Madrid, Amsterdam' },
+  { offsetMin: 120,  label: 'UTC+02:00', title: 'UTC+02:00 • Eropa Timur (EET)', cities: 'Kairo, Athena, Yerusalem, Johannesburg' },
+  { offsetMin: 180,  label: 'UTC+03:00', title: 'UTC+03:00 • Arab / Moskow (AST)', cities: 'Mekkah, Riyadh, Moskow, Istanbul, Nairobi' },
+  { offsetMin: 210,  label: 'UTC+03:30', title: 'UTC+03:30 • Iran (IRST)', cities: 'Teheran, Isfahan, Tabriz' },
+  { offsetMin: 240,  label: 'UTC+04:00', title: 'UTC+04:00 • Gulf (GST)', cities: 'Dubai, Abu Dhabi, Baku, Tbilisi' },
+  { offsetMin: 270,  label: 'UTC+04:30', title: 'UTC+04:30 • Afganistan (AFT)', cities: 'Kabul, Kandahar, Herat' },
+  { offsetMin: 300,  label: 'UTC+05:00', title: 'UTC+05:00 • Pakistan (PKT)', cities: 'Karachi, Islamabad, Tashkent, Yekaterinburg' },
+  { offsetMin: 330,  label: 'UTC+05:30', title: 'UTC+05:30 • India (IST)', cities: 'New Delhi, Mumbai, Kolkata, Colombo' },
+  { offsetMin: 345,  label: 'UTC+05:45', title: 'UTC+05:45 • Nepal (NPT)', cities: 'Kathmandu, Pokhara' },
+  { offsetMin: 360,  label: 'UTC+06:00', title: 'UTC+06:00 • Bangladesh (BST)', cities: 'Dhaka, Almaty, Omsk, Bishkek' },
+  { offsetMin: 390,  label: 'UTC+06:30', title: 'UTC+06:30 • Myanmar (MMT)', cities: 'Yangon, Mandalay, Naypyidaw' },
+  { offsetMin: 420,  label: 'UTC+07:00', title: 'UTC+07:00 • WIB (Jakarta, Bangkok)', cities: 'Jakarta, Surabaya, Medan, Bangkok, Hanoi' },
+  { offsetMin: 480,  label: 'UTC+08:00', title: 'UTC+08:00 • WITA (Bali, Singapura)', cities: 'Bali, Makassar, Singapura, Kuala Lumpur, Beijing' },
+  { offsetMin: 540,  label: 'UTC+09:00', title: 'UTC+09:00 • WIT (Tokyo, Jayapura)', cities: 'Tokyo, Seoul, Jayapura, Ambon, Pyongyang' },
+  { offsetMin: 570,  label: 'UTC+09:30', title: 'UTC+09:30 • Australia Tengah (ACST)', cities: 'Adelaide, Darwin, Alice Springs' },
+  { offsetMin: 600,  label: 'UTC+10:00', title: 'UTC+10:00 • Australia Timur (AEST)', cities: 'Sydney, Melbourne, Brisbane, Guam, Vladivostok' },
+  { offsetMin: 660,  label: 'UTC+11:00', title: 'UTC+11:00 • Solomon Islands', cities: 'Honiara, Noumea, Magadan' },
+  { offsetMin: 720,  label: 'UTC+12:00', title: 'UTC+12:00 • Selandia Baru (NZST)', cities: 'Auckland, Wellington, Fiji, Kamchatka' },
+  { offsetMin: 765,  label: 'UTC+12:45', title: 'UTC+12:45 • Chatham Islands', cities: 'Chatham Islands' },
+  { offsetMin: 780,  label: 'UTC+13:00', title: 'UTC+13:00 • Tonga / Samoa', cities: 'Nuku\'alofa, Apia, Tokelau' },
+  { offsetMin: 840,  label: 'UTC+14:00', title: 'UTC+14:00 • Line Islands', cities: 'Kiritimati (Christmas Island)' }
+];
+
+function renderTimezoneDropdown() {
+  const container = document.getElementById('clockTzDropdownList');
+  if (!container) return;
+  container.innerHTML = '';
+  WORLD_TIMEZONES.forEach((item) => {
+    const el = document.createElement('div');
+    el.className = `tz-dropdown-item ${item.offsetMin === currentClockTzOffsetMin ? 'selected' : ''}`;
+    el.onclick = () => selectTimezoneItem(item.offsetMin, item.title, item.cities);
+    el.innerHTML = `
+      <span class="tz-item-title">${item.title}</span>
+      <span class="tz-item-cities">${item.cities}</span>
+    `;
+    container.appendChild(el);
+  });
+}
+
+function toggleTimezoneDropdown() {
+  triggerHaptic(15);
+  const list = document.getElementById('clockTzDropdownList');
+  const arrow = document.getElementById('clockTzArrow');
+  if (!list) return;
+  const isHidden = list.style.display === 'none';
+  if (isHidden) {
+    renderTimezoneDropdown();
+    list.style.display = 'flex';
+    if (arrow) arrow.classList.add('open');
+  } else {
+    list.style.display = 'none';
+    if (arrow) arrow.classList.remove('open');
+  }
+}
+
+function selectTimezoneItem(offsetMin, title, cities) {
+  triggerHaptic(25);
+  currentClockTzOffsetMin = offsetMin;
+  currentClockTzTitle = title;
+  currentClockTzSub = cities;
+
+  const titleEl = document.getElementById('clockActiveTzTitle');
+  const subEl = document.getElementById('clockActiveTzSub');
+  if (titleEl) titleEl.textContent = title;
+  if (subEl) subEl.textContent = cities;
+
+  const list = document.getElementById('clockTzDropdownList');
+  const arrow = document.getElementById('clockTzArrow');
+  if (list) list.style.display = 'none';
+  if (arrow) arrow.classList.remove('open');
+
+  currentTimezoneOffset = offsetMin / 60;
+  updateOledClockTick();
+  showNeonToast(`Zona Waktu: ${title}`);
+}
+
+function applyPhoneTimezoneAuto(btnEl) {
+  if (btnEl && typeof btnEl.blur === 'function') btnEl.blur();
+  triggerHaptic(30);
+
+  // Deteksi offset menit HP (dibalik tandanya karena getTimezoneOffset menghasilkan menit ke UTC)
+  const phoneOffsetMin = -new Date().getTimezoneOffset();
+  const matched = WORLD_TIMEZONES.find(tz => tz.offsetMin === phoneOffsetMin) ||
+                  WORLD_TIMEZONES.reduce((prev, curr) => Math.abs(curr.offsetMin - phoneOffsetMin) < Math.abs(prev.offsetMin - phoneOffsetMin) ? curr : prev);
+
+  if (matched) {
+    selectTimezoneItem(matched.offsetMin, matched.title, matched.cities);
+    showNeonToast(`✓ Zona Waktu HP Terdeteksi: ${matched.label}`);
+  }
+}
+
+function selectClockFormat(is12H, btnEl) {
+  if (btnEl && typeof btnEl.blur === 'function') btnEl.blur();
+  triggerHaptic(20);
+  currentClockFormat12H = is12H;
+  currentTimeFormat = is12H ? 12 : 24;
+
+  const btn24 = document.getElementById('btnClockFmt24');
+  const btn12 = document.getElementById('btnClockFmt12');
+  if (btn24) btn24.classList.toggle('active', !is12H);
+  if (btn12) btn12.classList.toggle('active', is12H);
+
+  updateOledClockTick();
+  showNeonToast(`Format Jam: ${is12H ? '12 Jam (AM/PM)' : '24 Jam'}`);
+}
+
+function toggleClockSeconds(btnEl) {
+  if (btnEl && typeof btnEl.blur === 'function') btnEl.blur();
+  triggerHaptic(20);
+  currentClockShowSec = !currentClockShowSec;
+
+  const toggleBtn = document.getElementById('btnToggleClockSec');
+  const labelEl = document.getElementById('btnClockSecLabel');
+  if (toggleBtn) toggleBtn.classList.toggle('active', currentClockShowSec);
+  if (labelEl) {
+    labelEl.textContent = currentClockShowSec ? 'DETIK: DITAMPILKAN (HH:MM:SS)' : 'DETIK: DISEMBUNYIKAN (HH:MM)';
+  }
+
+  updateOledClockTick();
+  showNeonToast(`Detik: ${currentClockShowSec ? 'Ditampilkan' : 'Disembunyikan'}`);
+}
+
+// SINKRONKAN JAM DENGAN HP (AKSI UTAMA 1 TAP)
+function syncClockFromPhone(btnEl) {
+  if (btnEl && typeof btnEl.blur === 'function') btnEl.blur();
+  if (!isBleConnected) {
+    triggerHaptic(40);
+    showNeonToast('⚠ Robot belum terhubung Bluetooth!');
+    return;
+  }
+  if (isGameActivelyPlaying) {
+    triggerHaptic(40);
+    showNeonToast('⚠ Sedang bermain game! Selesaikan dulu untuk atur jam');
+    return;
+  }
+
+  triggerHaptic(35);
+  const now = Date.now();
+  const epoch = Math.floor(now / 1000);
+  const us = (now % 1000) * 1000;
+
+  sendCommand({
+    cmd: 'time',
+    epoch: epoch,
+    us: us,
+    tz: currentClockTzOffsetMin,
+    fmt_12h: currentClockFormat12H,
+    show_sec: currentClockShowSec
+  });
+
+  esp32TimeBaseMs = now;
+  localTimeAtSyncMs = now;
+  hasEsp32TimeSync = true;
+  updateOledClockTick();
+
+  showNeonToast('✓ Jam berhasil disinkronkan dengan HP!');
+}
+
+// TERAPKAN SETELAN FORMAT & ZONA WAKTU KE ROBOT
+function applyClockSettingsToRobot(btnEl) {
+  if (btnEl && typeof btnEl.blur === 'function') btnEl.blur();
+  if (!isBleConnected) {
+    triggerHaptic(40);
+    showNeonToast('⚠ Robot belum terhubung Bluetooth!');
+    return;
+  }
+  if (isGameActivelyPlaying) {
+    triggerHaptic(40);
+    showNeonToast('⚠ Sedang bermain game! Selesaikan dulu untuk atur jam');
+    return;
+  }
+
+  triggerHaptic(30);
+  sendCommand({
+    cmd: 'clock_cfg',
+    tz: currentClockTzOffsetMin,
+    fmt_12h: currentClockFormat12H,
+    show_sec: currentClockShowSec
+  });
+
+  updateOledClockTick();
+  showNeonToast('✓ Pengaturan jam berhasil diterapkan ke robot!');
+}
+
 function updateOledClockTick() {
   const clockEl = document.getElementById('oledClockPreview');
   const dateEl = document.getElementById('oledDatePreview');
-  const stageClockEl = document.getElementById('stageClockDigits');
-  const stageDateEl = document.getElementById('stageClockDate');
-  const stageTzEl = document.getElementById('stageOledTzLabel');
   const detailClockEl = document.getElementById('detailClockDigits');
   const detailDateEl = document.getElementById('detailClockDate');
-  const detailTzEl = document.getElementById('detailClockTz');
+  const phoneTimeEl = document.getElementById('clockCurrentPhoneTime');
 
-  let targetTime;
-  if (hasEsp32TimeSync && localTimeAtSyncMs > 0) {
-    const elapsedSinceSync = Date.now() - localTimeAtSyncMs;
-    targetTime = new Date(esp32TimeBaseMs + elapsedSinceSync);
-  } else {
-    const now = new Date();
-    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-    targetTime = new Date(utc + (3600000 * currentTimezoneOffset));
+  // Waktu HP Saat Ini untuk teks status sinkronisasi
+  const localNow = new Date();
+  const phoneH = String(localNow.getHours()).padStart(2, '0');
+  const phoneM = String(localNow.getMinutes()).padStart(2, '0');
+  const phoneS = String(localNow.getSeconds()).padStart(2, '0');
+  if (phoneTimeEl) {
+    phoneTimeEl.textContent = `${phoneH}:${phoneM}:${phoneS}`;
   }
+
+  // Waktu target dihitung dari UTC + offset zona waktu terpilih
+  const utcMs = localNow.getTime() + (localNow.getTimezoneOffset() * 60000);
+  const targetTime = new Date(utcMs + (currentClockTzOffsetMin * 60000));
 
   let hours = targetTime.getHours();
   const minutes = String(targetTime.getMinutes()).padStart(2, '0');
   const seconds = String(targetTime.getSeconds()).padStart(2, '0');
 
   let timeStr = '';
-  if (currentTimeFormat === 12) {
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12;
-    hours = hours ? hours : 12;
-    timeStr = `${String(hours).padStart(2, '0')}:${minutes}:${seconds} ${ampm}`;
+  if (!currentClockFormat12H) {
+    // Format 24 Jam
+    if (currentClockShowSec) {
+      timeStr = `${String(hours).padStart(2, '0')}:${minutes}:${seconds}`;
+    } else {
+      timeStr = `${String(hours).padStart(2, '0')}:${minutes}`;
+    }
   } else {
-    timeStr = `${String(hours).padStart(2, '0')}:${minutes}:${seconds}`;
+    // Format 12 Jam AM/PM
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    let h12 = hours % 12;
+    if (h12 === 0) h12 = 12;
+    if (currentClockShowSec) {
+      timeStr = `${String(h12).padStart(2, '0')}:${minutes}:${seconds} ${ampm}`;
+    } else {
+      timeStr = `${String(h12).padStart(2, '0')}:${minutes} ${ampm}`;
+    }
   }
 
-  const mainClockEl = document.getElementById('mainClockDigits');
-  if (mainClockEl) mainClockEl.textContent = timeStr;
   if (clockEl) clockEl.textContent = timeStr;
-  if (stageClockEl) stageClockEl.textContent = timeStr;
   if (detailClockEl) detailClockEl.textContent = timeStr;
 
-  // Format tanggal 100% PERSIS OLED: "Minggu, 05 Nov 2026"
-  const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+  // Tanggal & Nama Hari Otomatis Mengikuti Zona Waktu (Gregorian Calendar)
+  const days = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
+  const months = ['JAN', 'FEB', 'MAR', 'APR', 'MEI', 'JUN', 'JUL', 'AGU', 'SEP', 'OKT', 'NOV', 'DES'];
   const dayName = days[targetTime.getDay()];
   const dateNum = String(targetTime.getDate()).padStart(2, '0');
   const monthName = months[targetTime.getMonth()];
   const yearNum = targetTime.getFullYear();
   const dateStr = `${dayName}, ${dateNum} ${monthName} ${yearNum}`;
 
-  const mainDateEl = document.getElementById('mainClockDate');
-  if (mainDateEl) mainDateEl.textContent = dateStr;
   if (dateEl) dateEl.textContent = dateStr;
-  if (stageDateEl) stageDateEl.textContent = dateStr;
   if (detailDateEl) detailDateEl.textContent = dateStr;
-
-  const sel = document.getElementById('selTimezoneWorld');
-  const selectedText = sel ? sel.options[sel.selectedIndex]?.text : '';
-  const tzCode = selectedText ? selectedText.split(' ')[0] : 'WIB';
-  if (stageTzEl) stageTzEl.textContent = tzCode;
-  if (detailTzEl) detailTzEl.textContent = tzCode;
 }
 
 // Pembaruan realtime ultra-cepat (50ms) agar detik jam berpindah seketika tanpa jeda

@@ -2463,3 +2463,329 @@ input[type="range"]::-webkit-slider-thumb {
   margin-top: 1px;
 }
 
+/* ================= CLOCK DIGITAL CONTROL PANEL ================= */
+.clock-ctrl-panel {
+  gap: 14px;
+}
+
+.clock-ctrl-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.clock-ctrl-block .ctrl-sub-label {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+/* Tombol Sinkronisasi Utama */
+.btn-clock-sync {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 14px;
+  background: rgba(0, 240, 255, 0.12);
+  border: 1px solid var(--neon-cyan);
+  border-radius: var(--radius-sm);
+  color: var(--neon-cyan);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease;
+}
+
+.btn-clock-sync svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  stroke: var(--neon-cyan);
+}
+
+.btn-clock-sync:active {
+  transform: scale(0.97);
+  background: rgba(0, 240, 255, 0.22);
+}
+
+.clock-phone-status-line {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-align: center;
+  letter-spacing: 0.3px;
+}
+
+.clock-phone-status-line span {
+  color: var(--neon-cyan);
+  font-weight: 700;
+}
+
+/* Tombol Timezone Auto */
+.btn-clock-tz-auto {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(5, 12, 26, 0.85);
+  border: 1px dashed var(--neon-cyan-border);
+  border-radius: var(--radius-sm);
+  color: var(--neon-cyan);
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease;
+}
+
+.btn-clock-tz-auto svg {
+  width: 15px;
+  height: 15px;
+  stroke: var(--neon-cyan);
+}
+
+.btn-clock-tz-auto:active {
+  transform: scale(0.97);
+  background: rgba(0, 240, 255, 0.1);
+}
+
+/* Trigger Selector Timezone Dropdown */
+.tz-picker-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #02060c;
+  border: 1px solid var(--neon-cyan-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.15s ease;
+}
+
+.tz-trigger-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.tz-trigger-title {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--neon-cyan);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tz-trigger-sub {
+  font-family: var(--font-mono);
+  font-size: 0.52rem;
+  color: var(--text-muted);
+}
+
+.tz-trigger-arrow {
+  color: var(--neon-cyan);
+  font-size: 0.65rem;
+  transition: transform 0.2s ease;
+}
+
+.tz-trigger-arrow.open {
+  transform: rotate(180deg);
+}
+
+/* Custom Dropdown List Timezone */
+.tz-dropdown-list {
+  max-height: 210px;
+  overflow-y: auto;
+  background: #030814;
+  border: 1px solid var(--neon-cyan);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+  margin-top: 2px;
+  z-index: 100;
+}
+
+.tz-dropdown-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 7px 10px;
+  background: rgba(10, 18, 34, 0.6);
+  border: 1px solid transparent;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+.tz-dropdown-item:active,
+.tz-dropdown-item.selected {
+  background: rgba(0, 240, 255, 0.14);
+  border-color: var(--neon-cyan-border);
+}
+
+.tz-item-title {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--neon-cyan);
+}
+
+.tz-item-cities {
+  font-family: var(--font-mono);
+  font-size: 0.52rem;
+  color: var(--text-muted);
+}
+
+.clock-tz-info-hint {
+  font-family: var(--font-mono);
+  font-size: 0.52rem;
+  color: var(--text-muted);
+  letter-spacing: 0.2px;
+  line-height: 1.25;
+}
+
+/* Row Format Jam 24H vs 12H */
+.clock-fmt-btn-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
+}
+
+.btn-fmt-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 8px 6px;
+  background: #02060c;
+  border: 1px solid var(--neon-cyan-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  outline: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease;
+}
+
+.btn-fmt-pill:active {
+  transform: scale(0.97);
+}
+
+.btn-fmt-pill.active {
+  border-color: var(--neon-cyan);
+  background: rgba(0, 240, 255, 0.12);
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.25);
+}
+
+.fmt-pill-name {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--neon-cyan);
+}
+
+.fmt-pill-sample {
+  font-family: var(--font-mono);
+  font-size: 0.52rem;
+  color: var(--text-muted);
+}
+
+/* Toggle Detik */
+.btn-clock-toggle-sec {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: #02060c;
+  border: 1px solid var(--neon-cyan-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease;
+}
+
+.btn-clock-toggle-sec.active {
+  color: var(--neon-cyan);
+  border-color: var(--neon-cyan);
+  background: rgba(0, 240, 255, 0.08);
+}
+
+.btn-clock-toggle-sec:active {
+  transform: scale(0.97);
+}
+
+.sec-toggle-indicator {
+  font-size: 0.55rem;
+  color: var(--neon-cyan);
+}
+
+/* Tombol Terapkan ke Robot */
+.btn-clock-apply {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 14px;
+  background: rgba(0, 240, 255, 0.18);
+  border: 1px solid var(--neon-cyan);
+  border-radius: var(--radius-sm);
+  color: var(--neon-cyan);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease;
+}
+
+.btn-clock-apply svg {
+  width: 16px;
+  height: 16px;
+  stroke: var(--neon-cyan);
+}
+
+.btn-clock-apply:active {
+  transform: scale(0.97);
+  background: rgba(0, 240, 255, 0.28);
+}
+

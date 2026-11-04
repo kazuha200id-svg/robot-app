@@ -419,6 +419,84 @@
                 </div>
               </div>
             </div>
+
+            <!-- KONTROL JAM DIGITAL: SINKRONISASI, ZONA WAKTU DUNIA, FORMAT 24H/12H & DETIK -->
+            <div class="feature-ctrl-panel clock-ctrl-panel">
+
+              <!-- 1. AKSI UTAMA: SINKRONISASI JAM HP -->
+              <div class="clock-ctrl-block">
+                <span class="ctrl-sub-label">AKSI UTAMA: SINKRONISASI</span>
+                <button type="button" class="btn-clock-sync" id="btnSyncClockPhone" onclick="syncClockFromPhone(this)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                  </svg>
+                  <span>SINKRONKAN JAM DENGAN HP</span>
+                </button>
+                <div class="clock-phone-status-line" id="clockPhoneStatusLine">
+                  Waktu HP Saat Ini: <span id="clockCurrentPhoneTime">--:--:--</span>
+                </div>
+              </div>
+
+              <!-- 2. ZONA WAKTU INTERNASIONAL (TIMEZONE) -->
+              <div class="clock-ctrl-block">
+                <span class="ctrl-sub-label">ZONA WAKTU INTERNASIONAL (TIMEZONE)</span>
+                <button type="button" class="btn-clock-tz-auto" id="btnAutoClockTz" onclick="applyPhoneTimezoneAuto(this)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                  </svg>
+                  <span>IKUTI ZONA WAKTU HP (AUTO)</span>
+                </button>
+
+                <div class="tz-picker-trigger" id="btnOpenTzPicker" onclick="toggleTimezoneDropdown()">
+                  <div class="tz-trigger-info">
+                    <span class="tz-trigger-title" id="clockActiveTzTitle">UTC+07:00 • WIB (Jakarta, Bangkok)</span>
+                    <span class="tz-trigger-sub" id="clockActiveTzSub">Asia/Jakarta</span>
+                  </div>
+                  <span class="tz-trigger-arrow" id="clockTzArrow">▼</span>
+                </div>
+
+                <!-- Custom Dropdown List Zona Waktu Cyberpunk -->
+                <div class="tz-dropdown-list" id="clockTzDropdownList" style="display: none;">
+                  <!-- Daftar item timezone di-render dinamis oleh JS -->
+                </div>
+                <div class="clock-tz-info-hint">
+                  Info: Tanggal dan nama hari otomatis mengikuti zona waktu terpilih
+                </div>
+              </div>
+
+              <!-- 3. FORMAT TAMPILAN LAYAR OLED -->
+              <div class="clock-ctrl-block">
+                <span class="ctrl-sub-label">FORMAT TAMPILAN LAYAR OLED</span>
+                <div class="clock-fmt-btn-row">
+                  <button type="button" class="btn-fmt-pill active" id="btnClockFmt24" onclick="selectClockFormat(false, this)">
+                    <span class="fmt-pill-name">24 JAM</span>
+                    <span class="fmt-pill-sample">Contoh: 14:35</span>
+                  </button>
+                  <button type="button" class="btn-fmt-pill" id="btnClockFmt12" onclick="selectClockFormat(true, this)">
+                    <span class="fmt-pill-name">12 JAM AM/PM</span>
+                    <span class="fmt-pill-sample">Contoh: 02:35 PM</span>
+                  </button>
+                </div>
+
+                <button type="button" class="btn-clock-toggle-sec active" id="btnToggleClockSec" onclick="toggleClockSeconds(this)">
+                  <span class="sec-toggle-indicator">●</span>
+                  <span id="btnClockSecLabel">DETIK: DITAMPILKAN (HH:MM:SS)</span>
+                </button>
+              </div>
+
+              <!-- 4. TOMBOL TERAPKAN KE ROBOT -->
+              <div class="clock-ctrl-block" style="margin-top: 4px;">
+                <button type="button" class="btn-clock-apply" id="btnApplyClockCfg" onclick="applyClockSettingsToRobot(this)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  <span>TERAPKAN KE ROBOT</span>
+                </button>
+              </div>
+
+            </div>
           </div>
 
           <!-- 3. DETAIL: ALARM (100% PERSIS OLED DENGAN STATUS BAR) -->
