@@ -62,9 +62,11 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
                 if (state == BluetoothAdapter.STATE_ON) {
                     runOnUiThread(() -> {
                         webView.evaluateJavascript("if (window.onBluetoothPowerState) window.onBluetoothPowerState(true);", null);
-                        if (!hasInitialScanStarted) {
-                            hasInitialScanStarted = true;
-                            if (bleManager != null) {
+                        if (bleManager != null) {
+                            if (bleManager.hasSavedDevice()) {
+                                bleManager.connectToSavedDevice();
+                            } else if (!hasInitialScanStarted) {
+                                hasInitialScanStarted = true;
                                 bleManager.startScan();
                             }
                         }
@@ -223,12 +225,16 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
             }
         });
 
-        // Hanya jalankan pemindaian otomatis SATU KALI saat Bluetooth telah aktif
+        // Jalankan koneksi / pemindaian saat Bluetooth telah aktif
         if (isBtOn && !hasInitialScanStarted) {
             hasInitialScanStarted = true;
             runOnUiThread(() -> {
                 if (bleManager != null) {
-                    bleManager.startScan();
+                    if (bleManager.hasSavedDevice()) {
+                        bleManager.connectToSavedDevice();
+                    } else {
+                        bleManager.startScan();
+                    }
                 }
             });
         }
@@ -471,13 +477,48 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
         }
 
         @JavascriptInterface
-        public boolean isConnected() {
-            return bleManager.isConnected();
+        public boolean isScanning() {
+            return bleManager != null && bleManager.isScanning();
         }
 
         @JavascriptInterface
-        public boolean isScanning() {
-            return bleManager != null && bleManager.isScanning();
+        public boolean hasSavedDevice() {
+            return bleManager != null && bleManager.hasSavedDevice();
+        }
+
+        @JavascriptInterface
+        public String getSavedDeviceName() {
+            return bleManager != null ? bleManager.getSavedDeviceName() : "Robot Desk";
+        }
+
+        @JavascriptInterface
+        public String getSavedDeviceAddress() {
+            return bleManager != null ? bleManager.getSavedDeviceAddress() : "";
+        }
+
+        @JavascriptInterface
+        public void forgetDevice() {
+            runOnUiThread(() -> {
+                if (bleManager != null) {
+                    bleManager.forgetDevice();
+                    if (webView != null) {
+                        webView.evaluateJavascript("if (window.onDeviceForgotten) window.onDeviceForgotten();", null);
+                    }
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void reconnect() {
+            runOnUiThread(() -> {
+                if (bleManager != null) {
+                    if (bleManager.hasSavedDevice()) {
+                        bleManager.connectToSavedDevice();
+                    } else {
+                        bleManager.startScan();
+                    }
+                }
+            });
         }
     }
 

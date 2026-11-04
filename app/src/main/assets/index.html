@@ -61,7 +61,29 @@
           </button>
         </div>
 
-        <!-- Card: Perangkat Terdeteksi (Disembunyikan saat Bluetooth mati) -->
+        <!-- Card: Perangkat Tersimpan (Muncul jika sudah pernah pairing) -->
+        <div id="boxSavedDevice" class="setup-status-card" style="display: none;">
+          <div class="status-card-header-row">
+            <span class="status-card-label">PERANGKAT TERSIMPAN</span>
+            <button id="btnForgetDevice" class="neon-btn-corner" onclick="forgetSavedRobot()" title="Lupakan Robot">
+              <span id="forgetCornerLabel">GANTI ROBOT</span>
+            </button>
+          </div>
+
+          <div class="device-state-box" style="margin-top: 8px;">
+            <div id="savedDevSpinner" class="neon-spinner"></div>
+            <div class="device-state-info">
+              <span id="txtSavedDevState" class="device-state-title">Menyambungkan kembali...</span>
+              <span id="txtSavedDevName" class="device-state-sub">Robot Desk</span>
+            </div>
+          </div>
+
+          <button id="btnManualReconnect" class="neon-btn-action full mt-8" onclick="manualReconnectSaved()" style="display: none;">
+            SAMBUNGKAN KEMBALI
+          </button>
+        </div>
+
+        <!-- Card: Perangkat Terdeteksi (Disembunyikan saat Bluetooth mati atau sudah ada perangkat tersimpan) -->
         <div id="boxDetectedDevices" class="setup-status-card" style="display: none;">
           <div class="status-card-header-row">
             <span class="status-card-label">PERANGKAT TERDETEKSI</span>

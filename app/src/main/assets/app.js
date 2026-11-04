@@ -367,15 +367,108 @@ window.onScanStopped = function() {
   }, remaining);
 };
 
+function hasSavedRobot() {
+  if (window.AndroidBLE && typeof window.AndroidBLE.hasSavedDevice === 'function') {
+    return window.AndroidBLE.hasSavedDevice();
+  }
+  return localStorage.getItem('robot_saved_mac') !== null;
+}
+
+function getSavedRobotName() {
+  if (window.AndroidBLE && typeof window.AndroidBLE.getSavedDeviceName === 'function') {
+    const n = window.AndroidBLE.getSavedDeviceName();
+    if (n && n.trim().length > 0) return n;
+  }
+  return localStorage.getItem('robot_saved_name') || 'Robot Desk';
+}
+
+function forgetSavedRobot() {
+  triggerHaptic(40);
+  if (window.AndroidBLE && typeof window.AndroidBLE.forgetDevice === 'function') {
+    window.AndroidBLE.forgetDevice();
+  } else {
+    localStorage.removeItem('robot_saved_mac');
+    localStorage.removeItem('robot_saved_name');
+    window.onDeviceForgotten();
+  }
+}
+
+window.onDeviceForgotten = function() {
+  localStorage.removeItem('robot_saved_mac');
+  localStorage.removeItem('robot_saved_name');
+  showNeonToast('Perangkat robot dilupakan');
+  const isBtOn = (window.AndroidBLE && typeof window.AndroidBLE.isBluetoothEnabled === 'function') ? window.AndroidBLE.isBluetoothEnabled() : true;
+  updateSetupGateView(isBtOn);
+  retryAutoScan();
+};
+
+function manualReconnectSaved() {
+  triggerHaptic(30);
+  const name = getSavedRobotName();
+  showNeonToast('Menghubungkan ke ' + name);
+  const txtSaved = document.getElementById('txtSavedDevState');
+  const spinner = document.getElementById('savedDevSpinner');
+  const btnReconnect = document.getElementById('btnManualReconnect');
+  if (txtSaved) txtSaved.textContent = 'Menyambungkan kembali...';
+  if (spinner) spinner.style.display = 'block';
+  if (btnReconnect) btnReconnect.style.display = 'none';
+
+  if (window.AndroidBLE && typeof window.AndroidBLE.reconnect === 'function') {
+    window.AndroidBLE.reconnect();
+  } else if (window.AndroidBLE && typeof window.AndroidBLE.connect === 'function') {
+    window.AndroidBLE.connect();
+  }
+}
+
+function updateSetupGateView(btEnabled) {
+  const boxBt = document.getElementById('boxBtPower');
+  const boxSaved = document.getElementById('boxSavedDevice');
+  const boxDetected = document.getElementById('boxDetectedDevices');
+  const radarWrap = document.querySelector('.setup-radar-wrap');
+  const hasSaved = hasSavedRobot();
+
+  if (!btEnabled) {
+    if (boxBt) boxBt.style.display = 'flex';
+    if (boxSaved) boxSaved.style.display = 'none';
+    if (boxDetected) boxDetected.style.display = 'none';
+    if (radarWrap) radarWrap.style.display = 'none';
+  } else {
+    if (boxBt) boxBt.style.display = 'none';
+    if (hasSaved) {
+      if (boxSaved) boxSaved.style.display = 'flex';
+      if (boxDetected) boxDetected.style.display = 'none';
+      if (radarWrap) radarWrap.style.display = 'none';
+
+      const txtName = document.getElementById('txtSavedDevName');
+      if (txtName) txtName.textContent = getSavedRobotName();
+
+      const txtState = document.getElementById('txtSavedDevState');
+      const spinner = document.getElementById('savedDevSpinner');
+      const btnReconnect = document.getElementById('btnManualReconnect');
+      if (isBleConnected) {
+        if (txtState) txtState.textContent = 'Tersambung';
+        if (spinner) spinner.style.display = 'none';
+        if (btnReconnect) btnReconnect.style.display = 'none';
+      } else {
+        if (txtState) txtState.textContent = 'Menyambungkan ke robot...';
+        if (spinner) spinner.style.display = 'block';
+        if (btnReconnect) btnReconnect.style.display = 'none';
+      }
+    } else {
+      if (boxSaved) boxSaved.style.display = 'none';
+      if (boxDetected) boxDetected.style.display = 'flex';
+      if (radarWrap) radarWrap.style.display = 'flex';
+    }
+  }
+}
+
 // BLUETOOTH POWER STATE CALLBACK FROM NATIVE ANDROID
 window.onBluetoothPowerState = function(enabled) {
   const txtBt = document.getElementById('txtBtPower');
   const btnEnable = document.getElementById('btnEnableBt');
   const boxBt = document.getElementById('boxBtPower');
-  const boxDetected = document.getElementById('boxDetectedDevices');
-  const txtScan = document.getElementById('txtScanState');
-  const spinner = document.getElementById('scanSpinner');
   const gate = document.getElementById('setupGate');
+  const btnDisc = document.getElementById('btnDisconnectBt');
 
   if (enabled) {
     if (txtBt) {
@@ -384,10 +477,22 @@ window.onBluetoothPowerState = function(enabled) {
     }
     if (btnEnable) btnEnable.style.display = 'none';
     if (boxBt) boxBt.classList.add('ready');
-    if (boxDetected) boxDetected.style.display = 'flex';
-    if (txtScan && !isBleConnected && !isDeviceFound) {
-      txtScan.textContent = 'Mencari Robot Desk...';
-      if (spinner) spinner.style.display = 'block';
+
+    updateSetupGateView(true);
+
+    if (!isBleConnected) {
+      if (hasSavedRobot()) {
+        if (window.AndroidBLE && typeof window.AndroidBLE.reconnect === 'function') {
+          window.AndroidBLE.reconnect();
+        }
+      } else {
+        const txtScan = document.getElementById('txtScanState');
+        const spinner = document.getElementById('scanSpinner');
+        if (txtScan && !isDeviceFound) {
+          txtScan.textContent = 'Mencari Robot Desk...';
+          if (spinner) spinner.style.display = 'block';
+        }
+      }
     }
   } else {
     isDeviceFound = false;
@@ -401,22 +506,9 @@ window.onBluetoothPowerState = function(enabled) {
     }
     if (btnEnable) btnEnable.style.display = 'block';
     if (boxBt) boxBt.classList.remove('ready');
-    if (boxDetected) boxDetected.style.display = 'none';
-
-    const scanningBox = document.getElementById('deviceScanningBox');
-    const itemBox = document.getElementById('deviceItemBox');
-    if (scanningBox) scanningBox.style.display = 'flex';
-    if (itemBox) {
-      itemBox.style.display = 'none';
-      itemBox.classList.remove('selected');
-    }
-    if (txtScan) txtScan.textContent = 'Nyalakan Bluetooth untuk mulai';
-    if (spinner) spinner.style.display = 'none';
-
-    const btnDisc = document.getElementById('btnDisconnectBt');
     if (btnDisc) btnDisc.style.display = 'none';
 
-    updateConnectButtonState();
+    updateSetupGateView(false);
 
     if (gate) gate.classList.add('active');
   }
@@ -443,6 +535,9 @@ window.onBLEStatus = function(connected, message) {
     if (label) label.textContent = 'BLE TERHUBUNG';
     if (btnDisc) btnDisc.style.display = 'flex';
 
+    localStorage.setItem('robot_saved_mac', 'connected');
+    localStorage.setItem('robot_saved_name', 'Robot Desk');
+
     if (isConnecting) {
       const elapsed = Date.now() - connectStartTime;
       const remaining = Math.max(0, 3000 - elapsed);
@@ -459,6 +554,17 @@ window.onBLEStatus = function(connected, message) {
 
     if (!isConnecting && gate) {
       gate.classList.add('active');
+      const isBtOn = (window.AndroidBLE && typeof window.AndroidBLE.isBluetoothEnabled === 'function') ? window.AndroidBLE.isBluetoothEnabled() : true;
+      updateSetupGateView(isBtOn);
+
+      if (hasSavedRobot()) {
+        const txtSaved = document.getElementById('txtSavedDevState');
+        const spinner = document.getElementById('savedDevSpinner');
+        const btnReconnect = document.getElementById('btnManualReconnect');
+        if (txtSaved) txtSaved.textContent = 'Terputus dari Robot';
+        if (spinner) spinner.style.display = 'none';
+        if (btnReconnect) btnReconnect.style.display = 'block';
+      }
     }
 
     const isFailure = message && (
@@ -1031,12 +1137,22 @@ window.addEventListener('DOMContentLoaded', () => {
   updateOledAlarmPreview();
   updateOledClockTick();
 
-  // Cek status daya Bluetooth HP secara native
+  // Cek status daya Bluetooth HP & sambungkan kembali ke robot tersimpan
   if (window.AndroidBLE && typeof window.AndroidBLE.isBluetoothEnabled === 'function') {
     const btOn = window.AndroidBLE.isBluetoothEnabled();
     window.onBluetoothPowerState(btOn);
     if (btOn) {
-      window.AndroidBLE.connect();
+      if (hasSavedRobot()) {
+        if (typeof window.AndroidBLE.reconnect === 'function') {
+          window.AndroidBLE.reconnect();
+        } else {
+          window.AndroidBLE.connect();
+        }
+      } else {
+        window.AndroidBLE.connect();
+      }
     }
+  } else {
+    updateSetupGateView(true);
   }
 });

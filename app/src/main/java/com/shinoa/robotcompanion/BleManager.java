@@ -59,6 +59,10 @@ public class BleManager {
     private BluetoothDevice bondedCandidate = null;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
+    private static final String PREF_NAME = "robot_companion_ble";
+    private static final String KEY_SAVED_MAC = "saved_mac_address";
+    private static final String KEY_SAVED_NAME = "saved_device_name";
+
     public BleManager(Context context) {
         this.context = context.getApplicationContext();
         this.bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -74,6 +78,64 @@ public class BleManager {
 
     public boolean isBluetoothEnabled() {
         return bluetoothAdapter != null && bluetoothAdapter.isEnabled();
+    }
+
+    public void saveDevice(BluetoothDevice device) {
+        if (device != null && device.getAddress() != null) {
+            String name = device.getName();
+            if (name == null || name.trim().isEmpty()) name = "Robot Desk";
+            context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+                    .edit()
+                    .putString(KEY_SAVED_MAC, device.getAddress())
+                    .putString(KEY_SAVED_NAME, name)
+                    .apply();
+            Log.d(TAG, "Perangkat robot tersimpan permanen: " + device.getAddress() + " (" + name + ")");
+        }
+    }
+
+    public String getSavedDeviceAddress() {
+        return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+                .getString(KEY_SAVED_MAC, null);
+    }
+
+    public String getSavedDeviceName() {
+        return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+                .getString(KEY_SAVED_NAME, "Robot Desk");
+    }
+
+    public boolean hasSavedDevice() {
+        return getSavedDeviceAddress() != null;
+    }
+
+    public void forgetDevice() {
+        context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .remove(KEY_SAVED_MAC)
+                .remove(KEY_SAVED_NAME)
+                .apply();
+        discoveredDevice = null;
+        disconnect();
+        notifyStatus(false, "Perangkat robot telah dilupakan");
+    }
+
+    public boolean connectToSavedDevice() {
+        String savedMac = getSavedDeviceAddress();
+        if (savedMac == null || bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {
+            return false;
+        }
+
+        try {
+            BluetoothDevice device = bluetoothAdapter.getRemoteDevice(savedMac);
+            if (device != null) {
+                discoveredDevice = device;
+                stopScan();
+                connectToDevice(device);
+                return true;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Gagal mendapatkan perangkat tersimpan: " + e.getMessage());
+        }
+        return false;
     }
 
     public void startScan() {
@@ -102,7 +164,7 @@ public class BleManager {
             }
         } catch (Exception ignored) {}
 
-        // 2. Pemindaian sinyal aktif BLE realtime
+        // 2. Pemindaian sinyal aktif BLE realtime dengan ScanFilter perangkat keras
         bleScanner = bluetoothAdapter.getBluetoothLeScanner();
         if (bleScanner == null) {
             if (discoveredDevice == null) {
@@ -133,12 +195,28 @@ public class BleManager {
             }
         }, 12000);
 
+        List<ScanFilter> filters = new ArrayList<>();
         try {
-            bleScanner.startScan(null, settings, scanCallback);
+            filters.add(new ScanFilter.Builder()
+                    .setServiceUuid(new ParcelUuid(NUS_SERVICE_UUID))
+                    .build());
+        } catch (Exception ignored) {}
+        try {
+            filters.add(new ScanFilter.Builder()
+                    .setDeviceName("Robot Desk")
+                    .build());
+        } catch (Exception ignored) {}
+
+        try {
+            bleScanner.startScan(filters, settings, scanCallback);
         } catch (Exception e) {
             try {
-                bleScanner.startScan(scanCallback);
-            } catch (Exception ignored) {}
+                bleScanner.startScan(null, settings, scanCallback);
+            } catch (Exception ignored) {
+                try {
+                    bleScanner.startScan(scanCallback);
+                } catch (Exception ignored2) {}
+            }
         }
     }
 
@@ -147,16 +225,21 @@ public class BleManager {
     }
 
     public void startScanAndConnect() {
-        startScan();
+        if (hasSavedDevice()) {
+            connectToSavedDevice();
+        } else {
+            startScan();
+        }
     }
 
     public void connectToDiscoveredDevice() {
         stopScan();
         if (discoveredDevice != null) {
-            // Beri jeda 200ms setelah stopScan agar stack BLE Android siap connect
             mainHandler.postDelayed(() -> {
                 connectToDevice(discoveredDevice);
             }, 200);
+        } else if (hasSavedDevice()) {
+            connectToSavedDevice();
         } else {
             isAutoConnectWhenFound = true;
             startScan();
@@ -213,7 +296,10 @@ public class BleManager {
                 }
             }
 
-            if (matchName || matchUuid) {
+            String savedAddr = getSavedDeviceAddress();
+            boolean matchSaved = savedAddr != null && savedAddr.equalsIgnoreCase(device.getAddress());
+
+            if (matchName || matchUuid || matchSaved) {
                 stopScan();
                 discoveredDevice = device;
                 notifyDeviceDiscovered("Robot Desk", device.getAddress());
@@ -350,6 +436,11 @@ public class BleManager {
                     if (rxChar != null) {
                         isConnected = true;
                         connectAttempts = 0;
+
+                        // Simpan perangkat secara permanen agar pairing hanya 1 kali
+                        try {
+                            saveDevice(gatt.getDevice());
+                        } catch (Exception ignored) {}
 
                         // Aktifkan notifikasi pada TX Characteristic
                         if (txChar != null) {
