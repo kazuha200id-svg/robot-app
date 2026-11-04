@@ -2097,7 +2097,7 @@ input[type="range"]::-webkit-slider-thumb {
   margin-top: 4px;
 }
 
-/* Face Card: Hover aktif, Selected/Active state dihilangkan */
+/* Face Card: Kotak aktif dihilangkan sepenuhnya */
 .face-card {
   display: flex;
   flex-direction: column;
@@ -2109,32 +2109,40 @@ input[type="range"]::-webkit-slider-thumb {
   border: 1px solid var(--neon-cyan-border);
   border-radius: var(--radius-md);
   cursor: pointer;
+  outline: none;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
-  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.12s ease;
 }
 
-/* Hover aktif saat kursor melayang di atas kartu */
-.face-card:hover {
-  border-color: var(--neon-cyan) !important;
-  background: rgba(0, 240, 255, 0.12) !important;
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3) !important;
-  transform: translateY(-2px);
+/* Hover HANYA aktif pada desktop/mouse pointer, tidak menempel pada layar sentuh HP */
+@media (hover: hover) and (pointer: fine) {
+  .face-card:hover {
+    border-color: var(--neon-cyan);
+    background: rgba(0, 240, 255, 0.08);
+    transform: translateY(-2px);
+  }
 }
 
 .face-card:active {
-  transform: scale(0.97);
-  background: rgba(0, 240, 255, 0.18) !important;
-  border-color: var(--neon-cyan) !important;
+  transform: scale(0.96);
+  background: rgba(5, 10, 22, 0.85) !important;
+  border-color: var(--neon-cyan-border) !important;
+  box-shadow: none !important;
+  outline: none !important;
 }
 
-/* Selected / Active State DIHILANGKAN (tampil normal tanpa kotak terang yang menempel) */
+/* Kotak aktif / Selected / Focus State DIHILANGKAN TOTAL */
+.face-card:focus,
+.face-card:focus-visible,
+.face-card:focus-within,
 .face-card.active,
 .face-card.selected {
-  background: rgba(5, 10, 22, 0.85);
-  border-color: var(--neon-cyan-border);
-  box-shadow: none;
-  transform: none;
+  background: rgba(5, 10, 22, 0.85) !important;
+  border-color: var(--neon-cyan-border) !important;
+  box-shadow: none !important;
+  transform: none !important;
+  outline: none !important;
 }
 
 .face-card .eye-preview {
@@ -2339,7 +2347,7 @@ input[type="range"]::-webkit-slider-thumb {
   margin-top: 4px;
 }
 
-/* Game Select Card: Hover aktif, Selected/Active state dihilangkan */
+/* Game Select Card: Hover aktif hanya di desktop, Selected/Active state dihilangkan */
 .game-select-card {
   display: flex;
   align-items: center;
@@ -2350,31 +2358,39 @@ input[type="range"]::-webkit-slider-thumb {
   border-radius: var(--radius-sm);
   cursor: pointer;
   user-select: none;
+  outline: none;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.12s ease;
 }
 
-/* Hover aktif saat kursor melayang di atas kartu game */
-.game-select-card:hover {
-  border-color: var(--neon-cyan) !important;
-  background: rgba(0, 240, 255, 0.12) !important;
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3) !important;
-  transform: translateY(-1.5px);
+/* Hover aktif HANYA untuk pointer mouse di desktop */
+@media (hover: hover) and (pointer: fine) {
+  .game-select-card:hover {
+    border-color: var(--neon-cyan);
+    background: rgba(0, 240, 255, 0.08);
+    transform: translateY(-1.5px);
+  }
 }
 
 .game-select-card:active {
-  transform: scale(0.97);
-  background: rgba(0, 240, 255, 0.18) !important;
-  border-color: var(--neon-cyan) !important;
+  transform: scale(0.96);
+  background: rgba(5, 10, 22, 0.85) !important;
+  border-color: var(--neon-cyan-border) !important;
+  box-shadow: none !important;
+  outline: none !important;
 }
 
-/* Selected / Active State DIHILANGKAN (tampil normal tanpa kotak terang yang menempel) */
+/* Selected / Active / Focus State DIHILANGKAN (tidak ada kotak terang menempel di HP) */
+.game-select-card:focus,
+.game-select-card:focus-visible,
+.game-select-card:focus-within,
 .game-select-card.selected,
 .game-select-card.active {
-  background: rgba(5, 10, 22, 0.85);
-  border-color: var(--neon-cyan-border);
-  box-shadow: none;
-  transform: none;
+  background: rgba(5, 10, 22, 0.85) !important;
+  border-color: var(--neon-cyan-border) !important;
+  box-shadow: none !important;
+  transform: none !important;
+  outline: none !important;
 }
 
 

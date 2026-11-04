@@ -633,6 +633,18 @@ window.onBLEReceived = function(jsonStr) {
       localTimeAtSyncMs = Date.now();
       hasEsp32TimeSync = true;
     }
+    // Sinkronisasi status game sedang aktif dimainkan dari ESP32
+    if (typeof data.playing === 'boolean') {
+      const prevPlaying = isGameActivelyPlaying;
+      isGameActivelyPlaying = data.playing;
+      if (prevPlaying !== isGameActivelyPlaying) {
+        if (typeof renderOledGameMenu === 'function') renderOledGameMenu();
+        if (typeof render10GamesGrid === 'function') render10GamesGrid();
+      }
+    }
+    if (data.status === 'error' && data.msg) {
+      showNeonToast(data.msg);
+    }
     if (typeof data.mode === 'number') {
       currentRobotMode = data.mode;
       // Jika mode adalah 4 (MODE_GAME_MENU), robot berada di menu game (atau kembali setelah game over)
@@ -755,6 +767,13 @@ function renderDetailFacesGrid() {
 
 // PILIH EXPRESI WAJAH OLED (DURASI 3 DETIK, HANYA BISA DI FITUR/MODE ANIMASI)
 function selectFaceFromDetail(index, elem) {
+  if (elem && typeof elem.blur === 'function') {
+    elem.blur();
+  }
+  if (document.activeElement && typeof document.activeElement.blur === 'function') {
+    document.activeElement.blur();
+  }
+
   // Pergantian animasi cuma bisa di fitur animasi saja (jangan ke-input jika mode jam, alarm, dll)
   if (currentRobotMode !== 0 && currentOpenDetailFeature !== 'face') {
     return;
@@ -842,8 +861,22 @@ function openRobotFeatureDetail(featureKey) {
     if (panel) panel.style.display = 'block';
     renderOledGameMenu();
     render10GamesGrid();
-    currentRobotMode = 4;
-    sendCommand({ c: 'm', v: 4 });
+    if (!isGameActivelyPlaying) {
+      currentRobotMode = 4;
+      sendCommand({ c: 'm', v: 4 });
+    }
+    // Minta status bermain game dari ESP32 seketika
+    sendCommand({ c: 's' });
+
+    if (window._gameDetailSyncTimer) clearInterval(window._gameDetailSyncTimer);
+    window._gameDetailSyncTimer = setInterval(() => {
+      if (currentOpenDetailFeature === 'game' && isBleConnected) {
+        sendCommand({ c: 's' });
+      } else {
+        clearInterval(window._gameDetailSyncTimer);
+        window._gameDetailSyncTimer = null;
+      }
+    }, 1500);
   }
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -853,6 +886,11 @@ function openRobotFeatureDetail(featureKey) {
 function closeRobotFeatureDetail() {
   triggerHaptic(20);
   currentOpenDetailFeature = null;
+
+  if (window._gameDetailSyncTimer) {
+    clearInterval(window._gameDetailSyncTimer);
+    window._gameDetailSyncTimer = null;
+  }
 
   const overview = document.getElementById('robotMainOverview');
   const detailView = document.getElementById('robotFeatureDetailView');
@@ -1252,7 +1290,10 @@ function render10GamesGrid() {
   GAMES_LIST.forEach((g, idx) => {
     const card = document.createElement('div');
     card.className = `game-select-card ${isGameActivelyPlaying ? 'disabled-playing locked' : ''}`;
-    card.onclick = () => selectAndLaunchGame(idx);
+    card.onclick = () => {
+      if (typeof card.blur === 'function') card.blur();
+      selectAndLaunchGame(idx);
+    };
     card.innerHTML = `
       <span class="game-select-num">${idx + 1}</span>
       <div class="game-select-icon">${g.svg}</div>
@@ -1263,11 +1304,18 @@ function render10GamesGrid() {
 }
 
 function selectAndLaunchGame(idx) {
+  if (document.activeElement && typeof document.activeElement.blur === 'function') {
+    document.activeElement.blur();
+  }
+
   // Syarat: tidak sedang aktif memainkan game
-  // Bisa masuk jika di menu game, belum mulai, atau game over
+  // Pergantian game hanya bisa dilakukan saat:
+  // 1. Berada di menu game
+  // 2. Game over
+  // 3. Game belum dimulai (status IDLE/READY)
   if (isGameActivelyPlaying) {
     triggerHaptic(40);
-    showNeonToast('Sedang bermain game! Selesaikan game atau Game Over untuk ganti game');
+    showNeonToast('Sedang bermain game! Hanya bisa ganti saat di menu game, game over, atau game belum dimulai');
     return;
   }
 
@@ -1292,6 +1340,13 @@ function selectRobotMenuFeature(featureKey, btnEl) {
 
   if (btnEl && typeof btnEl.blur === 'function') {
     btnEl.blur();
+  }
+
+  // Kunci perpindahan fitur jika robot sedang aktif memainkan game
+  if (isGameActivelyPlaying) {
+    triggerHaptic(40);
+    showNeonToast('Sedang bermain game! Selesaikan atau Game Over untuk ganti fitur');
+    return;
   }
 
   triggerHaptic(30);
