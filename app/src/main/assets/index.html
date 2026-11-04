@@ -227,12 +227,14 @@
 
       <!-- ================= PAGE 3: ROBOT (LAYAR OLED ROBOT - MONITOR DISPLAY) ================= -->
       <section id="pageRobot" class="page">
-        <div class="section-title-bar">
-          <h2>LAYAR OLED ROBOT</h2>
-        </div>
+        <!-- WRAPPER OVERVIEW UTAMA (DISEMBUNYIKAN SAAT MEMBUKA DETAIL FITUR) -->
+        <div id="robotMainOverview">
+          <div class="section-title-bar">
+            <h2>LAYAR OLED ROBOT</h2>
+          </div>
 
-        <!-- GRID 7 LAYAR FITUR ROBOT -->
-        <div class="robot-screens-grid" id="robotScreensGrid">
+          <!-- GRID 7 LAYAR FITUR ROBOT -->
+          <div class="robot-screens-grid" id="robotScreensGrid">
           <!-- 1. BARIS 1 KIRI: EXPRESI WAJAH -->
           <div class="oled-screen-card" onclick="openRobotFeatureDetail('face')">
             <div class="oled-display-bezel">
@@ -376,19 +378,13 @@
           </div>
         </div>
 
-        <!-- DETAIL FITUR ROBOT INTERAKTIF -->
+        <!-- DETAIL FITUR ROBOT INTERAKTIF (HALAMAN BARU) -->
         <div id="robotFeatureDetailView" class="robot-feature-detail-view" style="display: none;">
-          <div class="subpage-nav-bar">
-            <button type="button" class="subpage-back-btn" onclick="closeRobotFeatureDetail()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px;">
-                <polyline points="15 18 9 12 15 6"></polyline>
-              </svg>
-              <span>KEMBALI</span>
-            </button>
-            <span id="txtRobotDetailTitle" style="font-family: var(--font-mono); font-size: 0.72rem; font-weight: 800; color: var(--neon-cyan); letter-spacing: 1px;">EXPRESI WAJAH</span>
+          <div class="section-title-bar">
+            <h2 id="txtRobotDetailTitle">EXPRESI WAJAH</h2>
           </div>
 
-          <!-- 1. DETAIL: EXPRESI WAJAH (MENAMPILKAN KE-13 EXPRESI) -->
+          <!-- 1. DETAIL: EXPRESI WAJAH (128x64 MURNI PERSIS SAMA DENGAN OLED FISIK) -->
           <div id="detailViewFace" class="detail-feature-panel" style="display: none;">
             <div class="oled-screen-card" style="margin-bottom: 12px; cursor: default;">
               <div class="oled-display-bezel">
@@ -399,11 +395,10 @@
                       <rect x="57" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3"></rect>
                     </svg>
                   </div>
-                  <div class="oled-mood-label" id="detailFaceMoodLabel">MOOD: SENANG</div>
                 </div>
               </div>
             </div>
-            <span class="status-card-label">PILIH DARI 13 EXPRESI WAJAH OLED ROBOT</span>
+            <div id="detailFaceMoodLabel" class="status-card-label" style="text-align: center; margin-bottom: 8px; color: var(--neon-cyan);">MOOD: SENANG</div>
             <div class="faces-grid" id="detailFacesGrid">
               <!-- Render 13 cards dynamically by JS -->
             </div>

@@ -1784,7 +1784,18 @@ input[type="range"]::-webkit-slider-thumb {
   border: 1px solid var(--neon-cyan-border);
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+/* Hilangkan hover / persistent highlight pada ekspresi wajah saat disentuh di HP */
+.face-card:hover,
+.face-card:focus,
+.face-card:focus-visible {
+  outline: none;
+  background: rgba(5, 10, 22, 0.85);
+  border-color: var(--neon-cyan-border);
+  box-shadow: none;
 }
 
 .face-card:active {
@@ -1797,6 +1808,12 @@ input[type="range"]::-webkit-slider-thumb {
   border-color: var(--neon-cyan);
   background: rgba(0, 240, 255, 0.18);
   box-shadow: 0 0 12px rgba(0, 240, 255, 0.35);
+}
+
+.detail-feature-panel .oled-face-wrap {
+  width: 90px;
+  height: 45px;
+  margin-bottom: 0;
 }
 
 .face-card .eye-preview {

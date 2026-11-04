@@ -4,6 +4,9 @@
 
 let isBleConnected = false;
 let currentFaceIndex = 0;
+let currentRobotMode = 0; // 0 = MODE_ANIMATION
+let currentOpenDetailFeature = null;
+let faceAnimationTimer = null;
 let currentMainTab = 'pageMenu';
 let toastTimeout = null;
 
@@ -601,6 +604,9 @@ window.onBLEReceived = function(jsonStr) {
     const data = JSON.parse(jsonStr);
     
     // Telemetry updates
+    if (typeof data.mode === 'number') {
+      currentRobotMode = data.mode;
+    }
     if (data.mode_name) {
       const modeEl = document.getElementById('teleActiveMode');
       if (modeEl) modeEl.textContent = data.mode_name;
@@ -694,23 +700,57 @@ function renderDetailFacesGrid() {
 }
 
 function selectFaceFromDetail(index, elem) {
-  sendCommand({ c: 'm', v: 0 }); // Pastikan mode animasi wajah aktif di ESP32
-  sendFace(index, elem);
+  // Hanya diizinkan jika sedang berada di fitur/mode animasi
+  if (currentRobotMode !== 0 && currentOpenDetailFeature !== 'face') {
+    showNeonToast('Hanya Dapat Diubah Pada Mode Animasi');
+    return;
+  }
+
+  if (faceAnimationTimer) {
+    clearTimeout(faceAnimationTimer);
+    faceAnimationTimer = null;
+  }
+
+  currentFaceIndex = index;
+  document.querySelectorAll('#detailFacesGrid .face-card').forEach(c => c.classList.remove('active'));
+  if (elem) elem.classList.add('active');
+
+  updateOledFacePreview(index);
   const detailLabel = document.getElementById('detailFaceMoodLabel');
   if (detailLabel && OLED_FACES[index]) {
     detailLabel.textContent = `MOOD: ${OLED_FACES[index].name}`;
   }
-}
 
-// BUKA TAMPILAN DETAIL FITUR ROBOT
-function openRobotFeatureDetail(featureKey) {
+  sendCommand({ c: 'm', v: 0 }); // Pastikan mode animasi wajah aktif di ESP32
+  currentRobotMode = 0;
+  sendCommand({ c: 'f', v: index });
+
+  showNeonToast(`Ekspresi: ${OLED_FACES[index].name} (3 Detik)`);
   triggerHaptic(25);
 
-  const screensGrid = document.getElementById('robotScreensGrid');
+  // Setelah 3 detik, kembalikan tampilan ke ekspresi netral (0: SENANG) sesuai firmware robot
+  if (index !== 0) {
+    faceAnimationTimer = setTimeout(() => {
+      currentFaceIndex = 0;
+      updateOledFacePreview(0);
+      if (detailLabel) detailLabel.textContent = `MOOD: ${OLED_FACES[0].name}`;
+      document.querySelectorAll('#detailFacesGrid .face-card').forEach((c, i) => {
+        c.classList.toggle('active', i === 0);
+      });
+    }, 3000);
+  }
+}
+
+// BUKA TAMPILAN DETAIL FITUR ROBOT (HALAMAN BARU PENUH)
+function openRobotFeatureDetail(featureKey) {
+  triggerHaptic(25);
+  currentOpenDetailFeature = featureKey;
+
+  const overview = document.getElementById('robotMainOverview');
   const detailView = document.getElementById('robotFeatureDetailView');
   const titleEl = document.getElementById('txtRobotDetailTitle');
 
-  if (screensGrid) screensGrid.style.display = 'none';
+  if (overview) overview.style.display = 'none';
   if (detailView) detailView.style.display = 'block';
 
   // Sembunyikan semua sub-panel detail
@@ -723,6 +763,7 @@ function openRobotFeatureDetail(featureKey) {
     renderDetailFacesGrid();
     updateOledFacePreview(currentFaceIndex || 0);
     sendCommand({ c: 'm', v: 0 }); // Mode Animasi (0)
+    currentRobotMode = 0;
     sendCommand({ c: 'f', v: currentFaceIndex || 0 });
     showNeonToast('Layar Robot: Expresi Wajah');
   } else if (featureKey === 'clock') {
@@ -731,6 +772,7 @@ function openRobotFeatureDetail(featureKey) {
     if (panel) panel.style.display = 'block';
     updateOledClockTick();
     sendCommand({ c: 'm', v: 1 }); // Mode Jam Digital (1)
+    currentRobotMode = 1;
     showNeonToast('Layar Robot: Jam Digital');
   } else if (featureKey === 'alarm') {
     if (titleEl) titleEl.textContent = 'PENGATURAN ALARM ROBOT';
@@ -738,12 +780,14 @@ function openRobotFeatureDetail(featureKey) {
     if (panel) panel.style.display = 'block';
     updateOledAlarmPreview();
     sendCommand({ c: 'm', v: 8 }); // Mode Alarm (8)
+    currentRobotMode = 8;
     showNeonToast('Layar Robot: Alarm');
   } else if (featureKey === 'stopwatch') {
     if (titleEl) titleEl.textContent = 'STOPWATCH ROBOT';
     const panel = document.getElementById('detailViewStopwatch');
     if (panel) panel.style.display = 'block';
     sendCommand({ c: 'm', v: 7 }); // Mode Stopwatch (7)
+    currentRobotMode = 7;
     showNeonToast('Layar Robot: Stopwatch');
   } else if (featureKey === 'weather') {
     if (titleEl) titleEl.textContent = 'INFO CUACA DUNIA';
@@ -751,35 +795,49 @@ function openRobotFeatureDetail(featureKey) {
     if (panel) panel.style.display = 'block';
     updateOledWeatherPreview();
     sendCommand({ c: 'm', v: 2 }); // Mode Cuaca (2)
+    currentRobotMode = 2;
     showNeonToast('Layar Robot: Info Cuaca');
   } else if (featureKey === 'subtitle') {
     if (titleEl) titleEl.textContent = 'SUBTITLE / TEKS BERJALAN';
     const panel = document.getElementById('detailViewSubtitle');
     if (panel) panel.style.display = 'block';
     sendCommand({ c: 'm', v: 3 }); // Mode Subtitle (3)
+    currentRobotMode = 3;
     showNeonToast('Layar Robot: Subtitle Teks');
   } else if (featureKey === 'game') {
     if (titleEl) titleEl.textContent = '10 GAME ARCADE ROBOT';
     const panel = document.getElementById('detailViewGame');
     if (panel) panel.style.display = 'block';
     sendCommand({ c: 'm', v: 4 }); // Mode Menu Game (4)
+    currentRobotMode = 4;
     showNeonToast('Layar Robot: Menu Game');
   }
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// TUTUP DETAIL FITUR & KEMBALI KE GRID FITUR ROBOT
+// TUTUP DETAIL FITUR & KEMBALI KE OVERVIEW LAYAR OLED ROBOT
 function closeRobotFeatureDetail() {
   triggerHaptic(20);
-  const screensGrid = document.getElementById('robotScreensGrid');
+  currentOpenDetailFeature = null;
+
+  const overview = document.getElementById('robotMainOverview');
   const detailView = document.getElementById('robotFeatureDetailView');
 
   if (detailView) detailView.style.display = 'none';
-  if (screensGrid) screensGrid.style.display = 'grid';
+  if (overview) overview.style.display = 'block';
 
   document.querySelectorAll('.detail-feature-panel').forEach(p => p.style.display = 'none');
 }
+
+// HANDLER TOMBOL KEMBALI NAVIGASI ANDROID (HARDWARE / GESTURE BACK)
+window.handleAndroidBack = function() {
+  if (currentOpenDetailFeature !== null) {
+    closeRobotFeatureDetail();
+    return true; // Berhasil ditangani di JS, tidak keluar app
+  }
+  return false; // Biarkan sistem Android menangani keluar / minimize
+};
 
 // HANDLER INTERAKTIF UNTUK FITUR DETAIL
 function triggerVirtualTouchTap() {
@@ -893,8 +951,18 @@ function selectRobotMenuFeature(featureKey, btnEl) {
   }
 }
 
-// Ganti Ekspresi Wajah (0..12)
+// Ganti Ekspresi Wajah (0..12) - Hanya bisa jika mode animasi aktif
 function sendFace(faceIndex, elem) {
+  if (currentRobotMode !== 0 && currentOpenDetailFeature !== 'face') {
+    showNeonToast('Hanya Dapat Diubah Pada Mode Animasi');
+    return;
+  }
+
+  if (faceAnimationTimer) {
+    clearTimeout(faceAnimationTimer);
+    faceAnimationTimer = null;
+  }
+
   currentFaceIndex = faceIndex;
   document.querySelectorAll('.face-card').forEach(c => c.classList.remove('active'));
   if (elem) elem.classList.add('active');
@@ -904,13 +972,25 @@ function sendFace(faceIndex, elem) {
 
   const ok = sendCommand({ c: 'f', v: faceIndex });
   if (ok) {
-    showNeonToast('Ekspresi Diganti');
+    showNeonToast(`Ekspresi: ${OLED_FACES[faceIndex]?.name || faceIndex} (3 Detik)`);
     triggerHaptic(25);
+
+    // Otomatis kembali ke ekspresi netral (0) setelah 3 detik
+    if (faceIndex !== 0) {
+      faceAnimationTimer = setTimeout(() => {
+        currentFaceIndex = 0;
+        updateOledFacePreview(0);
+        document.querySelectorAll('#detailFacesGrid .face-card').forEach((c, i) => {
+          c.classList.toggle('active', i === 0);
+        });
+      }, 3000);
+    }
   }
 }
 
 // Ganti Mode Robot (Jam, Cuaca, Game, dll)
 function sendDeviceMode(modeIndex) {
+  currentRobotMode = modeIndex;
   const ok = sendCommand({ c: 'm', v: modeIndex });
   if (ok) {
     showNeonToast('Mode Diaktifkan');
