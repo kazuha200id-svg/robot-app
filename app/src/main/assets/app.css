@@ -1354,39 +1354,38 @@ input[type="range"]::-webkit-slider-thumb {
 .robot-screens-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  gap: 10px;
   width: 100%;
+  margin-top: 4px;
 }
 
 .oled-screen-card {
   display: flex;
   flex-direction: column;
-  aspect-ratio: 1 / 1;
-  justify-content: space-between;
   align-items: center;
-  background: rgba(10, 18, 34, 0.75);
+  justify-content: flex-start;
+  background: rgba(8, 14, 28, 0.85);
   border: 1px solid var(--neon-cyan-border);
-  border-radius: var(--radius-md);
-  padding: 8px;
+  border-radius: 12px;
+  padding: 7px 7px 9px 7px;
   cursor: pointer;
   user-select: none;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-  transition: all 0.15s ease;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
   box-sizing: border-box;
   overflow: hidden;
+  position: relative;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 
 .oled-screen-card:active {
-  transform: scale(0.97);
+  transform: scale(0.98);
   border-color: var(--neon-cyan);
   background: rgba(0, 240, 255, 0.08);
 }
 
 .oled-screen-card.full-width {
   grid-column: span 2;
-  aspect-ratio: auto;
-  justify-content: flex-start;
+  padding: 8px 10px 10px 10px;
 }
 
 .oled-display-bezel {
@@ -1658,26 +1657,40 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .screen-card-meta {
-  margin-top: auto;
+  margin-top: 7px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   width: 100%;
-  text-align: center;
+  padding: 0 2px;
+  box-sizing: border-box;
 }
 
 .screen-title {
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.5px;
-  color: var(--text-bright);
+  letter-spacing: 0.6px;
+  color: var(--neon-cyan);
   text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 0 6px rgba(0, 240, 255, 0.35);
 }
 
 .screen-desc {
   display: none !important;
+}
+
+/* Disabled action button (e.g. Stopwatch Reset saat 00:00 atau lagi mulai) */
+.neon-btn-action:disabled,
+.neon-btn-action.disabled {
+  opacity: 0.35 !important;
+  pointer-events: none !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
 /* ================= WORLD CLOCK & SETTINGS SELECT ================= */
@@ -2084,7 +2097,7 @@ input[type="range"]::-webkit-slider-thumb {
   margin-top: 4px;
 }
 
-/* Face Card: NO HOVER on touch, only active and selected */
+/* Face Card: NO HOVER on touch or pointer */
 .face-card {
   display: flex;
   flex-direction: column;
@@ -2098,13 +2111,14 @@ input[type="range"]::-webkit-slider-thumb {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
-  transition: transform 0.1s ease, border-color 0.1s ease, background 0.1s ease;
+  transition: none !important;
 }
 
-/* Strictly disable hover and focus highlight on touch screen */
+/* Strictly disable hover, focus, and scale on face-card */
 .face-card:hover,
 .face-card:focus,
-.face-card:focus-visible {
+.face-card:focus-visible,
+.face-card:active {
   outline: none !important;
   background: rgba(5, 10, 22, 0.85) !important;
   border-color: var(--neon-cyan-border) !important;
@@ -2112,18 +2126,20 @@ input[type="range"]::-webkit-slider-thumb {
   transform: none !important;
 }
 
-/* Momentary touch feedback */
-.face-card:active {
-  transform: scale(0.95);
-  border-color: var(--neon-cyan) !important;
-  background: rgba(0, 240, 255, 0.15) !important;
-}
-
 /* Selected active face */
 .face-card.active {
   border-color: var(--neon-cyan) !important;
   background: rgba(0, 240, 255, 0.18) !important;
-  box-shadow: 0 0 12px rgba(0, 240, 255, 0.35) !important;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.35) !important;
+}
+
+.face-card.active:hover,
+.face-card.active:focus,
+.face-card.active:active {
+  border-color: var(--neon-cyan) !important;
+  background: rgba(0, 240, 255, 0.18) !important;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.35) !important;
+  transform: none !important;
 }
 
 .face-card .eye-preview {
@@ -2332,31 +2348,26 @@ input[type="range"]::-webkit-slider-thumb {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px;
+  padding: 8px 10px;
   background: rgba(5, 10, 22, 0.85);
   border: 1px solid var(--neon-cyan-border);
   border-radius: var(--radius-sm);
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 0.1s ease;
+  transition: none !important;
 }
 
-/* Strictly disable hover on game select cards */
+/* Strictly disable hover, focus, and scale on game select cards */
 .game-select-card:hover,
 .game-select-card:focus,
-.game-select-card:focus-visible {
+.game-select-card:focus-visible,
+.game-select-card:active {
   outline: none !important;
   background: rgba(5, 10, 22, 0.85) !important;
   border-color: var(--neon-cyan-border) !important;
   box-shadow: none !important;
   transform: none !important;
-}
-
-.game-select-card:active {
-  transform: scale(0.96);
-  border-color: var(--neon-cyan) !important;
-  background: rgba(0, 240, 255, 0.15) !important;
 }
 
 .game-select-card.selected,
@@ -2367,11 +2378,17 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .game-select-card.selected:hover,
-.game-select-card.active:hover {
+.game-select-card.active:hover,
+.game-select-card.selected:focus,
+.game-select-card.active:focus,
+.game-select-card.selected:active,
+.game-select-card.active:active {
   border-color: var(--neon-cyan) !important;
   background: rgba(0, 240, 255, 0.18) !important;
   box-shadow: 0 0 10px rgba(0, 240, 255, 0.35) !important;
+  transform: none !important;
 }
+
 
 .game-select-card.disabled-playing,
 .game-select-card.locked {

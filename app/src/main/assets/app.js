@@ -920,7 +920,7 @@ function renderAlarmOledAndControls() {
   // Update tombol toggle
   const btnEn = document.getElementById('btnToggleAlarmEn');
   if (btnEn) {
-    btnEn.textContent = `STATUS: ${g_alarmEnabled ? 'ON' : 'OFF'}`;
+    btnEn.textContent = `ALARM: ${g_alarmEnabled ? 'ON' : 'OFF'}`;
     btnEn.classList.toggle('active-toggle', g_alarmEnabled);
   }
   const btnRep = document.getElementById('btnToggleAlarmRepeat');
@@ -1090,6 +1090,17 @@ function updateStopwatchDisplay() {
     btnStartStop.textContent = isSwRunning ? 'STOP' : 'MULAI';
     btnStartStop.classList.toggle('danger', isSwRunning);
   }
+
+  // Tombol reset HANYA bisa dipencet jika:
+  // 1. Sudah ada angkanya (totalMs > 0)
+  // 2. Bukan 00:00:00
+  // 3. Tidak sedang mulai/berjalan (!isSwRunning)
+  const btnReset = document.getElementById('btnSwReset');
+  const canReset = (!isSwRunning && totalMs > 0);
+  if (btnReset) {
+    btnReset.disabled = !canReset;
+    btnReset.classList.toggle('disabled', !canReset);
+  }
 }
 
 function toggleStopwatchStartStop() {
@@ -1113,6 +1124,16 @@ function toggleStopwatchStartStop() {
 }
 
 function resetStopwatchFromApp() {
+  let totalMs = swElapsedBeforePause;
+  if (isSwRunning) {
+    totalMs += (Date.now() - swStartTime);
+  }
+
+  // Syarat mutlak: tidak bisa dipencet saat 00:00 atau saat sedang mulai
+  if (isSwRunning || totalMs <= 0) {
+    return;
+  }
+
   triggerHaptic(40);
   isSwRunning = false;
   if (swTimerId) {
