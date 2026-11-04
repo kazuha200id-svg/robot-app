@@ -2071,3 +2071,58 @@ input[type="range"]::-webkit-slider-thumb {
   letter-spacing: 0.5px;
   color: var(--neon-cyan);
 }
+
+/* 10 ARCADE GAMES GRID */
+.games-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.game-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  background: rgba(5, 10, 22, 0.85);
+  border: 1px solid var(--neon-cyan-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.game-btn:hover,
+.game-btn:focus,
+.game-btn:focus-visible {
+  outline: none;
+  background: rgba(5, 10, 22, 0.85) !important;
+  border-color: var(--neon-cyan-border) !important;
+  box-shadow: none !important;
+}
+
+.game-btn:active {
+  transform: scale(0.96);
+  border-color: var(--neon-cyan) !important;
+  background: rgba(0, 240, 255, 0.15) !important;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.35) !important;
+}
+
+.game-btn svg {
+  width: 22px;
+  height: 22px;
+  stroke: var(--neon-cyan);
+  flex-shrink: 0;
+}
+
+.game-btn span {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--neon-cyan);
+}
+

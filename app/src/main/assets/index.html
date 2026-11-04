@@ -225,122 +225,374 @@
 
 
 
-      <!-- ================= PAGE 3: ROBOT (LAYAR OLED ROBOT - REALTIME MIRROR) ================= -->
+      <!-- ================= PAGE 3: ROBOT (LAYAR OLED ROBOT - MONITOR DISPLAY) ================= -->
       <section id="pageRobot" class="page">
-        <div class="section-title-bar">
-          <h2>LAYAR OLED ROBOT</h2>
-        </div>
+        <!-- WRAPPER OVERVIEW UTAMA (DISEMBUNYIKAN SAAT MEMBUKA DETAIL FITUR) -->
+        <div id="robotMainOverview">
+          <div class="section-title-bar">
+            <h2>LAYAR OLED ROBOT</h2>
+          </div>
 
-        <!-- 1 LAYAR OLED UTAMA (RASIO 128x64 MURNI MIRRORING FISIK OLED ROBOT) -->
-        <div class="main-oled-stage-wrap">
-          <div class="oled-display-bezel stage-bezel">
-            <div id="mainOledScreen" class="oled-screen-content stage-screen-content">
-
-              <!-- STATUS BAR OLED (PERSIS FIRMWARE: WIFI, JUDUL MODE 'JAM', BATERAI, GARIS Y=13) -->
-              <div id="oledStatusBar" class="oled-status-bar" style="display: none;">
-                <div class="oled-status-left">
-                  <svg id="oledWifiIcon" viewBox="0 0 24 24" class="oled-status-icon" fill="none" stroke="#00F0FF" stroke-width="2.5">
-                    <path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"></path>
-                  </svg>
-                  <svg id="oledAlarmIcon" viewBox="0 0 24 24" class="oled-status-icon" fill="none" stroke="#00F0FF" stroke-width="2.5" style="display: none;">
-                    <circle cx="12" cy="13" r="7"></circle>
-                    <path d="M12 9v4l2 2M5 3L2 6M22 6l-3-3"></path>
-                  </svg>
+          <!-- GRID 7 LAYAR FITUR ROBOT -->
+          <div class="robot-screens-grid" id="robotScreensGrid">
+            <!-- 1. BARIS 1 KIRI: EXPRESI WAJAH -->
+            <div class="oled-screen-card" onclick="openRobotFeatureDetail('face')">
+              <div class="oled-display-bezel">
+                <div class="oled-screen-content oled-face-view">
+                  <div class="oled-face-wrap" id="oledFaceSvgWrap">
+                    <svg viewBox="0 0 100 50" class="oled-face-svg">
+                      <rect x="15" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3"></rect>
+                      <rect x="57" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3"></rect>
+                    </svg>
+                  </div>
+                  <div class="oled-mood-label" id="oledFaceMoodLabel">MOOD: SENANG</div>
                 </div>
-                <div id="oledStatusTitle" class="oled-status-title">JAM</div>
-                <div class="oled-status-right">
-                  <div class="oled-battery-vert">
-                    <div class="oled-batt-pip"></div>
-                    <div class="oled-batt-body">
-                      <div class="oled-batt-fill"></div>
+              </div>
+              <div class="screen-card-meta">
+                <span class="screen-title">EXPRESI WAJAH</span>
+                <span class="screen-desc">13 Animasi Wajah &bull; Sentuh untuk Buka</span>
+              </div>
+            </div>
+
+            <!-- 2. BARIS 1 KANAN: JAM DIGITAL -->
+            <div class="oled-screen-card" onclick="openRobotFeatureDetail('clock')">
+              <div class="oled-display-bezel">
+                <div class="oled-screen-content oled-clock-view">
+                  <div class="oled-header-tiny">
+                    <span id="oledTzLabel">WIB</span>
+                    <span>BAT 100%</span>
+                  </div>
+                  <div class="oled-big-time" id="oledClockPreview">12:30:00</div>
+                  <div class="oled-sub-date" id="oledDatePreview">RABU, 04 NOV</div>
+                </div>
+              </div>
+              <div class="screen-card-meta">
+                <span class="screen-title">JAM DIGITAL</span>
+                <span class="screen-desc">Jam & Kalender &bull; Sentuh untuk Buka</span>
+              </div>
+            </div>
+
+            <!-- 3. BARIS 2 KIRI: ALARM -->
+            <div class="oled-screen-card" onclick="openRobotFeatureDetail('alarm')">
+              <div class="oled-display-bezel">
+                <div class="oled-screen-content oled-alarm-view">
+                  <div class="oled-header-tiny">
+                    <span>ALARM</span>
+                    <svg viewBox="0 0 24 24" class="oled-tiny-icon" fill="none" stroke="#00F0FF" stroke-width="2">
+                      <circle cx="12" cy="13" r="8"></circle>
+                      <path d="M12 9v4l2 2M5 3L2 6M22 6l-3-3"></path>
+                    </svg>
+                  </div>
+                  <div class="oled-big-time" id="oledAlarmTimePreview">06:30</div>
+                  <div class="oled-alarm-badge" id="oledAlarmBadgePreview">ON &bull; TIAP HARI</div>
+                </div>
+              </div>
+              <div class="screen-card-meta">
+                <span class="screen-title">ALARM</span>
+                <span class="screen-desc">Pengingat &bull; Sentuh untuk Buka</span>
+              </div>
+            </div>
+
+            <!-- 4. BARIS 2 KANAN: STOPWATCH -->
+            <div class="oled-screen-card" onclick="openRobotFeatureDetail('stopwatch')">
+              <div class="oled-display-bezel">
+                <div class="oled-screen-content oled-stopwatch-view">
+                  <div class="oled-header-tiny">
+                    <span>STOPWATCH</span>
+                    <span>LAP 01</span>
+                  </div>
+                  <div class="oled-big-time oled-mono" id="oledStopwatchPreview">00:00:00</div>
+                  <div class="oled-sw-bar-track">
+                    <div class="oled-sw-bar-fill"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="screen-card-meta">
+                <span class="screen-title">STOPWATCH</span>
+                <span class="screen-desc">Penghitung Waktu &bull; Sentuh untuk Buka</span>
+              </div>
+            </div>
+
+            <!-- 5. BARIS 3 KIRI: INFO CUACA -->
+            <div class="oled-screen-card" onclick="openRobotFeatureDetail('weather')">
+              <div class="oled-display-bezel">
+                <div class="oled-screen-content oled-weather-view">
+                  <div class="oled-weather-row">
+                    <div class="oled-weather-left">
+                      <div class="oled-weather-city" id="oledCityPreview">JAKARTA</div>
+                      <div class="oled-weather-temp" id="oledTempPreview">29°C</div>
+                    </div>
+                    <div class="oled-weather-divider"></div>
+                    <div class="oled-weather-right">
+                      <div class="oled-weather-info" id="oledWeatherCondPreview">CERAH</div>
+                      <div class="oled-weather-sub">Lembap: 65%</div>
+                      <div class="oled-weather-sub">Angin: 12km</div>
                     </div>
                   </div>
                 </div>
               </div>
-
-              <!-- VIEW 0: MODE ANIMASI (WAJAH PENUH 128x64 TANPA STATUS BAR) -->
-              <div id="oledLayerFace" class="oled-mode-layer active">
-                <div id="oledLiveFaceSvgWrap" class="oled-live-face-wrap">
-                  <svg viewBox="0 0 100 50" class="oled-face-svg">
-                    <rect x="15" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3"></rect>
-                    <rect x="57" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3"></rect>
-                  </svg>
-                </div>
+              <div class="screen-card-meta">
+                <span class="screen-title">INFO CUACA</span>
+                <span class="screen-desc">Cuaca Kota &bull; Sentuh untuk Buka</span>
               </div>
+            </div>
 
-              <!-- VIEW 1: MODE JAM DIGITAL -->
-              <div id="oledLayerClock" class="oled-mode-layer" style="display: none;">
-                <div class="oled-big-time oled-mono" id="mainClockDigits">12:30:00</div>
-                <div class="oled-sub-date" id="mainClockDate">RABU, 04 NOV 2026</div>
-              </div>
-
-              <!-- VIEW 2: MODE CUACA -->
-              <div id="oledLayerWeather" class="oled-mode-layer" style="display: none;">
-                <div class="oled-weather-row">
-                  <div class="oled-weather-left">
-                    <div class="oled-weather-city" id="mainWeatherCity">JAKARTA</div>
-                    <div class="oled-weather-temp" id="mainWeatherTemp">29°C</div>
+            <!-- 6. BARIS 3 KANAN: SUBTITLE -->
+            <div class="oled-screen-card" onclick="openRobotFeatureDetail('subtitle')">
+              <div class="oled-display-bezel">
+                <div class="oled-screen-content oled-msg-view">
+                  <div class="oled-header-tiny">
+                    <span>SUBTITLE YOUTUBE</span>
+                    <span>♪ ♫</span>
                   </div>
-                  <div class="oled-weather-divider"></div>
-                  <div class="oled-weather-right">
-                    <div class="oled-weather-info" id="mainWeatherCond">CERAH</div>
-                    <div class="oled-weather-sub" id="mainWeatherHum">Lembap: 65%</div>
-                    <div class="oled-weather-sub" id="mainWeatherWind">Angin: 12km</div>
+                  <div class="oled-marquee-text" id="oledMsgPreview">HELLO ROBOT DESK!</div>
+                  <div class="oled-footer-tiny"><span>TEKS BERJALAN AKTIF</span></div>
+                </div>
+              </div>
+              <div class="screen-card-meta">
+                <span class="screen-title">SUBTITLE</span>
+                <span class="screen-desc">Pesan Berjalan &bull; Sentuh untuk Buka</span>
+              </div>
+            </div>
+
+            <!-- 7. BARIS 4: MENU GAME (SPAN 2 KOLOM) -->
+            <div class="oled-screen-card full-width" onclick="openRobotFeatureDetail('game')">
+              <div class="oled-display-bezel">
+                <div class="oled-screen-content oled-game-view">
+                  <div class="oled-header-tiny">
+                    <span>ARCADE 10-IN-1</span>
+                    <span>MENU GAME</span>
+                  </div>
+                  <div class="oled-game-pixels">
+                    <div class="dino-pixel"></div>
+                    <div class="cactus-pixel"></div>
+                    <div class="bird-pixel"></div>
+                  </div>
+                  <div class="oled-score-line">10 ARCADE GAMES &bull; SENTUH UNTUK BUKA</div>
+                </div>
+              </div>
+              <div class="screen-card-meta">
+                <span class="screen-title">MENU GAME</span>
+                <span class="screen-desc">Pilihan 10 Game &bull; Sentuh untuk Buka</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DETAIL FITUR ROBOT INTERAKTIF (HALAMAN BARU - TANPA TOMBOL KEMBALI) -->
+        <div id="robotFeatureDetailView" class="robot-feature-detail-view" style="display: none;">
+          <div class="section-title-bar">
+            <h2 id="txtRobotDetailTitle">EXPRESI WAJAH</h2>
+          </div>
+
+          <!-- 1. DETAIL: EXPRESI WAJAH (128x64 MURNI PERSIS OLED FISIK ROBOT) -->
+          <div id="detailViewFace" class="detail-feature-panel" style="display: none;">
+            <div class="main-oled-stage-wrap">
+              <div class="oled-display-bezel stage-bezel">
+                <div class="oled-screen-content stage-screen-content">
+                  <div class="oled-live-face-wrap" id="detailFaceSvgWrap">
+                    <svg viewBox="0 0 100 50" class="oled-face-svg">
+                      <rect x="15" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3"></rect>
+                      <rect x="57" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3"></rect>
+                    </svg>
                   </div>
                 </div>
               </div>
-
-              <!-- VIEW 3: MODE SUBTITLE -->
-              <div id="oledLayerSubtitle" class="oled-mode-layer" style="display: none;">
-                <div class="oled-marquee-text" id="mainSubtitleText">HELLO ROBOT DESK!</div>
-                <div class="oled-footer-tiny"><span>TEKS BERJALAN AKTIF</span></div>
+            </div>
+            <div class="faces-selector-section">
+              <div class="faces-section-header">
+                <span class="status-card-label" id="detailFaceMoodLabel">PILIH DARI 13 EXPRESI WAJAH OLED</span>
               </div>
-
-              <!-- VIEW 4: MODE MENU GAME -->
-              <div id="oledLayerGame" class="oled-mode-layer" style="display: none;">
-                <div class="oled-game-pixels">
-                  <div class="dino-pixel"></div>
-                  <div class="cactus-pixel"></div>
-                  <div class="bird-pixel"></div>
-                </div>
-                <div class="oled-score-line">SELECT GAME &bull; 10 ARCADE READY</div>
+              <div class="faces-grid" id="detailFacesGrid">
+                <!-- 13 Kartu Ekspresi di-render secara dinamis oleh JavaScript -->
               </div>
-
-              <!-- VIEW 7: MODE STOPWATCH -->
-              <div id="oledLayerStopwatch" class="oled-mode-layer" style="display: none;">
-                <div class="oled-big-time oled-mono" id="mainStopwatchDigits">00:00:00</div>
-                <div class="oled-sw-bar-track">
-                  <div class="oled-sw-bar-fill"></div>
-                </div>
-              </div>
-
-              <!-- VIEW 8: MODE ALARM -->
-              <div id="oledLayerAlarm" class="oled-mode-layer" style="display: none;">
-                <div class="oled-big-time oled-mono" id="mainAlarmDigits">06:30</div>
-                <div class="oled-alarm-badge" id="mainAlarmBadge">ON &bull; TIAP HARI</div>
-              </div>
-
             </div>
           </div>
 
-          <!-- INDIKATOR MODE AKTIF -->
-          <div class="stage-mode-indicator">
-            <span class="status-card-label">STATUS LAYAR ROBOT:</span>
-            <span id="txtStageActiveMode" class="stage-mode-badge">ANIMASI WAJAH</span>
+          <!-- 2. DETAIL: JAM DIGITAL (128x64 PERSIS DENGAN STATUS BAR) -->
+          <div id="detailViewClock" class="detail-feature-panel" style="display: none;">
+            <div class="main-oled-stage-wrap">
+              <div class="oled-display-bezel stage-bezel">
+                <div class="oled-screen-content stage-screen-content">
+                  <div class="oled-status-bar">
+                    <div class="oled-status-left">
+                      <svg viewBox="0 0 24 24" class="oled-status-icon" fill="none" stroke="#00F0FF" stroke-width="2.5"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"></path></svg>
+                    </div>
+                    <div class="oled-status-title">JAM</div>
+                    <div class="oled-status-right">
+                      <div class="oled-battery-vert"><div class="oled-batt-pip"></div><div class="oled-batt-body"><div class="oled-batt-fill"></div></div></div>
+                    </div>
+                  </div>
+                  <div class="oled-mode-layer active">
+                    <div class="oled-big-time oled-mono" id="detailClockDigits">12:30:00</div>
+                    <div class="oled-sub-date" id="detailClockDate">RABU, 04 NOV 2026</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <!-- DAFTAR 13 EXPRESI WAJAH OLED -->
-        <div id="sectionFacesSelector" class="faces-selector-section">
-          <div class="faces-section-header">
-            <span class="status-card-label">PILIH DARI 13 EXPRESI WAJAH OLED</span>
+          <!-- 3. DETAIL: ALARM (128x64 PERSIS DENGAN STATUS BAR) -->
+          <div id="detailViewAlarm" class="detail-feature-panel" style="display: none;">
+            <div class="main-oled-stage-wrap">
+              <div class="oled-display-bezel stage-bezel">
+                <div class="oled-screen-content stage-screen-content">
+                  <div class="oled-status-bar">
+                    <div class="oled-status-left">
+                      <svg viewBox="0 0 24 24" class="oled-status-icon" fill="none" stroke="#00F0FF" stroke-width="2.5"><circle cx="12" cy="13" r="7"></circle><path d="M12 9v4l2 2M5 3L2 6M22 6l-3-3"></path></svg>
+                    </div>
+                    <div class="oled-status-title">ALARM</div>
+                    <div class="oled-status-right">
+                      <div class="oled-battery-vert"><div class="oled-batt-pip"></div><div class="oled-batt-body"><div class="oled-batt-fill"></div></div></div>
+                    </div>
+                  </div>
+                  <div class="oled-mode-layer active">
+                    <div class="oled-big-time oled-mono" id="detailAlarmDigits">06:30</div>
+                    <div class="oled-alarm-badge" id="detailAlarmBadge">ON &bull; TIAP HARI</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="faces-grid" id="mainFacesGrid">
-            <!-- 13 Kartu Ekspresi di-render secara dinamis oleh JavaScript -->
+
+          <!-- 4. DETAIL: STOPWATCH (128x64 PERSIS DENGAN STATUS BAR) -->
+          <div id="detailViewStopwatch" class="detail-feature-panel" style="display: none;">
+            <div class="main-oled-stage-wrap">
+              <div class="oled-display-bezel stage-bezel">
+                <div class="oled-screen-content stage-screen-content">
+                  <div class="oled-status-bar">
+                    <div class="oled-status-left"><svg viewBox="0 0 24 24" class="oled-status-icon" fill="none" stroke="#00F0FF" stroke-width="2.5"><circle cx="12" cy="13" r="7"></circle><polyline points="12 9 12 13 14 15"></polyline></svg></div>
+                    <div class="oled-status-title">STOPWATCH</div>
+                    <div class="oled-status-right"><div class="oled-battery-vert"><div class="oled-batt-pip"></div><div class="oled-batt-body"><div class="oled-batt-fill"></div></div></div></div>
+                  </div>
+                  <div class="oled-mode-layer active">
+                    <div class="oled-big-time oled-mono" id="detailSwDigits">00:00:00</div>
+                    <div class="oled-sw-bar-track"><div class="oled-sw-bar-fill"></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="dual-btn-row mt-8">
+              <button class="neon-btn-action flex-1" onclick="triggerVirtualTouchTap()">SENTUH / MULAI</button>
+              <button class="neon-btn-action flex-1 danger" onclick="resetStopwatchFromApp()">RESET / NOL</button>
+            </div>
+          </div>
+
+          <!-- 5. DETAIL: INFO CUACA (128x64 PERSIS DENGAN STATUS BAR) -->
+          <div id="detailViewWeather" class="detail-feature-panel" style="display: none;">
+            <div class="main-oled-stage-wrap">
+              <div class="oled-display-bezel stage-bezel">
+                <div class="oled-screen-content stage-screen-content">
+                  <div class="oled-status-bar">
+                    <div class="oled-status-left"><svg viewBox="0 0 24 24" class="oled-status-icon" fill="none" stroke="#00F0FF" stroke-width="2.5"><path d="M5 12.55a11 11 0 0 1 14.08 0M12 20h.01"></path></svg></div>
+                    <div class="oled-status-title">CUACA</div>
+                    <div class="oled-status-right"><div class="oled-battery-vert"><div class="oled-batt-pip"></div><div class="oled-batt-body"><div class="oled-batt-fill"></div></div></div></div>
+                  </div>
+                  <div class="oled-mode-layer active">
+                    <div class="oled-weather-row">
+                      <div class="oled-weather-left">
+                        <div class="oled-weather-city" id="detailWeatherCity">JAKARTA</div>
+                        <div class="oled-weather-temp" id="detailWeatherTemp">29°C</div>
+                      </div>
+                      <div class="oled-weather-divider"></div>
+                      <div class="oled-weather-right">
+                        <div class="oled-weather-info" id="detailWeatherCond">CERAH</div>
+                        <div class="oled-weather-sub" id="detailWeatherHum">Lembap: 65%</div>
+                        <div class="oled-weather-sub" id="detailWeatherWind">Angin: 12km</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6. DETAIL: SUBTITLE (128x64 PERSIS DENGAN STATUS BAR) -->
+          <div id="detailViewSubtitle" class="detail-feature-panel" style="display: none;">
+            <div class="main-oled-stage-wrap">
+              <div class="oled-display-bezel stage-bezel">
+                <div class="oled-screen-content stage-screen-content">
+                  <div class="oled-status-bar">
+                    <div class="oled-status-left"><svg viewBox="0 0 24 24" class="oled-status-icon" fill="none" stroke="#00F0FF" stroke-width="2.5"><path d="M4 6h16M4 12h16M4 18h7"></path></svg></div>
+                    <div class="oled-status-title">TEKS</div>
+                    <div class="oled-status-right"><div class="oled-battery-vert"><div class="oled-batt-pip"></div><div class="oled-batt-body"><div class="oled-batt-fill"></div></div></div></div>
+                  </div>
+                  <div class="oled-mode-layer active">
+                    <div class="oled-marquee-text" id="detailSubPreview">HELLO ROBOT DESK!</div>
+                    <div class="oled-footer-tiny"><span>TEKS BERJALAN AKTIF</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 7. DETAIL: MENU GAME (10 ARCADE GAMES) -->
+          <div id="detailViewGame" class="detail-feature-panel" style="display: none;">
+            <div class="main-oled-stage-wrap">
+              <div class="oled-display-bezel stage-bezel">
+                <div class="oled-screen-content stage-screen-content">
+                  <div class="oled-status-bar">
+                    <div class="oled-status-left"><svg viewBox="0 0 24 24" class="oled-status-icon" fill="none" stroke="#00F0FF" stroke-width="2.5"><rect x="2" y="6" width="20" height="12" rx="3"></rect><line x1="6" y1="12" x2="10" y2="12"></line><line x1="8" y1="10" x2="8" y2="14"></line></svg></div>
+                    <div class="oled-status-title">ARCADE</div>
+                    <div class="oled-status-right"><div class="oled-battery-vert"><div class="oled-batt-pip"></div><div class="oled-batt-body"><div class="oled-batt-fill"></div></div></div></div>
+                  </div>
+                  <div class="oled-mode-layer active">
+                    <div class="oled-game-pixels">
+                      <div class="dino-pixel"></div>
+                      <div class="cactus-pixel"></div>
+                      <div class="bird-pixel"></div>
+                    </div>
+                    <div class="oled-score-line" id="detailGameActiveLabel">10 ARCADE READY &bull; PILIH GAME</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <span class="status-card-label">10 GAME ARCADE ROBOT</span>
+            <div class="games-grid">
+              <button class="game-btn" onclick="launchGameFromDetail(5, 'Flappy Bird')">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M3 13h4l3-6 4 12 3-8 4 2" stroke="currentColor" stroke-width="2"></path></svg>
+                <span>1. Flappy Bird</span>
+              </button>
+              <button class="game-btn" onclick="launchGameFromDetail(6, 'Dino Run')">
+                <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="11" width="18" height="10" rx="2" stroke="currentColor" stroke-width="2"></rect></svg>
+                <span>2. Dino Run</span>
+              </button>
+              <button class="game-btn" onclick="launchGameFromDetail(9, 'Copter')">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M12 2v4m-8 4h16M6 14h12" stroke="currentColor" stroke-width="2"></path></svg>
+                <span>3. Copter</span>
+              </button>
+              <button class="game-btn" onclick="launchGameFromDetail(10, 'Gravity Runner')">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v18m-6-6l6 6 6-6" stroke="currentColor" stroke-width="2"></path></svg>
+                <span>4. Gravity Run</span>
+              </button>
+              <button class="game-btn" onclick="launchGameFromDetail(11, 'Pin Circle')">
+                <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"></circle></svg>
+                <span>5. Pin Circle</span>
+              </button>
+              <button class="game-btn" onclick="launchGameFromDetail(12, 'Orbit Jumper')">
+                <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"></circle><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 3"></circle></svg>
+                <span>6. Orbit Jumper</span>
+              </button>
+              <button class="game-btn" onclick="launchGameFromDetail(13, 'Tower Stacker')">
+                <svg viewBox="0 0 24 24" fill="none"><rect x="6" y="16" width="12" height="4" stroke="currentColor" stroke-width="2"></rect><rect x="8" y="11" width="8" height="4" stroke="currentColor" stroke-width="2"></rect><rect x="10" y="6" width="4" height="4" stroke="currentColor" stroke-width="2"></rect></svg>
+                <span>7. Tower Stack</span>
+              </button>
+              <button class="game-btn" onclick="launchGameFromDetail(14, 'Radar Defender')">
+                <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"></circle><circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.5"></circle><line x1="12" y1="12" x2="18" y2="6" stroke="currentColor" stroke-width="2"></line></svg>
+                <span>8. Radar Defend</span>
+              </button>
+              <button class="game-btn" onclick="launchGameFromDetail(15, 'Hoop Dunk')">
+                <svg viewBox="0 0 24 24" fill="none"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="2"></circle><ellipse cx="16" cy="14" rx="6" ry="2" stroke="currentColor" stroke-width="2"></ellipse><line x1="16" y1="14" x2="16" y2="21" stroke="currentColor" stroke-width="2"></line></svg>
+                <span>9. Hoop Dunk</span>
+              </button>
+              <button class="game-btn" onclick="launchGameFromDetail(16, 'Orbit Pong')">
+                <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"></circle><circle cx="12" cy="8" r="2" fill="currentColor"></circle><line x1="8" y1="17" x2="16" y2="17" stroke="currentColor" stroke-width="2.5"></line></svg>
+                <span>10. Orbit Pong</span>
+              </button>
+            </div>
           </div>
         </div>
       </section>
-
 
       <!-- ================= PAGE 4: SETTING (4 KOTAK PENGATURAN) ================= -->
       <section id="pageSetting" class="page">

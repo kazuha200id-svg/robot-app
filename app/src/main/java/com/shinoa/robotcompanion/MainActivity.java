@@ -564,9 +564,23 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
             webView.evaluateJavascript("if (window.onBLEReceived) window.onBLEReceived('" + safeJson + "');", null);
         });
     }
-
-
-
+    @Override
+    public void onBackPressed() {
+        if (webView != null) {
+            webView.evaluateJavascript(
+                "(function(){ if (typeof window.handleAndroidBack === 'function') { return window.handleAndroidBack(); } return false; })();",
+                value -> {
+                    if ("true".equals(value)) {
+                        // Handled by JavaScript (kembali dari subpage detail fitur ke layar utama robot)
+                        return;
+                    }
+                    runOnUiThread(() -> MainActivity.super.onBackPressed());
+                }
+            );
+            return;
+        }
+        super.onBackPressed();
+    }
     @Override
     protected void onDestroy() {
         super.onDestroy();

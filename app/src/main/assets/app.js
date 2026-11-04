@@ -45,6 +45,11 @@ function switchMainTab(pageId, btn) {
 
   currentMainTab = pageId;
 
+  // Tutup detail fitur jika meninggalkan tab Robot
+  if (pageId !== 'pageRobot') {
+    closeRobotFeatureDetail();
+  }
+
   // Toggle pages
   document.querySelectorAll('.page').forEach(page => {
     page.classList.toggle('active', page.id === pageId);
@@ -58,10 +63,12 @@ function switchMainTab(pageId, btn) {
     btn.classList.add('active');
   }
 
-  // Refresh live OLED screen & telemetry on robot tab
+  // Refresh previews & telemetry on robot tab
   if (pageId === 'pageRobot') {
-    renderMainFacesGrid();
-    updateLiveOledScreen(currentRobotMode);
+    updateOledFacePreview(currentFaceIndex);
+    updateOledClockTick();
+    updateOledAlarmPreview();
+    updateOledWeatherPreview();
     if (isBleConnected) {
       sendCommand({ c: 's' });
     }
@@ -605,7 +612,10 @@ window.onBLEReceived = function(jsonStr) {
     // Telemetry updates
     if (typeof data.mode === 'number') {
       currentRobotMode = data.mode;
-      updateLiveOledScreen(data.mode, data);
+    }
+    if (typeof data.face === 'number') {
+      currentFaceIndex = data.face;
+      updateOledFacePreview(data.face);
     }
     if (data.mode_name) {
       const modeEl = document.getElementById('teleActiveMode');
@@ -660,24 +670,37 @@ const OLED_FACES = [
   { name: 'HATI', svg: '<path d="M29 14 A 8 8 0 0 0 17 22 Q 29 40 29 40 Q 29 40 41 22 A 8 8 0 0 0 29 14" fill="#00F0FF"></path><path d="M71 14 A 8 8 0 0 0 59 22 Q 71 40 71 40 Q 71 40 83 22 A 8 8 0 0 0 71 14" fill="#00F0FF"></path>' }
 ];
 
-// UPDATE TAMPILAN WAJAH OLED DI MAIN STAGE
+// UPDATE TAMPILAN WAJAH OLED DI DETAIL DAN OVERVIEW
 function updateOledFacePreview(idx) {
   const item = OLED_FACES[idx] || OLED_FACES[0];
-  const liveFaceWrap = document.getElementById('oledLiveFaceSvgWrap');
-  if (liveFaceWrap) {
-    liveFaceWrap.innerHTML = `<svg viewBox="0 0 100 50" class="oled-face-svg">${item.svg}</svg>`;
+  const detailWrap = document.getElementById('detailFaceSvgWrap');
+  const overviewWrap = document.getElementById('oledFaceSvgWrap');
+  const moodLabel = document.getElementById('oledFaceMoodLabel');
+  const detailMoodLabel = document.getElementById('detailFaceMoodLabel');
+
+  if (detailWrap) {
+    detailWrap.innerHTML = `<svg viewBox="0 0 100 50" class="oled-face-svg">${item.svg}</svg>`;
+  }
+  if (overviewWrap) {
+    overviewWrap.innerHTML = `<svg viewBox="0 0 100 50" class="oled-face-svg">${item.svg}</svg>`;
+  }
+  if (moodLabel) {
+    moodLabel.textContent = `MOOD: ${item.name}`;
+  }
+  if (detailMoodLabel) {
+    detailMoodLabel.textContent = `MOOD: ${item.name}`;
   }
 }
 
-// RENDER 13 KARTU EXPRESI WAJAH OLED DI BAWAH LAYAR UTAMA
-function renderMainFacesGrid() {
-  const container = document.getElementById('mainFacesGrid');
+// RENDER 13 KARTU EXPRESI WAJAH OLED DI HALAMAN DETAIL FITUR
+function renderDetailFacesGrid() {
+  const container = document.getElementById('detailFacesGrid');
   if (!container) return;
   container.innerHTML = '';
   OLED_FACES.forEach((item, index) => {
     const card = document.createElement('div');
     card.className = `face-card ${index === currentFaceIndex ? 'active' : ''}`;
-    card.onclick = () => selectFace(index, card);
+    card.onclick = () => selectFaceFromDetail(index, card);
     card.innerHTML = `
       <div class="eye-preview">
         <svg viewBox="0 0 100 50" class="oled-face-svg">${item.svg}</svg>
@@ -689,9 +712,9 @@ function renderMainFacesGrid() {
 }
 
 // PILIH EXPRESI WAJAH OLED (DURASI 3 DETIK, HANYA BISA DI MODE ANIMASI)
-function selectFace(index, elem) {
-  // Hanya diizinkan jika sedang berada di mode animasi robot (mode 0)
-  if (currentRobotMode !== 0) {
+function selectFaceFromDetail(index, elem) {
+  // Hanya diizinkan jika sedang berada di mode animasi robot (mode 0) atau halaman detail face
+  if (currentRobotMode !== 0 && currentOpenDetailFeature !== 'face') {
     showNeonToast('Hanya Dapat Diubah Pada Mode Animasi');
     return;
   }
@@ -702,13 +725,16 @@ function selectFace(index, elem) {
   }
 
   currentFaceIndex = index;
-  document.querySelectorAll('#mainFacesGrid .face-card').forEach((c, i) => {
+  document.querySelectorAll('#detailFacesGrid .face-card').forEach((c, i) => {
     c.classList.toggle('active', i === index);
   });
 
   updateOledFacePreview(index);
 
+  sendCommand({ c: 'm', v: 0 });
+  currentRobotMode = 0;
   sendCommand({ c: 'f', v: index });
+
   showNeonToast(`Ekspresi: ${OLED_FACES[index]?.name || index} (3 Detik)`);
   triggerHaptic(25);
 
@@ -717,116 +743,144 @@ function selectFace(index, elem) {
     faceAnimationTimer = setTimeout(() => {
       currentFaceIndex = 0;
       updateOledFacePreview(0);
-      document.querySelectorAll('#mainFacesGrid .face-card').forEach((c, i) => {
+      document.querySelectorAll('#detailFacesGrid .face-card').forEach((c, i) => {
         c.classList.toggle('active', i === 0);
       });
     }, 3000);
   }
 }
 
-// UPDATE LAYAR OLED UTAMA (MIRRORING 100% SESUAI FISIK OLED SSD1306 ROBOT)
-function updateLiveOledScreen(mode, data) {
-  const statusBar = document.getElementById('oledStatusBar');
-  const statusTitle = document.getElementById('oledStatusTitle');
-  const modeBadge = document.getElementById('txtStageActiveMode');
-  const facesSection = document.getElementById('sectionFacesSelector');
+// BUKA TAMPILAN DETAIL FITUR ROBOT (HALAMAN BARU BERSIH TANPA TOMBOL KEMBALI)
+function openRobotFeatureDetail(featureKey) {
+  triggerHaptic(25);
+  currentOpenDetailFeature = featureKey;
 
-  // Layer mode
-  const layerFace = document.getElementById('oledLayerFace');
-  const layerClock = document.getElementById('oledLayerClock');
-  const layerWeather = document.getElementById('oledLayerWeather');
-  const layerSubtitle = document.getElementById('oledLayerSubtitle');
-  const layerGame = document.getElementById('oledLayerGame');
-  const layerStopwatch = document.getElementById('oledLayerStopwatch');
-  const layerAlarm = document.getElementById('oledLayerAlarm');
+  const overview = document.getElementById('robotMainOverview');
+  const detailView = document.getElementById('robotFeatureDetailView');
+  const titleEl = document.getElementById('txtRobotDetailTitle');
 
-  const allLayers = [layerFace, layerClock, layerWeather, layerSubtitle, layerGame, layerStopwatch, layerAlarm];
-  allLayers.forEach(l => {
-    if (l) {
-      l.style.display = 'none';
-      l.classList.remove('active');
-    }
-  });
+  if (overview) overview.style.display = 'none';
+  if (detailView) detailView.style.display = 'block';
 
-  if (mode === 0) {
-    // Mode Animasi Wajah: Sesuai OLED fisik, animasi mata memenuhi 128x64 tanpa status bar
-    if (statusBar) statusBar.style.display = 'none';
-    if (layerFace) {
-      layerFace.style.display = 'flex';
-      layerFace.classList.add('active');
-    }
-    if (facesSection) facesSection.style.display = 'block';
-    if (modeBadge) modeBadge.textContent = 'ANIMASI WAJAH';
-    updateOledFacePreview(currentFaceIndex);
-  } else {
-    // Mode Lainnya: Menampilkan Status Bar fisik (WiFi, Judul Fitur, Baterai, Garis Pembatas y=13)
-    if (statusBar) statusBar.style.display = 'flex';
-    if (facesSection) facesSection.style.display = 'none';
+  // Sembunyikan semua sub-panel detail
+  document.querySelectorAll('.detail-feature-panel').forEach(p => p.style.display = 'none');
 
-    if (mode === 1) { // JAM DIGITAL
-      if (statusTitle) statusTitle.textContent = 'JAM';
-      if (layerClock) {
-        layerClock.style.display = 'flex';
-        layerClock.classList.add('active');
-      }
-      if (modeBadge) modeBadge.textContent = 'JAM DIGITAL';
-      updateOledClockTick();
-    } else if (mode === 2) { // CUACA
-      if (statusTitle) statusTitle.textContent = 'CUACA';
-      if (layerWeather) {
-        layerWeather.style.display = 'flex';
-        layerWeather.classList.add('active');
-      }
-      if (modeBadge) modeBadge.textContent = 'INFO CUACA';
-      updateOledWeatherPreview();
-    } else if (mode === 3) { // SUBTITLE
-      if (statusTitle) statusTitle.textContent = 'TEKS';
-      if (layerSubtitle) {
-        layerSubtitle.style.display = 'flex';
-        layerSubtitle.classList.add('active');
-      }
-      if (modeBadge) modeBadge.textContent = 'SUBTITLE TEKS';
-    } else if (mode === 4) { // GAME ARCADE
-      if (statusTitle) statusTitle.textContent = 'ARCADE';
-      if (layerGame) {
-        layerGame.style.display = 'flex';
-        layerGame.classList.add('active');
-      }
-      if (modeBadge) modeBadge.textContent = 'MENU GAME';
-    } else if (mode === 7) { // STOPWATCH
-      if (statusTitle) statusTitle.textContent = 'STOPWATCH';
-      if (layerStopwatch) {
-        layerStopwatch.style.display = 'flex';
-        layerStopwatch.classList.add('active');
-      }
-      if (modeBadge) modeBadge.textContent = 'STOPWATCH';
-    } else if (mode === 8) { // ALARM
-      if (statusTitle) statusTitle.textContent = 'ALARM';
-      if (layerAlarm) {
-        layerAlarm.style.display = 'flex';
-        layerAlarm.classList.add('active');
-      }
-      if (modeBadge) modeBadge.textContent = 'ALARM';
-      updateOledAlarmPreview();
-    } else {
-      if (statusTitle) statusTitle.textContent = 'ROBOT';
-      if (layerClock) {
-        layerClock.style.display = 'flex';
-        layerClock.classList.add('active');
-      }
-      if (modeBadge) modeBadge.textContent = 'MODE ' + mode;
-    }
+  if (featureKey === 'face') {
+    if (titleEl) titleEl.textContent = 'EXPRESI WAJAH';
+    const panel = document.getElementById('detailViewFace');
+    if (panel) panel.style.display = 'block';
+    renderDetailFacesGrid();
+    updateOledFacePreview(currentFaceIndex || 0);
+    sendCommand({ c: 'm', v: 0 });
+    currentRobotMode = 0;
+    sendCommand({ c: 'f', v: currentFaceIndex || 0 });
+    showNeonToast('Layar Robot: Expresi Wajah');
+  } else if (featureKey === 'clock') {
+    if (titleEl) titleEl.textContent = 'JAM DIGITAL';
+    const panel = document.getElementById('detailViewClock');
+    if (panel) panel.style.display = 'block';
+    updateOledClockTick();
+    sendCommand({ c: 'm', v: 1 });
+    currentRobotMode = 1;
+    showNeonToast('Layar Robot: Jam Digital');
+  } else if (featureKey === 'alarm') {
+    if (titleEl) titleEl.textContent = 'ALARM ROBOT';
+    const panel = document.getElementById('detailViewAlarm');
+    if (panel) panel.style.display = 'block';
+    updateOledAlarmPreview();
+    sendCommand({ c: 'm', v: 8 });
+    currentRobotMode = 8;
+    showNeonToast('Layar Robot: Alarm');
+  } else if (featureKey === 'stopwatch') {
+    if (titleEl) titleEl.textContent = 'STOPWATCH ROBOT';
+    const panel = document.getElementById('detailViewStopwatch');
+    if (panel) panel.style.display = 'block';
+    sendCommand({ c: 'm', v: 7 });
+    currentRobotMode = 7;
+    showNeonToast('Layar Robot: Stopwatch');
+  } else if (featureKey === 'weather') {
+    if (titleEl) titleEl.textContent = 'INFO CUACA';
+    const panel = document.getElementById('detailViewWeather');
+    if (panel) panel.style.display = 'block';
+    updateOledWeatherPreview();
+    sendCommand({ c: 'm', v: 2 });
+    currentRobotMode = 2;
+    showNeonToast('Layar Robot: Info Cuaca');
+  } else if (featureKey === 'subtitle') {
+    if (titleEl) titleEl.textContent = 'SUBTITLE TEKS';
+    const panel = document.getElementById('detailViewSubtitle');
+    if (panel) panel.style.display = 'block';
+    sendCommand({ c: 'm', v: 3 });
+    currentRobotMode = 3;
+    showNeonToast('Layar Robot: Subtitle Teks');
+  } else if (featureKey === 'game') {
+    if (titleEl) titleEl.textContent = 'MENU GAME ARCADE';
+    const panel = document.getElementById('detailViewGame');
+    if (panel) panel.style.display = 'block';
+    sendCommand({ c: 'm', v: 4 });
+    currentRobotMode = 4;
+    showNeonToast('Layar Robot: Menu Game');
   }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// PILIH FITUR DI MENU ROBOT -> OTOMATIS GANTI MODE & UPDATE LAYAR MIRRORING REALTIME
+// TUTUP DETAIL FITUR & KEMBALI KE OVERVIEW LAYAR OLED ROBOT
+function closeRobotFeatureDetail() {
+  triggerHaptic(20);
+  currentOpenDetailFeature = null;
+
+  const overview = document.getElementById('robotMainOverview');
+  const detailView = document.getElementById('robotFeatureDetailView');
+
+  if (detailView) detailView.style.display = 'none';
+  if (overview) overview.style.display = 'block';
+
+  document.querySelectorAll('.detail-feature-panel').forEach(p => p.style.display = 'none');
+}
+
+// HANDLER TOMBOL KEMBALI NAVIGASI ANDROID (HARDWARE / GESTURE BACK)
+window.handleAndroidBack = function() {
+  if (currentOpenDetailFeature !== null) {
+    closeRobotFeatureDetail();
+    return true; // Berhasil ditangani di JS, tidak keluar aplikasi
+  }
+  return false; // Biarkan sistem Android menangani keluar / minimize
+};
+
+// HANDLER INTERAKTIF UNTUK FITUR DETAIL
+function triggerVirtualTouchTap() {
+  triggerHaptic(30);
+  sendCommand({ c: 'tap' });
+  showNeonToast('Sentuh Layar Robot');
+}
+
+function resetStopwatchFromApp() {
+  triggerHaptic(40);
+  sendCommand({ c: 'm', v: 7 });
+  const digits = document.getElementById('detailSwDigits');
+  const overviewDigits = document.getElementById('oledStopwatchPreview');
+  if (digits) digits.textContent = '00:00:00';
+  if (overviewDigits) overviewDigits.textContent = '00:00:00';
+  showNeonToast('Stopwatch Direset');
+}
+
+function launchGameFromDetail(modeNum, gameName) {
+  triggerHaptic(35);
+  const activeLabel = document.getElementById('detailGameActiveLabel');
+  if (activeLabel) activeLabel.textContent = gameName.toUpperCase();
+  sendCommand({ c: 'm', v: modeNum });
+  currentRobotMode = modeNum;
+  showNeonToast('Mulai Game: ' + gameName);
+}
+
+// PILIH FITUR DI MENU ROBOT
 function selectRobotMenuFeature(featureKey, btnEl) {
   if (!isBleConnected) {
     showNeonToast('Wajib Terhubung Robot');
     return;
   }
 
-  // Hilangkan fokus/hover langsung setelah tombol disentuh
   if (btnEl && typeof btnEl.blur === 'function') {
     btnEl.blur();
   }
@@ -837,44 +891,37 @@ function selectRobotMenuFeature(featureKey, btnEl) {
     currentRobotMode = 0;
     sendCommand({ c: 'm', v: 0 });
     sendCommand({ c: 'f', v: currentFaceIndex || 0 });
-    updateLiveOledScreen(0);
-    showNeonToast('Layar Robot: Expresi Wajah');
+    showNeonToast('Layar ESP32: Expresi Wajah');
   } else if (featureKey === 'clock') {
     currentRobotMode = 1;
     sendCommand({ c: 'm', v: 1 });
-    updateLiveOledScreen(1);
-    showNeonToast('Layar Robot: Jam Digital');
+    showNeonToast('Layar ESP32: Jam Digital');
   } else if (featureKey === 'alarm') {
     currentRobotMode = 8;
     sendCommand({ c: 'm', v: 8 });
-    updateLiveOledScreen(8);
-    showNeonToast('Layar Robot: Alarm');
+    showNeonToast('Layar ESP32: Alarm');
   } else if (featureKey === 'stopwatch') {
     currentRobotMode = 7;
     sendCommand({ c: 'm', v: 7 });
-    updateLiveOledScreen(7);
-    showNeonToast('Layar Robot: Stopwatch');
+    showNeonToast('Layar ESP32: Stopwatch');
   } else if (featureKey === 'weather') {
     currentRobotMode = 2;
     sendCommand({ c: 'm', v: 2 });
-    updateLiveOledScreen(2);
-    showNeonToast('Layar Robot: Info Cuaca');
+    showNeonToast('Layar ESP32: Info Cuaca');
   } else if (featureKey === 'subtitle') {
     currentRobotMode = 3;
     sendCommand({ c: 'm', v: 3 });
-    updateLiveOledScreen(3);
-    showNeonToast('Layar Robot: Subtitle');
+    showNeonToast('Layar ESP32: Subtitle');
   } else if (featureKey === 'game') {
     currentRobotMode = 4;
     sendCommand({ c: 'm', v: 4 });
-    updateLiveOledScreen(4);
-    showNeonToast('Layar Robot: Menu Game');
+    showNeonToast('Layar ESP32: Menu Game');
   }
 }
 
 // ALIAS PENGIRIMAN WAJAH
 function sendFace(faceIndex, elem) {
-  selectFace(faceIndex, elem);
+  selectFaceFromDetail(faceIndex, elem);
 }
 
 // Ganti Mode Robot (Jam, Cuaca, Game, dll)
@@ -950,6 +997,7 @@ function updateOledAlarmPreview() {
   if (h && m) {
     const hh = String(parseInt(h.value, 10) || 0).padStart(2, '0');
     const mm = String(parseInt(m.value, 10) || 0).padStart(2, '0');
+    const timeText = `${hh}:${mm}`;
     const mainDigits = document.getElementById('mainAlarmDigits');
     if (mainDigits) mainDigits.textContent = timeText;
     if (timeEl) timeEl.textContent = timeText;
@@ -1323,11 +1371,11 @@ window.addEventListener('DOMContentLoaded', () => {
     if (el) el.addEventListener('change', updateOledAlarmPreview);
   });
 
-  renderMainFacesGrid();
-  updateLiveOledScreen(0);
+  renderDetailFacesGrid();
   updateOledFacePreview(0);
   updateOledAlarmPreview();
   updateOledClockTick();
+  updateOledWeatherPreview();
 
   // Cek status daya Bluetooth HP & sambungkan kembali ke robot tersimpan
   if (window.AndroidBLE && typeof window.AndroidBLE.isBluetoothEnabled === 'function') {
