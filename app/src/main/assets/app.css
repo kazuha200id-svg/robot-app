@@ -2164,3 +2164,219 @@ input[type="range"]::-webkit-slider-thumb {
   color: var(--neon-cyan);
 }
 
+/* ================= FEATURE CONTROLS PANELS (ALARM, STOPWATCH, GAME) ================= */
+.feature-ctrl-panel {
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto 16px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: rgba(10, 18, 34, 0.75);
+  border: 1px solid var(--neon-cyan-border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+/* Alarm Steppers & Toggles */
+.ctrl-group-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.time-adjust-block {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #02060c;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--neon-cyan-border);
+}
+
+.stepper-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.stepper-btn {
+  background: transparent;
+  border: 1px solid var(--neon-cyan-border);
+  color: var(--neon-cyan);
+  border-radius: 4px;
+  width: 32px;
+  height: 24px;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.stepper-btn:active {
+  background: var(--neon-cyan);
+  color: #000;
+}
+
+.stepper-value {
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--neon-cyan);
+  min-width: 28px;
+  text-align: center;
+}
+
+.stepper-sep {
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--neon-cyan);
+}
+
+.toggles-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.active-toggle {
+  background: rgba(0, 240, 255, 0.22) !important;
+  border-color: var(--neon-cyan) !important;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.35) !important;
+}
+
+/* Game Navigation & 10-Grid */
+.game-nav-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.game-nav-row .highlight {
+  background: var(--neon-cyan) !important;
+  color: #000 !important;
+  box-shadow: 0 0 12px var(--neon-cyan) !important;
+}
+
+.game-lock-status {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #FFB300;
+  text-align: center;
+  padding: 6px;
+  background: rgba(255, 179, 0, 0.12);
+  border: 1px dashed #FFB300;
+  border-radius: var(--radius-sm);
+}
+
+.games-10-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.game-select-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: rgba(5, 10, 22, 0.85);
+  border: 1px solid var(--neon-cyan-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s ease;
+}
+
+.game-select-card:active {
+  transform: scale(0.96);
+}
+
+.game-select-card.selected,
+.game-select-card.active {
+  border-color: var(--neon-cyan) !important;
+  background: rgba(0, 240, 255, 0.18) !important;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.35) !important;
+}
+
+.game-select-card.disabled-playing,
+.game-select-card.locked {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.disabled-playing,
+.locked {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.game-select-icon,
+.game-card-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.95rem;
+}
+
+.game-select-icon svg,
+.game-card-icon svg {
+  width: 100%;
+  height: 100%;
+  fill: var(--neon-cyan);
+}
+
+.game-select-num,
+.game-card-num {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--text-muted);
+}
+
+.game-select-name,
+.game-card-name {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--neon-cyan);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* OLED Game Footer & Counter */
+.oled-game-footer-line {
+  width: 100%;
+  height: 1px;
+  background: var(--neon-cyan);
+  margin-top: 2px;
+}
+
+.oled-game-counter {
+  font-family: var(--font-mono);
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--neon-cyan);
+  text-align: center;
+  margin-top: 1px;
+}
+

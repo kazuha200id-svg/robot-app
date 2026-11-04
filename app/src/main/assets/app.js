@@ -557,6 +557,9 @@ window.onBLEStatus = function(connected, message) {
     localStorage.setItem('robot_saved_mac', 'connected');
     localStorage.setItem('robot_saved_name', 'Robot Desk');
 
+    // Sinkronkan detik jam HP ke robot seketika saat tersambung agar realtime tanpa jeda
+    syncClockQuiet();
+
     if (isConnecting) {
       const elapsed = Date.now() - connectStartTime;
       const remaining = Math.max(0, 3000 - elapsed);
@@ -621,6 +624,25 @@ window.onBLEReceived = function(jsonStr) {
     // Telemetry updates
     if (typeof data.mode === 'number') {
       currentRobotMode = data.mode;
+      // Jika mode adalah 4 (MODE_GAME_MENU), robot berada di menu game (atau kembali setelah game over)
+      if (data.mode === 4) {
+        if (typeof isGamePlaying !== 'undefined' && isGamePlaying) {
+          isGamePlaying = false;
+          if (typeof renderOledGameMenu === 'function') renderOledGameMenu();
+          if (typeof render10GamesGrid === 'function') render10GamesGrid();
+        }
+      } else if (data.mode >= 5 && data.mode <= 16 && data.mode !== 7 && data.mode !== 8) {
+        // Robot sedang memainkan salah satu game arcade
+        if (typeof isGamePlaying !== 'undefined' && !isGamePlaying) {
+          isGamePlaying = true;
+          if (typeof GAMES_LIST !== 'undefined') {
+            const matchedIdx = GAMES_LIST.findIndex(g => g.mode === data.mode);
+            if (matchedIdx >= 0) g_selectedGameIdx = matchedIdx;
+          }
+          if (typeof renderOledGameMenu === 'function') renderOledGameMenu();
+          if (typeof render10GamesGrid === 'function') render10GamesGrid();
+        }
+      }
     }
     if (typeof data.face === 'number') {
       currentFaceIndex = data.face;
@@ -638,18 +660,22 @@ window.onBLEReceived = function(jsonStr) {
     // Alarm config sync
     if (data.alarm) {
       if (typeof data.alarm.hour === 'number') {
+        g_alarmHour = data.alarm.hour;
         const hEl = document.getElementById('alarmHour');
         if (hEl) hEl.value = String(data.alarm.hour).padStart(2, '0');
       }
       if (typeof data.alarm.min === 'number') {
+        g_alarmMin = data.alarm.min;
         const mEl = document.getElementById('alarmMin');
         if (mEl) mEl.value = String(data.alarm.min).padStart(2, '0');
       }
       if (typeof data.alarm.enabled === 'boolean') {
+        g_alarmEnabled = data.alarm.enabled;
         const enEl = document.getElementById('alarmEnabledToggle');
         if (enEl) enEl.checked = data.alarm.enabled;
       }
       if (typeof data.alarm.daily === 'boolean') {
+        g_alarmDaily = data.alarm.daily;
         const dEl = document.getElementById('alarmDailyToggle');
         if (dEl) dEl.checked = data.alarm.daily;
       }
@@ -753,6 +779,7 @@ function selectFaceFromDetail(index, elem) {
     faceAnimationTimer = setTimeout(() => {
       currentFaceIndex = 0;
       updateOledFacePreview(0);
+      sendCommand({ c: 'f', v: 0 }); // Kembalikan ke netral di robot fisik
       document.querySelectorAll('#detailFacesGrid .face-card').forEach((c, i) => {
         c.classList.toggle('active', i === 0);
       });
@@ -785,17 +812,19 @@ function openRobotFeatureDetail(featureKey) {
     const panel = document.getElementById('detailViewClock');
     if (panel) panel.style.display = 'block';
     updateOledClockTick();
+    syncClockQuiet(); // Sinkronkan detik jam HP ke robot seketika
     currentRobotMode = 1;
     sendCommand({ c: 'm', v: 1 });
   } else if (featureKey === 'alarm') {
     const panel = document.getElementById('detailViewAlarm');
     if (panel) panel.style.display = 'block';
-    updateOledAlarmPreview();
+    renderAlarmOledAndControls();
     currentRobotMode = 8;
     sendCommand({ c: 'm', v: 8 });
   } else if (featureKey === 'stopwatch') {
     const panel = document.getElementById('detailViewStopwatch');
     if (panel) panel.style.display = 'block';
+    updateStopwatchDisplay();
     currentRobotMode = 7;
     sendCommand({ c: 'm', v: 7 });
   } else if (featureKey === 'weather') {
@@ -812,6 +841,8 @@ function openRobotFeatureDetail(featureKey) {
   } else if (featureKey === 'game') {
     const panel = document.getElementById('detailViewGame');
     if (panel) panel.style.display = 'block';
+    renderOledGameMenu();
+    render10GamesGrid();
     currentRobotMode = 4;
     sendCommand({ c: 'm', v: 4 });
   }
@@ -846,29 +877,306 @@ window.handleAndroidBack = function() {
 function triggerVirtualTouchTap() {
   triggerHaptic(30);
   sendCommand({ c: 'tap' });
-  showNeonToast('Sentuh Layar Robot');
+}
+
+// ================= FITUR 3: KONTROL ALARM INTERAKTIF =================
+let g_alarmHour = parseInt(localStorage.getItem('robot_cfg_alarm_h') || '6', 10);
+let g_alarmMin = parseInt(localStorage.getItem('robot_cfg_alarm_m') || '30', 10);
+let g_alarmEnabled = localStorage.getItem('robot_cfg_alarm_en') !== '0';
+let g_alarmDaily = localStorage.getItem('robot_cfg_alarm_daily') !== '0';
+
+function renderAlarmOledAndControls() {
+  const hh = String(g_alarmHour).padStart(2, '0');
+  const mm = String(g_alarmMin).padStart(2, '0');
+  const timeText = `${hh}:${mm}`;
+  const badgeText = `${g_alarmEnabled ? 'ON' : 'OFF'} \u2022 ${g_alarmDaily ? 'TIAP HARI' : 'SEKALI'}`;
+
+  // Update display teks jam & status badge
+  ['detailAlarmDigits', 'oledAlarmTimePreview', 'stageAlarmDigits', 'mainAlarmDigits'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = timeText;
+  });
+  ['detailAlarmBadge', 'oledAlarmBadgePreview', 'stageAlarmBadge', 'mainAlarmBadge'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.textContent = badgeText;
+      el.style.opacity = g_alarmEnabled ? '1' : '0.45';
+    }
+  });
+
+  // Update stepper display
+  const dH = document.getElementById('dispAlarmHour');
+  const dM = document.getElementById('dispAlarmMin');
+  if (dH) dH.textContent = hh;
+  if (dM) dM.textContent = mm;
+
+  // Update tombol toggle
+  const btnEn = document.getElementById('btnToggleAlarmEn');
+  if (btnEn) {
+    btnEn.textContent = `STATUS: ${g_alarmEnabled ? 'ON' : 'OFF'}`;
+    btnEn.classList.toggle('active-toggle', g_alarmEnabled);
+  }
+  const btnRep = document.getElementById('btnToggleAlarmRepeat');
+  if (btnRep) {
+    btnRep.textContent = g_alarmDaily ? 'TIAP HARI' : 'SEKALI';
+    btnRep.classList.toggle('active-toggle', g_alarmDaily);
+  }
+
+  // Update status bar alarm icon di semua detail screen
+  document.querySelectorAll('.detail-status-alarm-icon').forEach(icon => {
+    icon.classList.toggle('visible', g_alarmEnabled);
+  });
+}
+
+function sendAlarmToRobot() {
+  localStorage.setItem('robot_cfg_alarm_h', String(g_alarmHour));
+  localStorage.setItem('robot_cfg_alarm_m', String(g_alarmMin));
+  localStorage.setItem('robot_cfg_alarm_en', g_alarmEnabled ? '1' : '0');
+  localStorage.setItem('robot_cfg_alarm_daily', g_alarmDaily ? '1' : '0');
+
+  renderAlarmOledAndControls();
+
+  sendCommand({
+    cmd: 'alarm',
+    hour: g_alarmHour,
+    min: g_alarmMin,
+    en: g_alarmEnabled,
+    daily: g_alarmDaily,
+    enabled: g_alarmEnabled
+  });
+}
+
+function stepAlarmHour(dir) {
+  triggerHaptic(20);
+  g_alarmHour = (g_alarmHour + dir + 24) % 24;
+  sendAlarmToRobot();
+}
+
+function stepAlarmMin(dir) {
+  triggerHaptic(20);
+  g_alarmMin = (g_alarmMin + dir + 60) % 60;
+  sendAlarmToRobot();
+}
+
+function toggleAlarmPowerFromApp() {
+  triggerHaptic(25);
+  g_alarmEnabled = !g_alarmEnabled;
+  sendAlarmToRobot();
+}
+
+function toggleAlarmRepeatFromApp() {
+  triggerHaptic(25);
+  g_alarmDaily = !g_alarmDaily;
+  sendAlarmToRobot();
+}
+
+// ================= FITUR 4: KONTROL STOPWATCH INTERAKTIF =================
+let isSwRunning = false;
+let swStartTime = 0;
+let swElapsedBeforePause = 0;
+let swTimerId = null;
+
+function formatStopwatchTime(totalMs) {
+  const centisec = Math.floor((totalMs / 10) % 100);
+  const sec = Math.floor((totalMs / 1000) % 60);
+  const min = Math.floor(totalMs / 60000);
+  if (min < 100) {
+    return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}:${String(centisec).padStart(2, '0')}`;
+  } else {
+    const hr = Math.floor(min / 60);
+    const remMin = min % 60;
+    return `${String(hr).padStart(2, '0')}:${String(remMin).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+  }
+}
+
+function updateStopwatchDisplay() {
+  let totalMs = swElapsedBeforePause;
+  if (isSwRunning) {
+    totalMs += (Date.now() - swStartTime);
+  }
+
+  const timeStr = formatStopwatchTime(totalMs);
+  const barPercent = Math.min(100, ((totalMs % 60000) / 60000) * 100);
+
+  const digits = document.getElementById('detailSwDigits');
+  const previewDigits = document.getElementById('oledStopwatchPreview');
+  const bar = document.getElementById('detailSwBarFill');
+
+  if (digits) digits.textContent = timeStr;
+  if (previewDigits) previewDigits.textContent = timeStr;
+  if (bar) bar.style.width = barPercent + '%';
+
+  const btnStartStop = document.getElementById('btnSwStartStop');
+  if (btnStartStop) {
+    btnStartStop.textContent = isSwRunning ? 'STOP' : 'MULAI';
+    btnStartStop.classList.toggle('danger', isSwRunning);
+  }
+}
+
+function toggleStopwatchStartStop() {
+  triggerHaptic(30);
+  if (!isSwRunning) {
+    isSwRunning = true;
+    swStartTime = Date.now();
+    if (swTimerId) clearInterval(swTimerId);
+    swTimerId = setInterval(updateStopwatchDisplay, 30);
+    sendCommand({ c: 'action' });
+  } else {
+    isSwRunning = false;
+    swElapsedBeforePause += (Date.now() - swStartTime);
+    if (swTimerId) {
+      clearInterval(swTimerId);
+      swTimerId = null;
+    }
+    sendCommand({ c: 'action' });
+  }
+  updateStopwatchDisplay();
 }
 
 function resetStopwatchFromApp() {
   triggerHaptic(40);
-  sendCommand({ c: 'm', v: 7 });
-  const digits = document.getElementById('detailSwDigits');
-  const overviewDigits = document.getElementById('oledStopwatchPreview');
-  if (digits) digits.textContent = '00:00:00';
-  if (overviewDigits) overviewDigits.textContent = '00:00:00';
-  showNeonToast('Stopwatch Direset');
+  isSwRunning = false;
+  if (swTimerId) {
+    clearInterval(swTimerId);
+    swTimerId = null;
+  }
+  swStartTime = 0;
+  swElapsedBeforePause = 0;
+  updateStopwatchDisplay();
+  sendCommand({ c: 'm', v: 7 }); // Mode 7 di ESP32 mereset stopwatch ke 00:00:00
 }
 
-function launchGameFromDetail(modeNum, gameName) {
+// ================= FITUR 5: 10 GAME ARCADE DENGAN SYARAT TIDAK SEDANG MAIN =================
+const GAMES_LIST = [
+  { id: 0, mode: 5, name: 'FLAPPY BIRD', icon: '🐦' },
+  { id: 1, mode: 6, name: 'DINO RUNNER', icon: '🦖' },
+  { id: 2, mode: 9, name: 'CAVE COPTER', icon: '🚁' },
+  { id: 3, mode: 10, name: 'GRAV RUNNER', icon: '🏃' },
+  { id: 4, mode: 11, name: 'PIN CIRCLE', icon: '🎯' },
+  { id: 5, mode: 12, name: 'ORBIT JUMP', icon: '🪐' },
+  { id: 6, mode: 13, name: 'TOWER STACK', icon: '🏢' },
+  { id: 7, mode: 14, name: 'RADAR DEFEND', icon: '📡' },
+  { id: 8, mode: 15, name: 'HOOP DUNK', icon: '🏀' },
+  { id: 9, mode: 16, name: 'ORBIT PONG', icon: '🏓' }
+];
+
+let g_selectedGameIdx = 0;
+let isGamePlaying = false;
+
+function renderOledGameMenu() {
+  const container = document.getElementById('oledGameMenuContainer');
+  const counter = document.getElementById('oledGameCounter');
+  if (!container) return;
+
+  const total = GAMES_LIST.length;
+  let startIdx = 0;
+  if (total > 3 && g_selectedGameIdx >= 3) {
+    startIdx = g_selectedGameIdx - 2;
+  }
+
+  let html = '';
+  for (let row = 0; row < 3; row++) {
+    const idx = startIdx + row;
+    if (idx >= total) break;
+    const g = GAMES_LIST[idx];
+    const isSel = (idx === g_selectedGameIdx);
+    const cursor = isSel ? '&gt;&nbsp;' : '&nbsp;&nbsp;';
+    html += `
+      <div class="oled-game-menu-row ${isSel ? 'selected' : ''}">
+        <span class="row-num">${cursor}${idx + 1}.</span>
+        <span class="row-title">${g.name}</span>
+        <span class="row-icon">${g.icon}</span>
+      </div>
+    `;
+  }
+  container.innerHTML = html;
+
+  if (counter) {
+    const curStr = String(g_selectedGameIdx + 1).padStart(2, '0');
+    const totStr = String(total).padStart(2, '0');
+    counter.textContent = `${curStr}/${totStr}`;
+  }
+
+  const btnLaunch = document.getElementById('btnGameLaunch');
+  const lockStatus = document.getElementById('gameLockStatus');
+  if (btnLaunch) {
+    btnLaunch.textContent = isGamePlaying ? 'KEMBALI KE MENU' : 'MULAI MAIN';
+    btnLaunch.classList.toggle('danger', isGamePlaying);
+    btnLaunch.classList.toggle('highlight', !isGamePlaying);
+  }
+  if (lockStatus) {
+    lockStatus.style.display = isGamePlaying ? 'block' : 'none';
+  }
+}
+
+function render10GamesGrid() {
+  const grid = document.getElementById('games10Grid');
+  if (!grid) return;
+
+  grid.innerHTML = '';
+  GAMES_LIST.forEach((g, idx) => {
+    const card = document.createElement('div');
+    card.className = `game-select-card ${idx === g_selectedGameIdx ? 'active' : ''} ${isGamePlaying ? 'locked' : ''}`;
+    card.onclick = () => selectGameByIndex(idx);
+    card.innerHTML = `
+      <span class="game-card-num">${idx + 1}</span>
+      <span class="game-card-icon">${g.icon}</span>
+      <span class="game-card-name">${g.name}</span>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function selectGameByIndex(idx) {
+  // Syarat: hanya bisa ganti saat tidak sedang bermain game (di menu game, belum mulai, atau game over)
+  if (isGamePlaying) {
+    triggerHaptic(40);
+    return;
+  }
+
+  triggerHaptic(25);
+  g_selectedGameIdx = idx;
+  renderOledGameMenu();
+  render10GamesGrid();
+}
+
+function navigateGameMenu(dir) {
+  if (isGamePlaying) {
+    triggerHaptic(40);
+    return;
+  }
+
+  triggerHaptic(20);
+  const total = GAMES_LIST.length;
+  g_selectedGameIdx = (g_selectedGameIdx + dir + total) % total;
+  renderOledGameMenu();
+  render10GamesGrid();
+}
+
+function launchCurrentSelectedGame() {
   triggerHaptic(35);
-  const activeLabel = document.getElementById('detailGameActiveLabel');
-  if (activeLabel) activeLabel.textContent = gameName.toUpperCase();
-  sendCommand({ c: 'm', v: modeNum });
-  currentRobotMode = modeNum;
-  showNeonToast('Mulai Game: ' + gameName);
+  if (!isGamePlaying) {
+    const g = GAMES_LIST[g_selectedGameIdx];
+    isGamePlaying = true;
+    currentRobotMode = g.mode;
+    sendCommand({ c: 'm', v: g.mode });
+    renderOledGameMenu();
+    render10GamesGrid();
+  } else {
+    returnToGameMenuFromApp();
+  }
 }
 
-// PILIH FITUR DI MENU ROBOT
+function returnToGameMenuFromApp() {
+  triggerHaptic(30);
+  isGamePlaying = false;
+  currentRobotMode = 4;
+  sendCommand({ c: 'm', v: 4 });
+  renderOledGameMenu();
+  render10GamesGrid();
+}
+
+// PILIH FITUR DI MENU ROBOT (LANGSUNG BUKA TAMPILAN DETAIL PERSIS OLED)
 function selectRobotMenuFeature(featureKey, btnEl) {
   if (!isBleConnected) {
     showNeonToast('Wajib Terhubung Robot');
@@ -881,36 +1189,10 @@ function selectRobotMenuFeature(featureKey, btnEl) {
 
   triggerHaptic(35);
 
-  if (featureKey === 'face') {
-    currentRobotMode = 0;
-    sendCommand({ c: 'm', v: 0 });
-    sendCommand({ c: 'f', v: currentFaceIndex || 0 });
-    showNeonToast('Layar ESP32: Expresi Wajah');
-  } else if (featureKey === 'clock') {
-    currentRobotMode = 1;
-    sendCommand({ c: 'm', v: 1 });
-    showNeonToast('Layar ESP32: Jam Digital');
-  } else if (featureKey === 'alarm') {
-    currentRobotMode = 8;
-    sendCommand({ c: 'm', v: 8 });
-    showNeonToast('Layar ESP32: Alarm');
-  } else if (featureKey === 'stopwatch') {
-    currentRobotMode = 7;
-    sendCommand({ c: 'm', v: 7 });
-    showNeonToast('Layar ESP32: Stopwatch');
-  } else if (featureKey === 'weather') {
-    currentRobotMode = 2;
-    sendCommand({ c: 'm', v: 2 });
-    showNeonToast('Layar ESP32: Info Cuaca');
-  } else if (featureKey === 'subtitle') {
-    currentRobotMode = 3;
-    sendCommand({ c: 'm', v: 3 });
-    showNeonToast('Layar ESP32: Subtitle');
-  } else if (featureKey === 'game') {
-    currentRobotMode = 4;
-    sendCommand({ c: 'm', v: 4 });
-    showNeonToast('Layar ESP32: Menu Game');
-  }
+  const navTabs = document.querySelectorAll('.nav-tab');
+  const navRobotBtn = navTabs.length >= 3 ? navTabs[2] : null;
+  switchMainTab('pageRobot', navRobotBtn);
+  openRobotFeatureDetail(featureKey);
 }
 
 // ALIAS PENGIRIMAN WAJAH
@@ -980,52 +1262,12 @@ function updateOledAlarmPreview() {
   const en = document.getElementById('alarmEnabledToggle');
   const daily = document.getElementById('alarmDailyToggle');
 
-  const timeEl = document.getElementById('oledAlarmTimePreview');
-  const badgeEl = document.getElementById('oledAlarmBadgePreview');
-  const stageTimeEl = document.getElementById('stageAlarmDigits');
-  const stageBadgeEl = document.getElementById('stageAlarmBadge');
-  const detailTimeEl = document.getElementById('detailAlarmDigits');
-  const detailBadgeEl = document.getElementById('detailAlarmBadge');
-  const detailEn = document.getElementById('detailAlarmEn');
+  if (h && h.value !== '') g_alarmHour = parseInt(h.value, 10) || 0;
+  if (m && m.value !== '') g_alarmMin = parseInt(m.value, 10) || 0;
+  if (en) g_alarmEnabled = en.checked;
+  if (daily) g_alarmDaily = daily.checked;
 
-  if (h && m) {
-    const hh = String(parseInt(h.value, 10) || 0).padStart(2, '0');
-    const mm = String(parseInt(m.value, 10) || 0).padStart(2, '0');
-    const timeText = `${hh}:${mm}`;
-    const mainDigits = document.getElementById('mainAlarmDigits');
-    if (mainDigits) mainDigits.textContent = timeText;
-    if (timeEl) timeEl.textContent = timeText;
-    if (stageTimeEl) stageTimeEl.textContent = timeText;
-    if (detailTimeEl) detailTimeEl.textContent = timeText;
-  }
-  if (en && daily) {
-    const isEn = en.checked;
-    const isDaily = daily.checked;
-    const badgeText = `${isEn ? 'ON' : 'OFF'} \u2022 ${isDaily ? 'TIAP HARI' : 'SEKALI'}`;
-    const mainBadge = document.getElementById('mainAlarmBadge');
-    if (mainBadge) {
-      mainBadge.textContent = badgeText;
-      mainBadge.style.opacity = isEn ? '1' : '0.45';
-    }
-    if (badgeEl) {
-      badgeEl.textContent = badgeText;
-      badgeEl.style.opacity = isEn ? '1' : '0.45';
-    }
-    if (stageBadgeEl) {
-      stageBadgeEl.textContent = badgeText;
-      stageBadgeEl.style.opacity = isEn ? '1' : '0.45';
-    }
-    if (detailBadgeEl) {
-      detailBadgeEl.textContent = badgeText;
-      detailBadgeEl.style.opacity = isEn ? '1' : '0.45';
-    }
-    if (detailEn) {
-      detailEn.checked = isEn;
-    }
-    document.querySelectorAll('.detail-status-alarm-icon').forEach(icon => {
-      icon.classList.toggle('visible', !!isEn);
-    });
-  }
+  renderAlarmOledAndControls();
 }
 
 // SIMPAN & TES ALARM
@@ -1040,24 +1282,14 @@ function saveAlarmSettings() {
   const enabled = enInput ? enInput.checked : true;
   const daily = dailyInput ? dailyInput.checked : true;
 
-  localStorage.setItem('robot_cfg_alarm_h', String(h));
-  localStorage.setItem('robot_cfg_alarm_m', String(m));
-  localStorage.setItem('robot_cfg_alarm_en', enabled ? '1' : '0');
-  localStorage.setItem('robot_cfg_alarm_daily', daily ? '1' : '0');
+  g_alarmHour = h;
+  g_alarmMin = m;
+  g_alarmEnabled = enabled;
+  g_alarmDaily = daily;
 
-  updateOledAlarmPreview();
-
-  const ok = sendCommand({
-    cmd: 'alarm',
-    hour: h,
-    min: m,
-    enabled: enabled,
-    daily: daily
-  });
-  if (ok) {
-    showNeonToast('Alarm Disimpan: ' + String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0'));
-    triggerHaptic(30);
-  }
+  sendAlarmToRobot();
+  showNeonToast('Alarm Disimpan: ' + String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0'));
+  triggerHaptic(30);
 }
 
 function testAlarmBuzzer() {
@@ -1127,7 +1359,8 @@ function updateOledClockTick() {
   if (detailTzEl) detailTzEl.textContent = tzCode;
 }
 
-setInterval(updateOledClockTick, 1000);
+// Pembaruan realtime ultra-cepat (50ms) agar detik jam berpindah seketika tanpa jeda 1-2 detik
+setInterval(updateOledClockTick, 50);
 
 // ================= 7. PENGATURAN (SETTING) =================
 
@@ -1370,9 +1603,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
   renderDetailFacesGrid();
   updateOledFacePreview(0);
-  updateOledAlarmPreview();
+  renderAlarmOledAndControls();
+  updateStopwatchDisplay();
+  renderOledGameMenu();
+  render10GamesGrid();
   updateOledClockTick();
   updateOledWeatherPreview();
+  syncClockQuiet();
 
   // Cek status daya Bluetooth HP & sambungkan kembali ke robot tersimpan
   if (window.AndroidBLE && typeof window.AndroidBLE.isBluetoothEnabled === 'function') {

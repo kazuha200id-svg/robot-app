@@ -447,6 +447,33 @@
                 </div>
               </div>
             </div>
+
+            <!-- KONTROL ALARM: ATUR JAM & MENIT, ON/OFF, SEKALI/TIAP HARI -->
+            <div class="feature-ctrl-panel">
+              <div class="ctrl-group-row">
+                <div class="time-adjust-block">
+                  <div class="stepper-unit">
+                    <button type="button" class="stepper-btn" onclick="stepAlarmHour(1)">▲</button>
+                    <span class="stepper-value" id="dispAlarmHour">06</span>
+                    <button type="button" class="stepper-btn" onclick="stepAlarmHour(-1)">▼</button>
+                  </div>
+                  <span class="stepper-sep">:</span>
+                  <div class="stepper-unit">
+                    <button type="button" class="stepper-btn" onclick="stepAlarmMin(1)">▲</button>
+                    <span class="stepper-value" id="dispAlarmMin">30</span>
+                    <button type="button" class="stepper-btn" onclick="stepAlarmMin(-1)">▼</button>
+                  </div>
+                </div>
+                <div class="toggles-block">
+                  <button type="button" id="btnToggleAlarmEn" class="neon-btn-action active-toggle" onclick="toggleAlarmPowerFromApp()">
+                    STATUS: ON
+                  </button>
+                  <button type="button" id="btnToggleAlarmRepeat" class="neon-btn-action" onclick="toggleAlarmRepeatFromApp()">
+                    TIAP HARI
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- 4. DETAIL: STOPWATCH (100% PERSIS OLED DENGAN STATUS BAR) -->
@@ -467,9 +494,21 @@
                   </div>
                   <div class="oled-mode-layer active">
                     <div class="oled-big-time oled-mono" id="detailSwDigits">00:00:00</div>
-                    <div class="oled-sw-bar-track"><div class="oled-sw-bar-fill"></div></div>
+                    <div class="oled-sw-bar-track"><div class="oled-sw-bar-fill" id="detailSwBarFill" style="width: 0%;"></div></div>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <!-- KONTROL STOPWATCH: MULAI, STOP, RESET -->
+            <div class="feature-ctrl-panel">
+              <div class="dual-btn-row">
+                <button type="button" id="btnSwStartStop" class="neon-btn-action flex-1" onclick="toggleStopwatchStartStop()">
+                  MULAI
+                </button>
+                <button type="button" id="btnSwReset" class="neon-btn-action flex-1 danger" onclick="resetStopwatchFromApp()">
+                  RESET
+                </button>
               </div>
             </div>
           </div>
@@ -551,28 +590,34 @@
                     </div>
                   </div>
                   <div class="oled-mode-layer active">
-                    <div class="oled-game-menu-list">
-                      <div class="oled-game-menu-row active">
-                        <div class="oled-game-menu-left">
-                          <span>&gt; 1. FLAPPY BIRD</span>
-                        </div>
-                        <svg viewBox="0 0 8 6" class="oled-game-mini-icon"><path d="M0 2h3v1H0zM3 1h2v1H3zM5 0h3v4H5zM2 3h3v2H2z"/></svg>
-                      </div>
-                      <div class="oled-game-menu-row">
-                        <div class="oled-game-menu-left">
-                          <span>&nbsp;&nbsp;2. DINO RUNNER</span>
-                        </div>
-                        <svg viewBox="0 0 10 12" class="oled-game-mini-icon"><path d="M4 0h6v6H4zM2 4h4v6H2zM0 8h2v3H0zM2 10h2v2H2zM6 10h2v2H6z"/></svg>
-                      </div>
-                      <div class="oled-game-menu-row">
-                        <div class="oled-game-menu-left">
-                          <span>&nbsp;&nbsp;3. CAVE COPTER</span>
-                        </div>
-                        <svg viewBox="0 0 10 7" class="oled-game-mini-icon"><path d="M2 0h6v1H2zM4 1h2v1H4zM0 2h10v3H0zM3 5h4v1H3zM1 6h8v1H1z"/></svg>
-                      </div>
+                    <div class="oled-game-menu-list" id="oledGameMenuContainer">
+                      <!-- 3 baris di-render secara dinamis oleh JavaScript -->
                     </div>
+                    <div class="oled-game-footer-line"></div>
+                    <div class="oled-game-counter" id="oledGameCounter">01/10</div>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <!-- KONTROL GAME: NAVIGASI SEBELUMNYA / BERIKUTNYA, MULAI MAIN, DAN 10 PILIHAN GAME -->
+            <div class="feature-ctrl-panel">
+              <div class="game-nav-row">
+                <button type="button" id="btnGamePrev" class="neon-btn-action" onclick="navigateGameMenu(-1)">
+                  ◄ SEBELUMNYA
+                </button>
+                <button type="button" id="btnGameLaunch" class="neon-btn-action highlight" onclick="launchCurrentSelectedGame()">
+                  MULAI MAIN
+                </button>
+                <button type="button" id="btnGameNext" class="neon-btn-action" onclick="navigateGameMenu(1)">
+                  BERIKUTNYA ►
+                </button>
+              </div>
+              <div class="game-lock-status" id="gameLockStatus" style="display: none;">
+                Sedang Bermain Game &bull; Selesaikan game atau Game Over untuk ganti game
+              </div>
+              <div class="games-10-grid" id="games10Grid">
+                <!-- 10 Kartu Game di-render secara dinamis oleh JavaScript -->
               </div>
             </div>
           </div>
