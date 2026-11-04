@@ -1283,7 +1283,7 @@ function selectAndLaunchGame(idx) {
   render10GamesGrid();
 }
 
-// PILIH FITUR DI MENU ROBOT (LANGSUNG BUKA TAMPILAN DETAIL PERSIS OLED)
+// PILIH FITUR DI MENU LAYAR UTAMA (HANYA GANTI MODE LAYAR OLED FISIK ROBOT, TIDAK MEMBUKA DETAIL DI APLIKASI)
 function selectRobotMenuFeature(featureKey, btnEl) {
   if (!isBleConnected) {
     showNeonToast('Wajib Terhubung Robot');
@@ -1294,12 +1294,26 @@ function selectRobotMenuFeature(featureKey, btnEl) {
     btnEl.blur();
   }
 
-  triggerHaptic(35);
+  triggerHaptic(30);
 
-  const navTabs = document.querySelectorAll('.nav-tab');
-  const navRobotBtn = navTabs.length >= 3 ? navTabs[2] : null;
-  switchMainTab('pageRobot', navRobotBtn);
-  openRobotFeatureDetail(featureKey);
+  const modeMap = {
+    'face': 0,
+    'clock': 1,
+    'weather': 2,
+    'subtitle': 3,
+    'game': 4,
+    'stopwatch': 7,
+    'alarm': 8
+  };
+
+  const targetMode = modeMap[featureKey];
+  if (targetMode !== undefined) {
+    currentRobotMode = targetMode;
+    if (featureKey === 'clock') {
+      syncClockQuiet();
+    }
+    sendCommand({ c: 'm', v: targetMode });
+  }
 }
 
 // ALIAS PENGIRIMAN WAJAH
