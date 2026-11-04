@@ -413,11 +413,22 @@ window.onBluetoothPowerState = function(enabled) {
     if (txtScan) txtScan.textContent = 'Nyalakan Bluetooth untuk mulai';
     if (spinner) spinner.style.display = 'none';
 
+    const btnDisc = document.getElementById('btnDisconnectBt');
+    if (btnDisc) btnDisc.style.display = 'none';
+
     updateConnectButtonState();
 
     if (gate) gate.classList.add('active');
   }
 };
+
+function disconnectBluetooth() {
+  triggerHaptic(40);
+  if (window.AndroidBLE && typeof window.AndroidBLE.disconnect === 'function') {
+    window.AndroidBLE.disconnect();
+  }
+  showNeonToast('Memutuskan koneksi...');
+}
 
 // BLE CONNECTION STATUS CALLBACK FROM NATIVE ANDROID
 window.onBLEStatus = function(connected, message) {
@@ -425,10 +436,12 @@ window.onBLEStatus = function(connected, message) {
   const dot = document.getElementById('bleDot');
   const label = document.getElementById('bleStatusLabel');
   const gate = document.getElementById('setupGate');
+  const btnDisc = document.getElementById('btnDisconnectBt');
 
   if (connected) {
     if (dot) dot.className = 'pulse-dot online';
     if (label) label.textContent = 'BLE TERHUBUNG';
+    if (btnDisc) btnDisc.style.display = 'flex';
 
     if (isConnecting) {
       const elapsed = Date.now() - connectStartTime;
@@ -442,6 +455,7 @@ window.onBLEStatus = function(connected, message) {
   } else {
     if (dot) dot.className = 'pulse-dot';
     if (label) label.textContent = 'BLE TERPUTUS';
+    if (btnDisc) btnDisc.style.display = 'none';
 
     if (!isConnecting && gate) {
       gate.classList.add('active');

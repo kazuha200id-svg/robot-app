@@ -161,51 +161,51 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
             } else {
                 hasDeniedNearby = false;
             }
-        }
-
-        // 2. Cek Perizinan Lokasi
-        boolean hasLocation = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-        if (!hasLocation) {
-            if (hasDeniedLocation) {
-                // Hanya munculkan popup custom jika sudah pernah DITOLAK oleh pengguna
-                showPermissionPopup(
-                    "Izin Lokasi",
-                    "Aplikasi memerlukan izin lokasi untuk memindai sinyal Robot Desk di sekitar Anda.",
-                    this::reRequestLocationPermissions
-                );
-            } else {
-                // Minta izin bawaan Android secara langsung tanpa popup custom di awal
-                isWaitingNativePermission = true;
-                ActivityCompat.requestPermissions(MainActivity.this,
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
-                        REQ_LOCATION);
-            }
-            return;
+            // Di Android 12+, Bluetooth menggunakan 'neverForLocation' sehingga Lokasi dan GPS TIDAK DIPERLUKAN sama sekali!
         } else {
-            hasDeniedLocation = false;
-        }
-
-        // 3. Cek Apakah Layanan Lokasi (GPS) Aktif
-        LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        boolean isGpsEnabled = false;
-        try {
-            isGpsEnabled = lm != null && (lm.isProviderEnabled(LocationManager.GPS_PROVIDER) || lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER));
-        } catch (Exception ignored) {}
-
-        if (!isGpsEnabled) {
-            showPermissionPopup(
-                "Aktifkan Lokasi",
-                "Layanan lokasi (GPS) pada HP Anda belum aktif. Harap izinkan / aktifkan lokasi untuk memindai Robot Desk.",
-                () -> {
-                    try {
-                        Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                        startActivity(intent);
-                    } catch (Exception e) {
-                        Toast.makeText(MainActivity.this, "Gagal membuka pengaturan lokasi", Toast.LENGTH_SHORT).show();
-                    }
+            // Khusus HP jadul (Android 11 ke bawah / API <= 30), sistem Android mewajibkan izin lokasi & GPS untuk BLE
+            // 2. Cek Perizinan Lokasi
+            boolean hasLocation = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+            if (!hasLocation) {
+                if (hasDeniedLocation) {
+                    showPermissionPopup(
+                        "Izin Lokasi",
+                        "Aplikasi memerlukan izin lokasi untuk memindai sinyal Robot Desk di sekitar Anda.",
+                        this::reRequestLocationPermissions
+                    );
+                } else {
+                    isWaitingNativePermission = true;
+                    ActivityCompat.requestPermissions(MainActivity.this,
+                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                            REQ_LOCATION);
                 }
-            );
-            return;
+                return;
+            } else {
+                hasDeniedLocation = false;
+            }
+
+            // 3. Cek Apakah Layanan Lokasi (GPS) Aktif (Hanya Android 11 ke bawah)
+            LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+            boolean isGpsEnabled = false;
+            try {
+                isGpsEnabled = lm != null && (lm.isProviderEnabled(LocationManager.GPS_PROVIDER) || lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER));
+            } catch (Exception ignored) {}
+
+            if (!isGpsEnabled) {
+                showPermissionPopup(
+                    "Aktifkan Lokasi",
+                    "Layanan lokasi (GPS) pada HP Anda belum aktif. Harap aktifkan lokasi untuk memindai Robot Desk.",
+                    () -> {
+                        try {
+                            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                            startActivity(intent);
+                        } catch (Exception e) {
+                            Toast.makeText(MainActivity.this, "Gagal membuka pengaturan lokasi", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                );
+                return;
+            }
         }
 
         // Jika semua perizinan terpenuhi, tutup pop-up dialog yang aktif
