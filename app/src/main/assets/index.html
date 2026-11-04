@@ -235,7 +235,7 @@
 
           <!-- GRID 7 LAYAR FITUR ROBOT -->
           <div class="robot-screens-grid" id="robotScreensGrid">
-            <!-- 1. BARIS 1 KIRI: EXPRESI WAJAH -->
+            <!-- 1. BARIS 1 KIRI: EXPRESI WAJAH (1:1) -->
             <div class="oled-screen-card" onclick="openRobotFeatureDetail('face')">
               <div class="oled-display-bezel">
                 <div class="oled-screen-content oled-face-view">
@@ -250,11 +250,10 @@
               </div>
               <div class="screen-card-meta">
                 <span class="screen-title">EXPRESI WAJAH</span>
-                <span class="screen-desc">13 Animasi Wajah &bull; Sentuh untuk Buka</span>
               </div>
             </div>
 
-            <!-- 2. BARIS 1 KANAN: JAM DIGITAL -->
+            <!-- 2. BARIS 1 KANAN: JAM DIGITAL (1:1) -->
             <div class="oled-screen-card" onclick="openRobotFeatureDetail('clock')">
               <div class="oled-display-bezel">
                 <div class="oled-screen-content oled-clock-view">
@@ -268,11 +267,10 @@
               </div>
               <div class="screen-card-meta">
                 <span class="screen-title">JAM DIGITAL</span>
-                <span class="screen-desc">Jam & Kalender &bull; Sentuh untuk Buka</span>
               </div>
             </div>
 
-            <!-- 3. BARIS 2 KIRI: ALARM -->
+            <!-- 3. BARIS 2 KIRI: ALARM (1:1) -->
             <div class="oled-screen-card" onclick="openRobotFeatureDetail('alarm')">
               <div class="oled-display-bezel">
                 <div class="oled-screen-content oled-alarm-view">
@@ -289,11 +287,10 @@
               </div>
               <div class="screen-card-meta">
                 <span class="screen-title">ALARM</span>
-                <span class="screen-desc">Pengingat &bull; Sentuh untuk Buka</span>
               </div>
             </div>
 
-            <!-- 4. BARIS 2 KANAN: STOPWATCH -->
+            <!-- 4. BARIS 2 KANAN: STOPWATCH (1:1) -->
             <div class="oled-screen-card" onclick="openRobotFeatureDetail('stopwatch')">
               <div class="oled-display-bezel">
                 <div class="oled-screen-content oled-stopwatch-view">
@@ -309,11 +306,10 @@
               </div>
               <div class="screen-card-meta">
                 <span class="screen-title">STOPWATCH</span>
-                <span class="screen-desc">Penghitung Waktu &bull; Sentuh untuk Buka</span>
               </div>
             </div>
 
-            <!-- 5. BARIS 3 KIRI: INFO CUACA -->
+            <!-- 5. BARIS 3 KIRI: INFO CUACA (1:1) -->
             <div class="oled-screen-card" onclick="openRobotFeatureDetail('weather')">
               <div class="oled-display-bezel">
                 <div class="oled-screen-content oled-weather-view">
@@ -333,11 +329,10 @@
               </div>
               <div class="screen-card-meta">
                 <span class="screen-title">INFO CUACA</span>
-                <span class="screen-desc">Cuaca Kota &bull; Sentuh untuk Buka</span>
               </div>
             </div>
 
-            <!-- 6. BARIS 3 KANAN: SUBTITLE -->
+            <!-- 6. BARIS 3 KANAN: SUBTITLE (1:1) -->
             <div class="oled-screen-card" onclick="openRobotFeatureDetail('subtitle')">
               <div class="oled-display-bezel">
                 <div class="oled-screen-content oled-msg-view">
@@ -351,7 +346,6 @@
               </div>
               <div class="screen-card-meta">
                 <span class="screen-title">SUBTITLE</span>
-                <span class="screen-desc">Pesan Berjalan &bull; Sentuh untuk Buka</span>
               </div>
             </div>
 
@@ -373,19 +367,15 @@
               </div>
               <div class="screen-card-meta">
                 <span class="screen-title">MENU GAME</span>
-                <span class="screen-desc">Pilihan 10 Game &bull; Sentuh untuk Buka</span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- DETAIL FITUR ROBOT INTERAKTIF (HALAMAN BARU - TANPA TOMBOL KEMBALI) -->
+        <!-- DETAIL FITUR ROBOT (HALAMAN BARU - LAYAR OLED 100% PERSIS FISIK ESP32 TANPA TOMBOL TAMBAHAN) -->
         <div id="robotFeatureDetailView" class="robot-feature-detail-view" style="display: none;">
-          <div class="section-title-bar">
-            <h2 id="txtRobotDetailTitle">EXPRESI WAJAH</h2>
-          </div>
 
-          <!-- 1. DETAIL: EXPRESI WAJAH (128x64 MURNI PERSIS OLED FISIK ROBOT) -->
+          <!-- 1. DETAIL: EXPRESI WAJAH (128x64 MURNI PERSIS OLED FISIK ROBOT TANPA STATUS BAR) -->
           <div id="detailViewFace" class="detail-feature-panel" style="display: none;">
             <div class="main-oled-stage-wrap">
               <div class="oled-display-bezel stage-bezel">
@@ -409,18 +399,20 @@
             </div>
           </div>
 
-          <!-- 2. DETAIL: JAM DIGITAL (128x64 PERSIS DENGAN STATUS BAR) -->
+          <!-- 2. DETAIL: JAM DIGITAL (100% PERSIS OLED DENGAN STATUS BAR) -->
           <div id="detailViewClock" class="detail-feature-panel" style="display: none;">
             <div class="main-oled-stage-wrap">
               <div class="oled-display-bezel stage-bezel">
                 <div class="oled-screen-content stage-screen-content">
                   <div class="oled-status-bar">
                     <div class="oled-status-left">
-                      <svg viewBox="0 0 24 24" class="oled-status-icon" fill="none" stroke="#00F0FF" stroke-width="2.5"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"></path></svg>
+                      <svg viewBox="0 0 9 9" class="oled-status-wifi"><path d="M0 1.5C2.5 -0.5 6.5 -0.5 9 1.5l-1 1C6.2 0.8 2.8 0.8 1 2.5L0 1.5zm2 2.5c1.4 -1.2 3.6 -1.2 5 0l-1 1c-0.8 -0.7 -2.2 -0.7 -3 0l-1 -1zm2.5 3a1 1 0 1 1 0 2 1 1 0 0 1 0 -2z"/></svg>
+                      <svg viewBox="0 0 8 8" class="oled-status-alarm detail-status-alarm-icon"><path d="M3 0h2v1H3zM2 1h4v1H2zM2 2h4v1H2zM1 3h6v1H1zM0 4h8v2H0zM3 6h2v2H3z"/></svg>
                     </div>
                     <div class="oled-status-title">JAM</div>
                     <div class="oled-status-right">
-                      <div class="oled-battery-vert"><div class="oled-batt-pip"></div><div class="oled-batt-body"><div class="oled-batt-fill"></div></div></div>
+                      <svg viewBox="0 0 5 8" class="oled-status-lightning"><path d="M2 0h1v3h2L1 8l1-4H0z"/></svg>
+                      <div class="oled-battery-vert"><div class="oled-batt-pip"></div><div class="oled-batt-body"><div class="oled-batt-fill" style="height: 100%;"></div></div></div>
                     </div>
                   </div>
                   <div class="oled-mode-layer active">
@@ -432,18 +424,20 @@
             </div>
           </div>
 
-          <!-- 3. DETAIL: ALARM (128x64 PERSIS DENGAN STATUS BAR) -->
+          <!-- 3. DETAIL: ALARM (100% PERSIS OLED DENGAN STATUS BAR) -->
           <div id="detailViewAlarm" class="detail-feature-panel" style="display: none;">
             <div class="main-oled-stage-wrap">
               <div class="oled-display-bezel stage-bezel">
                 <div class="oled-screen-content stage-screen-content">
                   <div class="oled-status-bar">
                     <div class="oled-status-left">
-                      <svg viewBox="0 0 24 24" class="oled-status-icon" fill="none" stroke="#00F0FF" stroke-width="2.5"><circle cx="12" cy="13" r="7"></circle><path d="M12 9v4l2 2M5 3L2 6M22 6l-3-3"></path></svg>
+                      <svg viewBox="0 0 9 9" class="oled-status-wifi"><path d="M0 1.5C2.5 -0.5 6.5 -0.5 9 1.5l-1 1C6.2 0.8 2.8 0.8 1 2.5L0 1.5zm2 2.5c1.4 -1.2 3.6 -1.2 5 0l-1 1c-0.8 -0.7 -2.2 -0.7 -3 0l-1 -1zm2.5 3a1 1 0 1 1 0 2 1 1 0 0 1 0 -2z"/></svg>
+                      <svg viewBox="0 0 8 8" class="oled-status-alarm detail-status-alarm-icon"><path d="M3 0h2v1H3zM2 1h4v1H2zM2 2h4v1H2zM1 3h6v1H1zM0 4h8v2H0zM3 6h2v2H3z"/></svg>
                     </div>
                     <div class="oled-status-title">ALARM</div>
                     <div class="oled-status-right">
-                      <div class="oled-battery-vert"><div class="oled-batt-pip"></div><div class="oled-batt-body"><div class="oled-batt-fill"></div></div></div>
+                      <svg viewBox="0 0 5 8" class="oled-status-lightning"><path d="M2 0h1v3h2L1 8l1-4H0z"/></svg>
+                      <div class="oled-battery-vert"><div class="oled-batt-pip"></div><div class="oled-batt-body"><div class="oled-batt-fill" style="height: 100%;"></div></div></div>
                     </div>
                   </div>
                   <div class="oled-mode-layer active">
@@ -455,15 +449,21 @@
             </div>
           </div>
 
-          <!-- 4. DETAIL: STOPWATCH (128x64 PERSIS DENGAN STATUS BAR) -->
+          <!-- 4. DETAIL: STOPWATCH (100% PERSIS OLED DENGAN STATUS BAR) -->
           <div id="detailViewStopwatch" class="detail-feature-panel" style="display: none;">
             <div class="main-oled-stage-wrap">
               <div class="oled-display-bezel stage-bezel">
                 <div class="oled-screen-content stage-screen-content">
                   <div class="oled-status-bar">
-                    <div class="oled-status-left"><svg viewBox="0 0 24 24" class="oled-status-icon" fill="none" stroke="#00F0FF" stroke-width="2.5"><circle cx="12" cy="13" r="7"></circle><polyline points="12 9 12 13 14 15"></polyline></svg></div>
+                    <div class="oled-status-left">
+                      <svg viewBox="0 0 9 9" class="oled-status-wifi"><path d="M0 1.5C2.5 -0.5 6.5 -0.5 9 1.5l-1 1C6.2 0.8 2.8 0.8 1 2.5L0 1.5zm2 2.5c1.4 -1.2 3.6 -1.2 5 0l-1 1c-0.8 -0.7 -2.2 -0.7 -3 0l-1 -1zm2.5 3a1 1 0 1 1 0 2 1 1 0 0 1 0 -2z"/></svg>
+                      <svg viewBox="0 0 8 8" class="oled-status-alarm detail-status-alarm-icon"><path d="M3 0h2v1H3zM2 1h4v1H2zM2 2h4v1H2zM1 3h6v1H1zM0 4h8v2H0zM3 6h2v2H3z"/></svg>
+                    </div>
                     <div class="oled-status-title">STOPWATCH</div>
-                    <div class="oled-status-right"><div class="oled-battery-vert"><div class="oled-batt-pip"></div><div class="oled-batt-body"><div class="oled-batt-fill"></div></div></div></div>
+                    <div class="oled-status-right">
+                      <svg viewBox="0 0 5 8" class="oled-status-lightning"><path d="M2 0h1v3h2L1 8l1-4H0z"/></svg>
+                      <div class="oled-battery-vert"><div class="oled-batt-pip"></div><div class="oled-batt-body"><div class="oled-batt-fill" style="height: 100%;"></div></div></div>
+                    </div>
                   </div>
                   <div class="oled-mode-layer active">
                     <div class="oled-big-time oled-mono" id="detailSwDigits">00:00:00</div>
@@ -472,21 +472,23 @@
                 </div>
               </div>
             </div>
-            <div class="dual-btn-row mt-8">
-              <button class="neon-btn-action flex-1" onclick="triggerVirtualTouchTap()">SENTUH / MULAI</button>
-              <button class="neon-btn-action flex-1 danger" onclick="resetStopwatchFromApp()">RESET / NOL</button>
-            </div>
           </div>
 
-          <!-- 5. DETAIL: INFO CUACA (128x64 PERSIS DENGAN STATUS BAR) -->
+          <!-- 5. DETAIL: INFO CUACA (100% PERSIS OLED DENGAN STATUS BAR) -->
           <div id="detailViewWeather" class="detail-feature-panel" style="display: none;">
             <div class="main-oled-stage-wrap">
               <div class="oled-display-bezel stage-bezel">
                 <div class="oled-screen-content stage-screen-content">
                   <div class="oled-status-bar">
-                    <div class="oled-status-left"><svg viewBox="0 0 24 24" class="oled-status-icon" fill="none" stroke="#00F0FF" stroke-width="2.5"><path d="M5 12.55a11 11 0 0 1 14.08 0M12 20h.01"></path></svg></div>
+                    <div class="oled-status-left">
+                      <svg viewBox="0 0 9 9" class="oled-status-wifi"><path d="M0 1.5C2.5 -0.5 6.5 -0.5 9 1.5l-1 1C6.2 0.8 2.8 0.8 1 2.5L0 1.5zm2 2.5c1.4 -1.2 3.6 -1.2 5 0l-1 1c-0.8 -0.7 -2.2 -0.7 -3 0l-1 -1zm2.5 3a1 1 0 1 1 0 2 1 1 0 0 1 0 -2z"/></svg>
+                      <svg viewBox="0 0 8 8" class="oled-status-alarm detail-status-alarm-icon"><path d="M3 0h2v1H3zM2 1h4v1H2zM2 2h4v1H2zM1 3h6v1H1zM0 4h8v2H0zM3 6h2v2H3z"/></svg>
+                    </div>
                     <div class="oled-status-title">CUACA</div>
-                    <div class="oled-status-right"><div class="oled-battery-vert"><div class="oled-batt-pip"></div><div class="oled-batt-body"><div class="oled-batt-fill"></div></div></div></div>
+                    <div class="oled-status-right">
+                      <svg viewBox="0 0 5 8" class="oled-status-lightning"><path d="M2 0h1v3h2L1 8l1-4H0z"/></svg>
+                      <div class="oled-battery-vert"><div class="oled-batt-pip"></div><div class="oled-batt-body"><div class="oled-batt-fill" style="height: 100%;"></div></div></div>
+                    </div>
                   </div>
                   <div class="oled-mode-layer active">
                     <div class="oled-weather-row">
@@ -507,15 +509,21 @@
             </div>
           </div>
 
-          <!-- 6. DETAIL: SUBTITLE (128x64 PERSIS DENGAN STATUS BAR) -->
+          <!-- 6. DETAIL: SUBTITLE (100% PERSIS OLED DENGAN STATUS BAR) -->
           <div id="detailViewSubtitle" class="detail-feature-panel" style="display: none;">
             <div class="main-oled-stage-wrap">
               <div class="oled-display-bezel stage-bezel">
                 <div class="oled-screen-content stage-screen-content">
                   <div class="oled-status-bar">
-                    <div class="oled-status-left"><svg viewBox="0 0 24 24" class="oled-status-icon" fill="none" stroke="#00F0FF" stroke-width="2.5"><path d="M4 6h16M4 12h16M4 18h7"></path></svg></div>
-                    <div class="oled-status-title">TEKS</div>
-                    <div class="oled-status-right"><div class="oled-battery-vert"><div class="oled-batt-pip"></div><div class="oled-batt-body"><div class="oled-batt-fill"></div></div></div></div>
+                    <div class="oled-status-left">
+                      <svg viewBox="0 0 9 9" class="oled-status-wifi"><path d="M0 1.5C2.5 -0.5 6.5 -0.5 9 1.5l-1 1C6.2 0.8 2.8 0.8 1 2.5L0 1.5zm2 2.5c1.4 -1.2 3.6 -1.2 5 0l-1 1c-0.8 -0.7 -2.2 -0.7 -3 0l-1 -1zm2.5 3a1 1 0 1 1 0 2 1 1 0 0 1 0 -2z"/></svg>
+                      <svg viewBox="0 0 8 8" class="oled-status-alarm detail-status-alarm-icon"><path d="M3 0h2v1H3zM2 1h4v1H2zM2 2h4v1H2zM1 3h6v1H1zM0 4h8v2H0zM3 6h2v2H3z"/></svg>
+                    </div>
+                    <div class="oled-status-title">SUBTITLE</div>
+                    <div class="oled-status-right">
+                      <svg viewBox="0 0 5 8" class="oled-status-lightning"><path d="M2 0h1v3h2L1 8l1-4H0z"/></svg>
+                      <div class="oled-battery-vert"><div class="oled-batt-pip"></div><div class="oled-batt-body"><div class="oled-batt-fill" style="height: 100%;"></div></div></div>
+                    </div>
                   </div>
                   <div class="oled-mode-layer active">
                     <div class="oled-marquee-text" id="detailSubPreview">HELLO ROBOT DESK!</div>
@@ -526,69 +534,46 @@
             </div>
           </div>
 
-          <!-- 7. DETAIL: MENU GAME (10 ARCADE GAMES) -->
+          <!-- 7. DETAIL: MENU GAME (100% PERSIS OLED 3-BARIS DENGAN STATUS BAR) -->
           <div id="detailViewGame" class="detail-feature-panel" style="display: none;">
             <div class="main-oled-stage-wrap">
               <div class="oled-display-bezel stage-bezel">
                 <div class="oled-screen-content stage-screen-content">
                   <div class="oled-status-bar">
-                    <div class="oled-status-left"><svg viewBox="0 0 24 24" class="oled-status-icon" fill="none" stroke="#00F0FF" stroke-width="2.5"><rect x="2" y="6" width="20" height="12" rx="3"></rect><line x1="6" y1="12" x2="10" y2="12"></line><line x1="8" y1="10" x2="8" y2="14"></line></svg></div>
-                    <div class="oled-status-title">ARCADE</div>
-                    <div class="oled-status-right"><div class="oled-battery-vert"><div class="oled-batt-pip"></div><div class="oled-batt-body"><div class="oled-batt-fill"></div></div></div></div>
+                    <div class="oled-status-left">
+                      <svg viewBox="0 0 9 9" class="oled-status-wifi"><path d="M0 1.5C2.5 -0.5 6.5 -0.5 9 1.5l-1 1C6.2 0.8 2.8 0.8 1 2.5L0 1.5zm2 2.5c1.4 -1.2 3.6 -1.2 5 0l-1 1c-0.8 -0.7 -2.2 -0.7 -3 0l-1 -1zm2.5 3a1 1 0 1 1 0 2 1 1 0 0 1 0 -2z"/></svg>
+                      <svg viewBox="0 0 8 8" class="oled-status-alarm detail-status-alarm-icon"><path d="M3 0h2v1H3zM2 1h4v1H2zM2 2h4v1H2zM1 3h6v1H1zM0 4h8v2H0zM3 6h2v2H3z"/></svg>
+                    </div>
+                    <div class="oled-status-title">GAME</div>
+                    <div class="oled-status-right">
+                      <svg viewBox="0 0 5 8" class="oled-status-lightning"><path d="M2 0h1v3h2L1 8l1-4H0z"/></svg>
+                      <div class="oled-battery-vert"><div class="oled-batt-pip"></div><div class="oled-batt-body"><div class="oled-batt-fill" style="height: 100%;"></div></div></div>
+                    </div>
                   </div>
                   <div class="oled-mode-layer active">
-                    <div class="oled-game-pixels">
-                      <div class="dino-pixel"></div>
-                      <div class="cactus-pixel"></div>
-                      <div class="bird-pixel"></div>
+                    <div class="oled-game-menu-list">
+                      <div class="oled-game-menu-row active">
+                        <div class="oled-game-menu-left">
+                          <span>&gt; 1. FLAPPY BIRD</span>
+                        </div>
+                        <svg viewBox="0 0 8 6" class="oled-game-mini-icon"><path d="M0 2h3v1H0zM3 1h2v1H3zM5 0h3v4H5zM2 3h3v2H2z"/></svg>
+                      </div>
+                      <div class="oled-game-menu-row">
+                        <div class="oled-game-menu-left">
+                          <span>&nbsp;&nbsp;2. DINO RUNNER</span>
+                        </div>
+                        <svg viewBox="0 0 10 12" class="oled-game-mini-icon"><path d="M4 0h6v6H4zM2 4h4v6H2zM0 8h2v3H0zM2 10h2v2H2zM6 10h2v2H6z"/></svg>
+                      </div>
+                      <div class="oled-game-menu-row">
+                        <div class="oled-game-menu-left">
+                          <span>&nbsp;&nbsp;3. CAVE COPTER</span>
+                        </div>
+                        <svg viewBox="0 0 10 7" class="oled-game-mini-icon"><path d="M2 0h6v1H2zM4 1h2v1H4zM0 2h10v3H0zM3 5h4v1H3zM1 6h8v1H1z"/></svg>
+                      </div>
                     </div>
-                    <div class="oled-score-line" id="detailGameActiveLabel">10 ARCADE READY &bull; PILIH GAME</div>
                   </div>
                 </div>
               </div>
-            </div>
-            <span class="status-card-label">10 GAME ARCADE ROBOT</span>
-            <div class="games-grid">
-              <button class="game-btn" onclick="launchGameFromDetail(5, 'Flappy Bird')">
-                <svg viewBox="0 0 24 24" fill="none"><path d="M3 13h4l3-6 4 12 3-8 4 2" stroke="currentColor" stroke-width="2"></path></svg>
-                <span>1. Flappy Bird</span>
-              </button>
-              <button class="game-btn" onclick="launchGameFromDetail(6, 'Dino Run')">
-                <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="11" width="18" height="10" rx="2" stroke="currentColor" stroke-width="2"></rect></svg>
-                <span>2. Dino Run</span>
-              </button>
-              <button class="game-btn" onclick="launchGameFromDetail(9, 'Copter')">
-                <svg viewBox="0 0 24 24" fill="none"><path d="M12 2v4m-8 4h16M6 14h12" stroke="currentColor" stroke-width="2"></path></svg>
-                <span>3. Copter</span>
-              </button>
-              <button class="game-btn" onclick="launchGameFromDetail(10, 'Gravity Runner')">
-                <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v18m-6-6l6 6 6-6" stroke="currentColor" stroke-width="2"></path></svg>
-                <span>4. Gravity Run</span>
-              </button>
-              <button class="game-btn" onclick="launchGameFromDetail(11, 'Pin Circle')">
-                <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"></circle></svg>
-                <span>5. Pin Circle</span>
-              </button>
-              <button class="game-btn" onclick="launchGameFromDetail(12, 'Orbit Jumper')">
-                <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"></circle><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 3"></circle></svg>
-                <span>6. Orbit Jumper</span>
-              </button>
-              <button class="game-btn" onclick="launchGameFromDetail(13, 'Tower Stacker')">
-                <svg viewBox="0 0 24 24" fill="none"><rect x="6" y="16" width="12" height="4" stroke="currentColor" stroke-width="2"></rect><rect x="8" y="11" width="8" height="4" stroke="currentColor" stroke-width="2"></rect><rect x="10" y="6" width="4" height="4" stroke="currentColor" stroke-width="2"></rect></svg>
-                <span>7. Tower Stack</span>
-              </button>
-              <button class="game-btn" onclick="launchGameFromDetail(14, 'Radar Defender')">
-                <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"></circle><circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.5"></circle><line x1="12" y1="12" x2="18" y2="6" stroke="currentColor" stroke-width="2"></line></svg>
-                <span>8. Radar Defend</span>
-              </button>
-              <button class="game-btn" onclick="launchGameFromDetail(15, 'Hoop Dunk')">
-                <svg viewBox="0 0 24 24" fill="none"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="2"></circle><ellipse cx="16" cy="14" rx="6" ry="2" stroke="currentColor" stroke-width="2"></ellipse><line x1="16" y1="14" x2="16" y2="21" stroke="currentColor" stroke-width="2"></line></svg>
-                <span>9. Hoop Dunk</span>
-              </button>
-              <button class="game-btn" onclick="launchGameFromDetail(16, 'Orbit Pong')">
-                <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"></circle><circle cx="12" cy="8" r="2" fill="currentColor"></circle><line x1="8" y1="17" x2="16" y2="17" stroke="currentColor" stroke-width="2.5"></line></svg>
-                <span>10. Orbit Pong</span>
-              </button>
             </div>
           </div>
         </div>

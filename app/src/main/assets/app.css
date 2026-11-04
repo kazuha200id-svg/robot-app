@@ -1347,43 +1347,7 @@ input[type="range"]::-webkit-slider-thumb {
 
 /* ================= STRICT 1-LINE TOAST ================= */
 .neon-toast-single {
-  position: fixed;
-  bottom: calc(70px + env(safe-area-inset-bottom));
-  left: 50%;
-  transform: translateX(-50%) translateY(20px);
-  max-width: 90vw;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 16px;
-  background: rgba(6, 12, 24, 0.96);
-  border: 1px solid var(--neon-cyan);
-  border-radius: var(--radius-pill);
-  box-shadow: 0 0 18px rgba(0, 240, 255, 0.45);
-  pointer-events: none;
-  opacity: 0;
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-  z-index: 999;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.neon-toast-single span {
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.neon-toast-single.show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
+  display: none !important;
 }
 
 /* ================= ROBOT OLED SCREEN PREVIEW CARDS ================= */
@@ -1397,15 +1361,20 @@ input[type="range"]::-webkit-slider-thumb {
 .oled-screen-card {
   display: flex;
   flex-direction: column;
+  aspect-ratio: 1 / 1;
+  justify-content: space-between;
+  align-items: center;
   background: rgba(10, 18, 34, 0.75);
   border: 1px solid var(--neon-cyan-border);
   border-radius: var(--radius-md);
-  padding: 10px;
+  padding: 8px;
   cursor: pointer;
   user-select: none;
-  text-align: left;
+  text-align: center;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
   transition: all 0.15s ease;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .oled-screen-card:active {
@@ -1416,6 +1385,8 @@ input[type="range"]::-webkit-slider-thumb {
 
 .oled-screen-card.full-width {
   grid-column: span 2;
+  aspect-ratio: auto;
+  justify-content: flex-start;
 }
 
 .oled-display-bezel {
@@ -1648,23 +1619,26 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .screen-card-meta {
-  margin-top: 8px;
+  margin-top: auto;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  text-align: center;
 }
 
 .screen-title {
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.5px;
   color: var(--text-bright);
+  text-align: center;
 }
 
 .screen-desc {
-  font-size: 0.55rem;
-  color: var(--text-muted);
+  display: none !important;
 }
 
 /* ================= WORLD CLOCK & SETTINGS SELECT ================= */
@@ -1783,12 +1757,76 @@ input[type="range"]::-webkit-slider-thumb {
   stroke: var(--neon-cyan);
 }
 
+.oled-status-wifi {
+  width: 11px;
+  height: 11px;
+  fill: var(--neon-cyan);
+}
+
+.oled-status-alarm {
+  width: 10px;
+  height: 10px;
+  fill: var(--neon-cyan);
+  display: none;
+}
+
+.oled-status-alarm.visible {
+  display: inline-block !important;
+}
+
+.oled-status-lightning {
+  width: 8px;
+  height: 11px;
+  fill: var(--neon-cyan);
+}
+
 .oled-status-title {
   font-size: 0.62rem;
   font-weight: 800;
   letter-spacing: 1px;
   color: var(--neon-cyan);
   text-shadow: 0 0 6px rgba(0, 240, 255, 0.85);
+}
+
+/* OLED Arcade Game Menu 3-Row List (Mirrors physical OLED SSD1306) */
+.oled-game-menu-list {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 2px 4px;
+  gap: 3px;
+  box-sizing: border-box;
+}
+
+.oled-game-menu-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.5px;
+  color: #8EA9C7;
+}
+
+.oled-game-menu-row.active {
+  color: var(--neon-cyan);
+  font-weight: 800;
+  text-shadow: 0 0 6px rgba(0, 240, 255, 0.85);
+}
+
+.oled-game-menu-left {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.oled-game-mini-icon {
+  width: 12px;
+  height: 10px;
+  fill: currentColor;
 }
 
 /* OLED Battery Vertical indicator */

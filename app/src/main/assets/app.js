@@ -10,21 +10,10 @@ let faceAnimationTimer = null;
 let currentMainTab = 'pageMenu';
 let toastTimeout = null;
 
-// ================= 1. TOAST NOTIFICATION (STRICT SINGLE LINE) =================
+// ================= 1. TOAST NOTIFICATION (SEMUA NOTIFIKASI DINONAKTIFKAN) =================
 function showNeonToast(message) {
-  const toast = document.getElementById('neonToast');
-  const txt = document.getElementById('toastText');
-  if (!toast || !txt) return;
-
-  txt.textContent = message;
-  toast.classList.add('show');
-
-  if (toastTimeout) clearTimeout(toastTimeout);
-  toastTimeout = setTimeout(() => {
-    toast.classList.remove('show');
-  }, 2200);
-
-  triggerHaptic(20);
+  // Seluruh notifikasi toast dinonaktifkan sesuai permintaan pengguna ("hilangkan semua notfikasi")
+  return;
 }
 
 // HAPTIC FEEDBACK
@@ -79,22 +68,42 @@ function switchMainTab(pageId, btn) {
 
 
 
-// ================= 3. BLE COMMAND DISPATCH =================
-function sendCommand(cmdObject) {
-  const jsonStr = JSON.stringify(cmdObject);
+// ================= 3. BLE COMMAND DISPATCH (DENGAN ANTRIAN FIFO ANTI-COLLISION) =================
+const bleCommandQueue = [];
+let isBleTransmitting = false;
+
+function processNextBleCommand() {
+  if (bleCommandQueue.length === 0) {
+    isBleTransmitting = false;
+    return;
+  }
+  isBleTransmitting = true;
+  const cmd = bleCommandQueue.shift();
+  const jsonStr = JSON.stringify(cmd);
   if (window.AndroidBLE && typeof window.AndroidBLE.send === 'function') {
-    const res = window.AndroidBLE.send(jsonStr);
-    if (res === 'OK' || res === true) {
-      return true;
-    } else {
-      showNeonToast(res || 'Gagal Kirim');
-      return false;
+    try {
+      window.AndroidBLE.send(jsonStr);
+    } catch (e) {
+      console.error('[BLE SEND ERR]', e);
     }
   } else {
     console.log('[MOCK BLE SEND]', jsonStr);
-    showNeonToast('Perintah Terkirim');
-    return true;
   }
+  // Berikan jeda 75ms antar paket agar BLE GATT Android tidak menolak/drop write
+  setTimeout(processNextBleCommand, 75);
+}
+
+function sendCommand(cmdObject, priority = false) {
+  if (!cmdObject) return false;
+  if (priority) {
+    bleCommandQueue.unshift(cmdObject);
+  } else {
+    bleCommandQueue.push(cmdObject);
+  }
+  if (!isBleTransmitting) {
+    processNextBleCommand();
+  }
+  return true;
 }
 
 // ================= 4. STRICT BLUETOOTH SETUP GATE HANDLERS =================
@@ -711,11 +720,10 @@ function renderDetailFacesGrid() {
   });
 }
 
-// PILIH EXPRESI WAJAH OLED (DURASI 3 DETIK, HANYA BISA DI MODE ANIMASI)
+// PILIH EXPRESI WAJAH OLED (DURASI 3 DETIK, HANYA BISA DI FITUR/MODE ANIMASI)
 function selectFaceFromDetail(index, elem) {
-  // Hanya diizinkan jika sedang berada di mode animasi robot (mode 0) atau halaman detail face
+  // Pergantian animasi cuma bisa di fitur animasi saja (jangan ke-input jika mode jam, alarm, dll)
   if (currentRobotMode !== 0 && currentOpenDetailFeature !== 'face') {
-    showNeonToast('Hanya Dapat Diubah Pada Mode Animasi');
     return;
   }
 
@@ -725,20 +733,22 @@ function selectFaceFromDetail(index, elem) {
   }
 
   currentFaceIndex = index;
+  currentRobotMode = 0;
+
+  // Update tampilan tombol ekspresi aktif
   document.querySelectorAll('#detailFacesGrid .face-card').forEach((c, i) => {
     c.classList.toggle('active', i === index);
   });
 
+  // Update preview OLED wajah di aplikasi seketika
   updateOledFacePreview(index);
 
-  sendCommand({ c: 'm', v: 0 });
-  currentRobotMode = 0;
+  // Kirim perintah pergantian ekspresi wajah ke robot fisik ESP32
   sendCommand({ c: 'f', v: index });
 
-  showNeonToast(`Ekspresi: ${OLED_FACES[index]?.name || index} (3 Detik)`);
   triggerHaptic(25);
 
-  // Setelah 3 detik, otomatis kembali ke ekspresi netral (0: SENANG) sesuai firmware robot
+  // Durasi animasi tepat 3 detik, lalu otomatis kembali ke netral (0: SENANG) sesuai firmware robot fisik
   if (index !== 0) {
     faceAnimationTimer = setTimeout(() => {
       currentFaceIndex = 0;
@@ -750,14 +760,13 @@ function selectFaceFromDetail(index, elem) {
   }
 }
 
-// BUKA TAMPILAN DETAIL FITUR ROBOT (HALAMAN BARU BERSIH TANPA TOMBOL KEMBALI)
+// BUKA TAMPILAN DETAIL FITUR ROBOT (HALAMAN BARU - LAYAR OLED 100% PERSIS FISIK)
 function openRobotFeatureDetail(featureKey) {
   triggerHaptic(25);
   currentOpenDetailFeature = featureKey;
 
   const overview = document.getElementById('robotMainOverview');
   const detailView = document.getElementById('robotFeatureDetailView');
-  const titleEl = document.getElementById('txtRobotDetailTitle');
 
   if (overview) overview.style.display = 'none';
   if (detailView) detailView.style.display = 'block';
@@ -766,60 +775,45 @@ function openRobotFeatureDetail(featureKey) {
   document.querySelectorAll('.detail-feature-panel').forEach(p => p.style.display = 'none');
 
   if (featureKey === 'face') {
-    if (titleEl) titleEl.textContent = 'EXPRESI WAJAH';
     const panel = document.getElementById('detailViewFace');
     if (panel) panel.style.display = 'block';
     renderDetailFacesGrid();
     updateOledFacePreview(currentFaceIndex || 0);
-    sendCommand({ c: 'm', v: 0 });
     currentRobotMode = 0;
-    sendCommand({ c: 'f', v: currentFaceIndex || 0 });
-    showNeonToast('Layar Robot: Expresi Wajah');
+    sendCommand({ c: 'm', v: 0 });
   } else if (featureKey === 'clock') {
-    if (titleEl) titleEl.textContent = 'JAM DIGITAL';
     const panel = document.getElementById('detailViewClock');
     if (panel) panel.style.display = 'block';
     updateOledClockTick();
-    sendCommand({ c: 'm', v: 1 });
     currentRobotMode = 1;
-    showNeonToast('Layar Robot: Jam Digital');
+    sendCommand({ c: 'm', v: 1 });
   } else if (featureKey === 'alarm') {
-    if (titleEl) titleEl.textContent = 'ALARM ROBOT';
     const panel = document.getElementById('detailViewAlarm');
     if (panel) panel.style.display = 'block';
     updateOledAlarmPreview();
-    sendCommand({ c: 'm', v: 8 });
     currentRobotMode = 8;
-    showNeonToast('Layar Robot: Alarm');
+    sendCommand({ c: 'm', v: 8 });
   } else if (featureKey === 'stopwatch') {
-    if (titleEl) titleEl.textContent = 'STOPWATCH ROBOT';
     const panel = document.getElementById('detailViewStopwatch');
     if (panel) panel.style.display = 'block';
-    sendCommand({ c: 'm', v: 7 });
     currentRobotMode = 7;
-    showNeonToast('Layar Robot: Stopwatch');
+    sendCommand({ c: 'm', v: 7 });
   } else if (featureKey === 'weather') {
-    if (titleEl) titleEl.textContent = 'INFO CUACA';
     const panel = document.getElementById('detailViewWeather');
     if (panel) panel.style.display = 'block';
     updateOledWeatherPreview();
-    sendCommand({ c: 'm', v: 2 });
     currentRobotMode = 2;
-    showNeonToast('Layar Robot: Info Cuaca');
+    sendCommand({ c: 'm', v: 2 });
   } else if (featureKey === 'subtitle') {
-    if (titleEl) titleEl.textContent = 'SUBTITLE TEKS';
     const panel = document.getElementById('detailViewSubtitle');
     if (panel) panel.style.display = 'block';
-    sendCommand({ c: 'm', v: 3 });
     currentRobotMode = 3;
-    showNeonToast('Layar Robot: Subtitle Teks');
+    sendCommand({ c: 'm', v: 3 });
   } else if (featureKey === 'game') {
-    if (titleEl) titleEl.textContent = 'MENU GAME ARCADE';
     const panel = document.getElementById('detailViewGame');
     if (panel) panel.style.display = 'block';
-    sendCommand({ c: 'm', v: 4 });
     currentRobotMode = 4;
-    showNeonToast('Layar Robot: Menu Game');
+    sendCommand({ c: 'm', v: 4 });
   }
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1028,6 +1022,9 @@ function updateOledAlarmPreview() {
     if (detailEn) {
       detailEn.checked = isEn;
     }
+    document.querySelectorAll('.detail-status-alarm-icon').forEach(icon => {
+      icon.classList.toggle('visible', !!isEn);
+    });
   }
 }
 
