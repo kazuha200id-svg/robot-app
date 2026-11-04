@@ -741,7 +741,7 @@ function renderDetailFacesGrid() {
   container.innerHTML = '';
   OLED_FACES.forEach((item, index) => {
     const card = document.createElement('div');
-    card.className = `face-card ${index === currentFaceIndex ? 'active' : ''}`;
+    card.className = 'face-card';
     card.onclick = () => selectFaceFromDetail(index, card);
     card.innerHTML = `
       <div class="eye-preview">
@@ -768,11 +768,6 @@ function selectFaceFromDetail(index, elem) {
   currentFaceIndex = index;
   currentRobotMode = 0;
 
-  // Update tampilan tombol ekspresi aktif
-  document.querySelectorAll('#detailFacesGrid .face-card').forEach((c, i) => {
-    c.classList.toggle('active', i === index);
-  });
-
   // Update preview OLED wajah di aplikasi seketika
   updateOledFacePreview(index);
 
@@ -787,9 +782,6 @@ function selectFaceFromDetail(index, elem) {
       currentFaceIndex = 0;
       updateOledFacePreview(0);
       sendCommand({ c: 'f', v: 0 }); // Kembalikan ke netral di robot fisik
-      document.querySelectorAll('#detailFacesGrid .face-card').forEach((c, i) => {
-        c.classList.toggle('active', i === 0);
-      });
     }, 3000);
   }
 }
@@ -1259,8 +1251,7 @@ function render10GamesGrid() {
   grid.innerHTML = '';
   GAMES_LIST.forEach((g, idx) => {
     const card = document.createElement('div');
-    const isSel = (idx === g_selectedGameIdx);
-    card.className = `game-select-card ${isSel ? 'selected active' : ''} ${isGameActivelyPlaying ? 'disabled-playing locked' : ''}`;
+    card.className = `game-select-card ${isGameActivelyPlaying ? 'disabled-playing locked' : ''}`;
     card.onclick = () => selectAndLaunchGame(idx);
     card.innerHTML = `
       <span class="game-select-num">${idx + 1}</span>

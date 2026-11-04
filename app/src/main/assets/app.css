@@ -2097,7 +2097,7 @@ input[type="range"]::-webkit-slider-thumb {
   margin-top: 4px;
 }
 
-/* Face Card: NO HOVER on touch or pointer */
+/* Face Card: Hover aktif, Selected/Active state dihilangkan */
 .face-card {
   display: flex;
   flex-direction: column;
@@ -2111,35 +2111,30 @@ input[type="range"]::-webkit-slider-thumb {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
-  transition: none !important;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* Strictly disable hover, focus, and scale on face-card */
-.face-card:hover,
-.face-card:focus,
-.face-card:focus-visible,
+/* Hover aktif saat kursor melayang di atas kartu */
+.face-card:hover {
+  border-color: var(--neon-cyan) !important;
+  background: rgba(0, 240, 255, 0.12) !important;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3) !important;
+  transform: translateY(-2px);
+}
+
 .face-card:active {
-  outline: none !important;
-  background: rgba(5, 10, 22, 0.85) !important;
-  border-color: var(--neon-cyan-border) !important;
-  box-shadow: none !important;
-  transform: none !important;
+  transform: scale(0.97);
+  background: rgba(0, 240, 255, 0.18) !important;
+  border-color: var(--neon-cyan) !important;
 }
 
-/* Selected active face */
-.face-card.active {
-  border-color: var(--neon-cyan) !important;
-  background: rgba(0, 240, 255, 0.18) !important;
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.35) !important;
-}
-
-.face-card.active:hover,
-.face-card.active:focus,
-.face-card.active:active {
-  border-color: var(--neon-cyan) !important;
-  background: rgba(0, 240, 255, 0.18) !important;
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.35) !important;
-  transform: none !important;
+/* Selected / Active State DIHILANGKAN (tampil normal tanpa kotak terang yang menempel) */
+.face-card.active,
+.face-card.selected {
+  background: rgba(5, 10, 22, 0.85);
+  border-color: var(--neon-cyan-border);
+  box-shadow: none;
+  transform: none;
 }
 
 .face-card .eye-preview {
@@ -2344,6 +2339,7 @@ input[type="range"]::-webkit-slider-thumb {
   margin-top: 4px;
 }
 
+/* Game Select Card: Hover aktif, Selected/Active state dihilangkan */
 .game-select-card {
   display: flex;
   align-items: center;
@@ -2355,38 +2351,30 @@ input[type="range"]::-webkit-slider-thumb {
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-  transition: none !important;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* Strictly disable hover, focus, and scale on game select cards */
-.game-select-card:hover,
-.game-select-card:focus,
-.game-select-card:focus-visible,
+/* Hover aktif saat kursor melayang di atas kartu game */
+.game-select-card:hover {
+  border-color: var(--neon-cyan) !important;
+  background: rgba(0, 240, 255, 0.12) !important;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3) !important;
+  transform: translateY(-1.5px);
+}
+
 .game-select-card:active {
-  outline: none !important;
-  background: rgba(5, 10, 22, 0.85) !important;
-  border-color: var(--neon-cyan-border) !important;
-  box-shadow: none !important;
-  transform: none !important;
+  transform: scale(0.97);
+  background: rgba(0, 240, 255, 0.18) !important;
+  border-color: var(--neon-cyan) !important;
 }
 
+/* Selected / Active State DIHILANGKAN (tampil normal tanpa kotak terang yang menempel) */
 .game-select-card.selected,
 .game-select-card.active {
-  border-color: var(--neon-cyan) !important;
-  background: rgba(0, 240, 255, 0.18) !important;
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.35) !important;
-}
-
-.game-select-card.selected:hover,
-.game-select-card.active:hover,
-.game-select-card.selected:focus,
-.game-select-card.active:focus,
-.game-select-card.selected:active,
-.game-select-card.active:active {
-  border-color: var(--neon-cyan) !important;
-  background: rgba(0, 240, 255, 0.18) !important;
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.35) !important;
-  transform: none !important;
+  background: rgba(5, 10, 22, 0.85);
+  border-color: var(--neon-cyan-border);
+  box-shadow: none;
+  transform: none;
 }
 
 
