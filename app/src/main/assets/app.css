@@ -1722,47 +1722,281 @@ input[type="range"]::-webkit-slider-thumb {
   padding-left: 8px;
 }
 
-/* ================= ROBOT FEATURE DETAIL & SUBVIEWS ================= */
-.subpage-nav-bar {
+/* ================= MAIN OLED LIVE SCREEN (MIRRORING SSD1306 128x64) ================= */
+.main-oled-stage-wrap {
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto 16px auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stage-bezel {
+  width: 100%;
+  aspect-ratio: 2 / 1;
+  background: #000205;
+  border: 2.5px solid #162a45;
+  border-radius: 10px;
+  padding: 6px 8px;
+  box-sizing: border-box;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.95), 0 0 16px rgba(0, 240, 255, 0.2);
+}
+
+.stage-screen-content {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  color: var(--neon-cyan);
+}
+
+/* OLED Status Bar (Top y=0..13 mirroring firmware status bar) */
+.oled-status-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 0 10px 0;
-  margin-bottom: 8px;
-  border-bottom: 1px solid var(--neon-cyan-border);
+  padding: 0 4px;
+  border-bottom: 1px solid rgba(0, 240, 255, 0.65);
+  box-sizing: border-box;
+  z-index: 5;
 }
 
-.subpage-back-btn {
+.oled-status-left,
+.oled-status-right {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  background: rgba(0, 240, 255, 0.08);
+  gap: 4px;
+}
+
+.oled-status-icon {
+  width: 12px;
+  height: 12px;
+  stroke: var(--neon-cyan);
+}
+
+.oled-status-title {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--neon-cyan);
+  text-shadow: 0 0 6px rgba(0, 240, 255, 0.85);
+}
+
+/* OLED Battery Vertical indicator */
+.oled-battery-vert {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.oled-batt-pip {
+  width: 4px;
+  height: 2px;
+  background: var(--neon-cyan);
+  border-radius: 1px 1px 0 0;
+}
+
+.oled-batt-body {
+  width: 10px;
+  height: 12px;
+  border: 1px solid var(--neon-cyan);
+  border-radius: 2px;
+  padding: 1px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: flex-end;
+}
+
+.oled-batt-fill {
+  width: 100%;
+  height: 80%;
+  background: var(--neon-cyan);
+  border-radius: 1px;
+  box-shadow: 0 0 4px var(--neon-cyan);
+}
+
+/* OLED Mode Layers */
+.oled-mode-layer {
+  position: absolute;
+  top: 18px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 4px;
+}
+
+.oled-mode-layer.active {
+  display: flex;
+}
+
+/* Mode Animasi Face Layer occupies full 128x64 display without status bar */
+#oledLayerFace {
+  top: 0;
+}
+
+.oled-live-face-wrap {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.oled-live-face-wrap svg {
+  max-width: 140px;
+  max-height: 70px;
+  width: 80%;
+  height: 80%;
+  stroke: var(--neon-cyan);
+  filter: drop-shadow(0 0 6px rgba(0, 240, 255, 0.8));
+}
+
+/* OLED Weather Row in Main Stage */
+.oled-weather-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  width: 100%;
+  height: 100%;
+  padding: 0 4px;
+}
+
+.oled-weather-left,
+.oled-weather-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.oled-weather-city {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #8EA9C7;
+}
+
+.oled-weather-temp {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--neon-cyan);
+  text-shadow: 0 0 6px rgba(0, 240, 255, 0.8);
+}
+
+.oled-weather-divider {
+  width: 1px;
+  height: 70%;
+  background: rgba(0, 240, 255, 0.3);
+}
+
+.oled-weather-info {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--neon-cyan);
+}
+
+.oled-weather-sub {
+  font-size: 0.5rem;
+  color: #8EA9C7;
+}
+
+/* OLED Subtitle Marquee in Main Stage */
+.oled-marquee-text {
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-align: center;
+  color: var(--neon-cyan);
+  text-shadow: 0 0 6px rgba(0, 240, 255, 0.8);
+  margin-bottom: 4px;
+}
+
+/* OLED Game Simulation in Main Stage */
+.oled-game-pixels {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 12px;
+  height: 28px;
+  width: 80%;
+  border-bottom: 1.5px solid var(--neon-cyan);
+  margin-bottom: 4px;
+  padding-bottom: 2px;
+}
+
+.dino-pixel {
+  width: 12px;
+  height: 16px;
+  background: var(--neon-cyan);
+  border-radius: 2px 2px 0 0;
+  box-shadow: 0 0 4px var(--neon-cyan);
+}
+
+.cactus-pixel {
+  width: 6px;
+  height: 12px;
+  background: var(--neon-cyan);
+  border-radius: 2px 2px 0 0;
+}
+
+.bird-pixel {
+  width: 10px;
+  height: 6px;
+  background: var(--neon-cyan);
+  margin-bottom: 8px;
+  border-radius: 1px;
+}
+
+.oled-score-line {
+  font-size: 0.55rem;
+  letter-spacing: 0.5px;
+  color: #8EA9C7;
+}
+
+/* Stage Mode Indicator Pill */
+.stage-mode-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 5px 14px;
+  background: rgba(0, 240, 255, 0.05);
   border: 1px solid var(--neon-cyan-border);
   border-radius: var(--radius-pill);
-  color: var(--neon-cyan);
+}
+
+.stage-mode-badge {
   font-family: var(--font-mono);
-  font-size: 0.68rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.15s ease;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: var(--neon-cyan);
+  text-shadow: 0 0 6px rgba(0, 240, 255, 0.7);
 }
 
-.subpage-back-btn:active {
-  transform: scale(0.96);
-  background: var(--neon-cyan);
-  color: #000;
+/* Faces Selector Section */
+.faces-selector-section {
+  width: 100%;
+  margin-top: 6px;
 }
 
-.oled-screen-card {
-  cursor: pointer;
-  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.oled-screen-card:active {
-  transform: scale(0.97);
-  border-color: var(--neon-cyan);
-  box-shadow: 0 0 14px rgba(0, 240, 255, 0.25);
+.faces-section-header {
+  padding: 4px 2px 8px 2px;
 }
 
 /* 13 FACES GRID */
@@ -1770,9 +2004,10 @@ input[type="range"]::-webkit-slider-thumb {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 4px;
 }
 
+/* Face Card: NO HOVER on touch, only active and selected */
 .face-card {
   display: flex;
   flex-direction: column;
@@ -1786,34 +2021,31 @@ input[type="range"]::-webkit-slider-thumb {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
+  transition: transform 0.1s ease, border-color 0.1s ease, background 0.1s ease;
 }
 
-/* Hilangkan hover / persistent highlight pada ekspresi wajah saat disentuh di HP */
+/* Strictly disable hover and focus highlight on touch screen */
 .face-card:hover,
 .face-card:focus,
 .face-card:focus-visible {
   outline: none;
-  background: rgba(5, 10, 22, 0.85);
-  border-color: var(--neon-cyan-border);
-  box-shadow: none;
+  background: rgba(5, 10, 22, 0.85) !important;
+  border-color: var(--neon-cyan-border) !important;
+  box-shadow: none !important;
 }
 
+/* Momentary touch feedback */
 .face-card:active {
-  transform: scale(0.96);
-  border-color: var(--neon-cyan);
-  background: rgba(0, 240, 255, 0.15);
+  transform: scale(0.95);
+  border-color: var(--neon-cyan) !important;
+  background: rgba(0, 240, 255, 0.15) !important;
 }
 
+/* Selected active face */
 .face-card.active {
-  border-color: var(--neon-cyan);
-  background: rgba(0, 240, 255, 0.18);
-  box-shadow: 0 0 12px rgba(0, 240, 255, 0.35);
-}
-
-.detail-feature-panel .oled-face-wrap {
-  width: 90px;
-  height: 45px;
-  margin-bottom: 0;
+  border-color: var(--neon-cyan) !important;
+  background: rgba(0, 240, 255, 0.18) !important;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.35) !important;
 }
 
 .face-card .eye-preview {
@@ -1828,54 +2060,13 @@ input[type="range"]::-webkit-slider-thumb {
 .face-card .eye-preview svg {
   width: 100%;
   height: 100%;
+  stroke: var(--neon-cyan);
+  filter: drop-shadow(0 0 3px rgba(0, 240, 255, 0.6));
 }
 
 .face-card span {
   font-family: var(--font-mono);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  color: var(--neon-cyan);
-}
-
-/* 10 ARCADE GAMES GRID */
-.games-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.game-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px;
-  background: rgba(5, 10, 22, 0.85);
-  border: 1px solid var(--neon-cyan-border);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  text-align: left;
-}
-
-.game-btn:active {
-  transform: scale(0.96);
-  border-color: var(--neon-cyan);
-  background: rgba(0, 240, 255, 0.15);
-  box-shadow: 0 0 12px rgba(0, 240, 255, 0.35);
-}
-
-.game-btn svg {
-  width: 22px;
-  height: 22px;
-  stroke: var(--neon-cyan);
-  flex-shrink: 0;
-}
-
-.game-btn span {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.5px;
   color: var(--neon-cyan);
