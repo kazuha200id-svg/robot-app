@@ -296,11 +296,10 @@
                 <div class="oled-screen-content oled-stopwatch-view">
                   <div class="oled-header-tiny">
                     <span>STOPWATCH</span>
-                    <span>LAP 01</span>
                   </div>
                   <div class="oled-big-time oled-mono" id="oledStopwatchPreview">00:00:00</div>
                   <div class="oled-sw-bar-track">
-                    <div class="oled-sw-bar-fill"></div>
+                    <div class="oled-sw-bar-fill" id="oledSwBarFill" style="width: 0%;"></div>
                   </div>
                 </div>
               </div>
@@ -316,13 +315,13 @@
                   <div class="oled-weather-row">
                     <div class="oled-weather-left">
                       <div class="oled-weather-city" id="oledCityPreview">JAKARTA</div>
-                      <div class="oled-weather-temp" id="oledTempPreview">29°C</div>
+                      <div class="oled-weather-temp" id="oledTempPreview">28<span class="oled-deg-circle"></span></div>
                     </div>
-                    <div class="oled-weather-divider"></div>
+                    <div class="oled-weather-dotted-divider"></div>
                     <div class="oled-weather-right">
                       <div class="oled-weather-info" id="oledWeatherCondPreview">CERAH</div>
-                      <div class="oled-weather-sub">Lembap: 65%</div>
-                      <div class="oled-weather-sub">Angin: 12km</div>
+                      <div class="oled-weather-sub" id="oledWeatherHumPreview">Lembap: 75</div>
+                      <div class="oled-weather-sub" id="oledWeatherWindPreview">Angin: 4 km</div>
                     </div>
                   </div>
                 </div>
@@ -337,11 +336,9 @@
               <div class="oled-display-bezel">
                 <div class="oled-screen-content oled-msg-view">
                   <div class="oled-header-tiny">
-                    <span>SUBTITLE YOUTUBE</span>
-                    <span>♪ ♫</span>
+                    <span>SUBTITLE</span>
                   </div>
-                  <div class="oled-marquee-text" id="oledMsgPreview">HELLO ROBOT DESK!</div>
-                  <div class="oled-footer-tiny"><span>TEKS BERJALAN AKTIF</span></div>
+                  <div class="oled-sub-center-text" id="oledMsgPreview">SUBTITLE YOUTUBE</div>
                 </div>
               </div>
               <div class="screen-card-meta">
@@ -453,15 +450,15 @@
               <div class="ctrl-group-row">
                 <div class="time-adjust-block">
                   <div class="stepper-unit">
-                    <button type="button" class="stepper-btn" onclick="stepAlarmHour(1)">▲</button>
+                    <button type="button" class="stepper-btn" id="btnAlarmHourUp">▲</button>
                     <span class="stepper-value" id="dispAlarmHour">06</span>
-                    <button type="button" class="stepper-btn" onclick="stepAlarmHour(-1)">▼</button>
+                    <button type="button" class="stepper-btn" id="btnAlarmHourDown">▼</button>
                   </div>
                   <span class="stepper-sep">:</span>
                   <div class="stepper-unit">
-                    <button type="button" class="stepper-btn" onclick="stepAlarmMin(1)">▲</button>
+                    <button type="button" class="stepper-btn" id="btnAlarmMinUp">▲</button>
                     <span class="stepper-value" id="dispAlarmMin">30</span>
-                    <button type="button" class="stepper-btn" onclick="stepAlarmMin(-1)">▼</button>
+                    <button type="button" class="stepper-btn" id="btnAlarmMinDown">▼</button>
                   </div>
                 </div>
                 <div class="toggles-block">
@@ -533,13 +530,13 @@
                     <div class="oled-weather-row">
                       <div class="oled-weather-left">
                         <div class="oled-weather-city" id="detailWeatherCity">JAKARTA</div>
-                        <div class="oled-weather-temp" id="detailWeatherTemp">29°C</div>
+                        <div class="oled-weather-temp" id="detailWeatherTemp">28<span class="oled-deg-circle"></span></div>
                       </div>
-                      <div class="oled-weather-divider"></div>
+                      <div class="oled-weather-dotted-divider"></div>
                       <div class="oled-weather-right">
                         <div class="oled-weather-info" id="detailWeatherCond">CERAH</div>
-                        <div class="oled-weather-sub" id="detailWeatherHum">Lembap: 65%</div>
-                        <div class="oled-weather-sub" id="detailWeatherWind">Angin: 12km</div>
+                        <div class="oled-weather-sub" id="detailWeatherHum">Lembap: 75</div>
+                        <div class="oled-weather-sub" id="detailWeatherWind">Angin: 4 km</div>
                       </div>
                     </div>
                   </div>
@@ -564,9 +561,8 @@
                       <div class="oled-battery-vert"><div class="oled-batt-pip"></div><div class="oled-batt-body"><div class="oled-batt-fill" style="height: 100%;"></div></div></div>
                     </div>
                   </div>
-                  <div class="oled-mode-layer active">
-                    <div class="oled-marquee-text" id="detailSubPreview">HELLO ROBOT DESK!</div>
-                    <div class="oled-footer-tiny"><span>TEKS BERJALAN AKTIF</span></div>
+                  <div class="oled-mode-layer active oled-subtitle-layer">
+                    <div class="oled-sub-center-text" id="detailSubPreview">SUBTITLE YOUTUBE</div>
                   </div>
                 </div>
               </div>
@@ -600,19 +596,8 @@
               </div>
             </div>
 
-            <!-- KONTROL GAME: NAVIGASI SEBELUMNYA / BERIKUTNYA, MULAI MAIN, DAN 10 PILIHAN GAME -->
+            <!-- KONTROL GAME: 10 PILIHAN GAME LANGSUNG MASUK DENGAN SYARAT TIDAK SEDANG MAIN -->
             <div class="feature-ctrl-panel">
-              <div class="game-nav-row">
-                <button type="button" id="btnGamePrev" class="neon-btn-action" onclick="navigateGameMenu(-1)">
-                  ◄ SEBELUMNYA
-                </button>
-                <button type="button" id="btnGameLaunch" class="neon-btn-action highlight" onclick="launchCurrentSelectedGame()">
-                  MULAI MAIN
-                </button>
-                <button type="button" id="btnGameNext" class="neon-btn-action" onclick="navigateGameMenu(1)">
-                  BERIKUTNYA ►
-                </button>
-              </div>
               <div class="game-lock-status" id="gameLockStatus" style="display: none;">
                 Sedang Bermain Game &bull; Selesaikan game atau Game Over untuk ganti game
               </div>

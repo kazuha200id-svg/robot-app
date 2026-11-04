@@ -1484,97 +1484,136 @@ input[type="range"]::-webkit-slider-thumb {
   box-shadow: 0 0 5px rgba(0, 240, 255, 0.6);
 }
 
-/* Stopwatch View in OLED */
+/* Stopwatch View in OLED (100% Persis Fisik SSD1306) */
 .oled-sw-bar-track {
-  width: 85%;
+  width: 87.5%;
   height: 4px;
-  background: #10243d;
-  border-radius: 2px;
-  margin-top: 5px;
+  background: transparent;
+  border: 1px solid var(--neon-cyan);
+  border-radius: 0;
+  margin: 10px auto 0 auto;
+  box-sizing: border-box;
+  padding: 0;
   overflow: hidden;
-  border: 0.5px solid rgba(0, 240, 255, 0.4);
+  position: relative;
 }
 
 .oled-sw-bar-fill {
-  width: 45%;
-  height: 100%;
+  width: 0%;
+  height: 2px;
   background: var(--neon-cyan);
-  box-shadow: 0 0 4px var(--neon-cyan);
-  animation: swPulse 2s ease-in-out infinite alternate;
+  box-shadow: none;
+  animation: none !important;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  margin: auto 0;
 }
 
-@keyframes swPulse {
-  0% { width: 10%; }
-  100% { width: 90%; }
-}
-
-/* Weather View in OLED */
+/* Weather View in OLED (100% Persis Fisik SSD1306) */
 .oled-weather-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 0 2px;
+  height: calc(100% - 14px);
+  padding: 3px 6px;
+  box-sizing: border-box;
 }
 
 .oled-weather-left {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  justify-content: space-between;
+  height: 100%;
+  padding: 1px 0;
+  width: 48px;
 }
 
 .oled-weather-city {
-  font-size: 0.52rem;
-  letter-spacing: 1px;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.5px;
   font-weight: 700;
-  color: #8EA9C7;
+  color: var(--neon-cyan);
   text-transform: uppercase;
 }
 
 .oled-weather-temp {
-  font-size: 1.15rem;
+  font-family: var(--font-mono);
+  font-size: 1.45rem;
   font-weight: 800;
-  line-height: 1.1;
+  line-height: 1;
+  color: var(--neon-cyan);
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
 }
 
-.oled-weather-divider {
+.oled-deg-circle {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border: 1px solid var(--neon-cyan);
+  border-radius: 50%;
+  margin-top: 2px;
+  box-sizing: border-box;
+}
+
+.oled-weather-dotted-divider {
   width: 1px;
-  height: 28px;
-  border-left: 1px dashed rgba(0, 240, 255, 0.4);
-  margin: 0 6px;
+  height: 40px;
+  border-left: 1px dotted var(--neon-cyan);
+  margin: 0 4px;
+  opacity: 0.8;
 }
 
 .oled-weather-right {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 1px;
+  justify-content: space-between;
+  height: 100%;
+  padding: 1px 0 1px 4px;
+  flex: 1;
 }
 
 .oled-weather-info {
-  font-size: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
   font-weight: 700;
   color: var(--neon-cyan);
   text-transform: uppercase;
 }
 
 .oled-weather-sub {
-  font-size: 0.42rem;
-  color: #5A7B99;
-}
-
-/* Subtitle View in OLED */
-.oled-marquee-text {
-  font-size: 0.65rem;
-  font-weight: 700;
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  font-weight: 600;
+  color: var(--neon-cyan);
   white-space: nowrap;
-  animation: marqueeScroll 6s linear infinite;
-  margin: 4px 0;
 }
 
-@keyframes marqueeScroll {
-  0% { transform: translateX(35px); }
-  100% { transform: translateX(-35px); }
+/* Subtitle View in OLED (100% Persis Fisik SSD1306) */
+.oled-subtitle-layer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: calc(100% - 14px);
+  padding: 4px 6px;
+  box-sizing: border-box;
+}
+
+.oled-sub-center-text {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--neon-cyan);
+  text-align: center;
+  letter-spacing: 0.5px;
+  line-height: 1.3;
+  word-break: break-word;
 }
 
 /* Game Menu View in OLED */
@@ -2066,10 +2105,11 @@ input[type="range"]::-webkit-slider-thumb {
 .face-card:hover,
 .face-card:focus,
 .face-card:focus-visible {
-  outline: none;
+  outline: none !important;
   background: rgba(5, 10, 22, 0.85) !important;
   border-color: var(--neon-cyan-border) !important;
   box-shadow: none !important;
+  transform: none !important;
 }
 
 /* Momentary touch feedback */
@@ -2299,15 +2339,35 @@ input[type="range"]::-webkit-slider-thumb {
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-  transition: all 0.15s ease;
+  transition: transform 0.1s ease;
+}
+
+/* Strictly disable hover on game select cards */
+.game-select-card:hover,
+.game-select-card:focus,
+.game-select-card:focus-visible {
+  outline: none !important;
+  background: rgba(5, 10, 22, 0.85) !important;
+  border-color: var(--neon-cyan-border) !important;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
 .game-select-card:active {
   transform: scale(0.96);
+  border-color: var(--neon-cyan) !important;
+  background: rgba(0, 240, 255, 0.15) !important;
 }
 
 .game-select-card.selected,
 .game-select-card.active {
+  border-color: var(--neon-cyan) !important;
+  background: rgba(0, 240, 255, 0.18) !important;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.35) !important;
+}
+
+.game-select-card.selected:hover,
+.game-select-card.active:hover {
   border-color: var(--neon-cyan) !important;
   background: rgba(0, 240, 255, 0.18) !important;
   box-shadow: 0 0 10px rgba(0, 240, 255, 0.35) !important;
@@ -2333,14 +2393,16 @@ input[type="range"]::-webkit-slider-thumb {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  font-size: 0.95rem;
+  color: var(--neon-cyan);
 }
 
 .game-select-icon svg,
 .game-card-icon svg {
   width: 100%;
   height: 100%;
-  fill: var(--neon-cyan);
+  stroke: var(--neon-cyan);
+  fill: none;
+  stroke-width: 2;
 }
 
 .game-select-num,

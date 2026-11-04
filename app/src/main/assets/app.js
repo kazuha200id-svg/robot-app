@@ -10,6 +10,11 @@ let faceAnimationTimer = null;
 let currentMainTab = 'pageMenu';
 let toastTimeout = null;
 
+// Sinkronisasi Waktu Ultra-Akurat ESP32 (Presisi Mikrodetik)
+let esp32TimeBaseMs = 0;
+let localTimeAtSyncMs = 0;
+let hasEsp32TimeSync = false;
+
 // ================= 1. TOAST NOTIFICATION (SEMUA NOTIFIKASI DINONAKTIFKAN) =================
 function showNeonToast(message) {
   // Seluruh notifikasi toast dinonaktifkan sesuai permintaan pengguna ("hilangkan semua notfikasi")
@@ -622,26 +627,28 @@ window.onBLEReceived = function(jsonStr) {
     const data = JSON.parse(jsonStr);
     
     // Telemetry updates
+    if (typeof data.epoch === 'number' && data.epoch > 100000000) {
+      const espTotalMs = (data.epoch * 1000) + Math.floor((data.us || 0) / 1000);
+      esp32TimeBaseMs = espTotalMs + 25; // Kompensasi perkiraan latensi BLE receive
+      localTimeAtSyncMs = Date.now();
+      hasEsp32TimeSync = true;
+    }
     if (typeof data.mode === 'number') {
       currentRobotMode = data.mode;
       // Jika mode adalah 4 (MODE_GAME_MENU), robot berada di menu game (atau kembali setelah game over)
       if (data.mode === 4) {
-        if (typeof isGamePlaying !== 'undefined' && isGamePlaying) {
-          isGamePlaying = false;
+        if (typeof isGameActivelyPlaying !== 'undefined' && isGameActivelyPlaying) {
+          isGameActivelyPlaying = false;
           if (typeof renderOledGameMenu === 'function') renderOledGameMenu();
           if (typeof render10GamesGrid === 'function') render10GamesGrid();
         }
       } else if (data.mode >= 5 && data.mode <= 16 && data.mode !== 7 && data.mode !== 8) {
-        // Robot sedang memainkan salah satu game arcade
-        if (typeof isGamePlaying !== 'undefined' && !isGamePlaying) {
-          isGamePlaying = true;
-          if (typeof GAMES_LIST !== 'undefined') {
-            const matchedIdx = GAMES_LIST.findIndex(g => g.mode === data.mode);
-            if (matchedIdx >= 0) g_selectedGameIdx = matchedIdx;
-          }
-          if (typeof renderOledGameMenu === 'function') renderOledGameMenu();
-          if (typeof render10GamesGrid === 'function') render10GamesGrid();
+        if (typeof GAMES_LIST !== 'undefined') {
+          const matchedIdx = GAMES_LIST.findIndex(g => g.mode === data.mode);
+          if (matchedIdx >= 0) g_selectedGameIdx = matchedIdx;
         }
+        if (typeof renderOledGameMenu === 'function') renderOledGameMenu();
+        if (typeof render10GamesGrid === 'function') render10GamesGrid();
       }
     }
     if (typeof data.face === 'number') {
@@ -946,16 +953,27 @@ function sendAlarmToRobot() {
   });
 }
 
+let alarmSendDebounceTimer = null;
+
 function stepAlarmHour(dir) {
-  triggerHaptic(20);
+  triggerHaptic(15);
   g_alarmHour = (g_alarmHour + dir + 24) % 24;
-  sendAlarmToRobot();
+  renderAlarmOledAndControls();
+  queueAlarmSend();
 }
 
 function stepAlarmMin(dir) {
-  triggerHaptic(20);
+  triggerHaptic(15);
   g_alarmMin = (g_alarmMin + dir + 60) % 60;
-  sendAlarmToRobot();
+  renderAlarmOledAndControls();
+  queueAlarmSend();
+}
+
+function queueAlarmSend() {
+  if (alarmSendDebounceTimer) clearTimeout(alarmSendDebounceTimer);
+  alarmSendDebounceTimer = setTimeout(() => {
+    sendAlarmToRobot();
+  }, 120);
 }
 
 function toggleAlarmPowerFromApp() {
@@ -968,6 +986,65 @@ function toggleAlarmRepeatFromApp() {
   triggerHaptic(25);
   g_alarmDaily = !g_alarmDaily;
   sendAlarmToRobot();
+}
+
+// ================= FITUR 3: KONTROL ALARM INTERAKTIF & REPEAT HOLD =================
+function bindStepperHold(btnId, stepFn) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+
+  let holdTimer = null;
+  let repeatTimer = null;
+  let isPressed = false;
+
+  const start = (e) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    e.preventDefault();
+    isPressed = true;
+    stepFn(); // Tap = naik 1 per 1
+
+    if (holdTimer) clearTimeout(holdTimer);
+    if (repeatTimer) clearInterval(repeatTimer);
+
+    // Jika tombol ditahan lebih dari 250ms, auto-repeat cepat (setiap 55ms)
+    holdTimer = setTimeout(() => {
+      if (!isPressed) return;
+      repeatTimer = setInterval(() => {
+        if (!isPressed) {
+          clearInterval(repeatTimer);
+          return;
+        }
+        stepFn(); // Tahan = jadi cepat
+      }, 55);
+    }, 250);
+  };
+
+  const stop = () => {
+    if (!isPressed) return;
+    isPressed = false;
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+    if (repeatTimer) {
+      clearInterval(repeatTimer);
+      repeatTimer = null;
+    }
+    // Kirim nilai final ke robot saat dilepas
+    sendAlarmToRobot();
+  };
+
+  btn.addEventListener('pointerdown', start);
+  btn.addEventListener('pointerup', stop);
+  btn.addEventListener('pointerleave', stop);
+  btn.addEventListener('pointercancel', stop);
+}
+
+function setupAlarmStepperRepeat() {
+  bindStepperHold('btnAlarmHourUp', () => stepAlarmHour(1));
+  bindStepperHold('btnAlarmHourDown', () => stepAlarmHour(-1));
+  bindStepperHold('btnAlarmMinUp', () => stepAlarmMin(1));
+  bindStepperHold('btnAlarmMinDown', () => stepAlarmMin(-1));
 }
 
 // ================= FITUR 4: KONTROL STOPWATCH INTERAKTIF =================
@@ -996,15 +1073,17 @@ function updateStopwatchDisplay() {
   }
 
   const timeStr = formatStopwatchTime(totalMs);
-  const barPercent = Math.min(100, ((totalMs % 60000) / 60000) * 100);
+  const barPercent = Math.min(100, Math.max(0, ((totalMs % 60000) / 60000) * 100));
 
   const digits = document.getElementById('detailSwDigits');
   const previewDigits = document.getElementById('oledStopwatchPreview');
   const bar = document.getElementById('detailSwBarFill');
+  const oledBar = document.getElementById('oledSwBarFill');
 
   if (digits) digits.textContent = timeStr;
   if (previewDigits) previewDigits.textContent = timeStr;
   if (bar) bar.style.width = barPercent + '%';
+  if (oledBar) oledBar.style.width = barPercent + '%';
 
   const btnStartStop = document.getElementById('btnSwStartStop');
   if (btnStartStop) {
@@ -1046,22 +1125,72 @@ function resetStopwatchFromApp() {
   sendCommand({ c: 'm', v: 7 }); // Mode 7 di ESP32 mereset stopwatch ke 00:00:00
 }
 
-// ================= FITUR 5: 10 GAME ARCADE DENGAN SYARAT TIDAK SEDANG MAIN =================
+// ================= FITUR 5: 10 GAME ARCADE (WARNA TEMA CYAN, AUTO LAUNCH & LOCK SYARAT) =================
 const GAMES_LIST = [
-  { id: 0, mode: 5, name: 'FLAPPY BIRD', icon: '🐦' },
-  { id: 1, mode: 6, name: 'DINO RUNNER', icon: '🦖' },
-  { id: 2, mode: 9, name: 'CAVE COPTER', icon: '🚁' },
-  { id: 3, mode: 10, name: 'GRAV RUNNER', icon: '🏃' },
-  { id: 4, mode: 11, name: 'PIN CIRCLE', icon: '🎯' },
-  { id: 5, mode: 12, name: 'ORBIT JUMP', icon: '🪐' },
-  { id: 6, mode: 13, name: 'TOWER STACK', icon: '🏢' },
-  { id: 7, mode: 14, name: 'RADAR DEFEND', icon: '📡' },
-  { id: 8, mode: 15, name: 'HOOP DUNK', icon: '🏀' },
-  { id: 9, mode: 16, name: 'ORBIT PONG', icon: '🏓' }
+  {
+    id: 0,
+    mode: 5,
+    name: 'FLAPPY BIRD',
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M4 14c2-4 6-6 10-4l4-2v4c2 2 2 5-1 7-4 2-9 1-13-5z"/><circle cx="15" cy="11" r="1" fill="#00F0FF"/></svg>'
+  },
+  {
+    id: 1,
+    mode: 6,
+    name: 'DINO RUNNER',
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M7 19v-4m4 4v-3m3 3h4V12h-3V7h-4v3H7v3h4v4z"/></svg>'
+  },
+  {
+    id: 2,
+    mode: 9,
+    name: 'CAVE COPTER',
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M4 7h16M12 7v3m-7 4h10a4 4 0 0 1-4 4H7a2 2 0 0 1-2-2v-2zm12 2h3m-15 4h12"/></svg>'
+  },
+  {
+    id: 3,
+    mode: 10,
+    name: 'GRAV RUNNER',
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><circle cx="12" cy="5" r="2"/><path d="m9 20 3-6 3 2 2 4M6 13l3-2 3 2 4-3"/></svg>'
+  },
+  {
+    id: 4,
+    mode: 11,
+    name: 'PIN CIRCLE',
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2" fill="#00F0FF"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/></svg>'
+  },
+  {
+    id: 5,
+    mode: 12,
+    name: 'ORBIT JUMP',
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><circle cx="12" cy="12" r="5"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-25 12 12)"/></svg>'
+  },
+  {
+    id: 6,
+    mode: 13,
+    name: 'TOWER STACK',
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><rect x="7" y="15" width="10" height="4" rx="1"/><rect x="5" y="10" width="14" height="4" rx="1"/><rect x="8" y="5" width="8" height="4" rx="1"/></svg>'
+  },
+  {
+    id: 7,
+    mode: 14,
+    name: 'RADAR DEFEND',
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><line x1="12" y1="12" x2="18" y2="7"/><circle cx="12" cy="12" r="1.5" fill="#00F0FF"/></svg>'
+  },
+  {
+    id: 8,
+    mode: 15,
+    name: 'HOOP DUNK',
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><circle cx="7" cy="8" r="3"/><path d="M12 11h8l-2 8h-4l-2-8zM12 11v6m8-6-4 8m0-8 4 8"/></svg>'
+  },
+  {
+    id: 9,
+    mode: 16,
+    name: 'ORBIT PONG',
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><circle cx="12" cy="12" r="9"/><rect x="5" y="10" width="2" height="5" rx="1" fill="#00F0FF"/><rect x="17" y="9" width="2" height="5" rx="1" fill="#00F0FF"/><circle cx="11" cy="12" r="1.5" fill="#00F0FF"/></svg>'
+  }
 ];
 
 let g_selectedGameIdx = 0;
-let isGamePlaying = false;
+let isGameActivelyPlaying = false;
 
 function renderOledGameMenu() {
   const container = document.getElementById('oledGameMenuContainer');
@@ -1085,7 +1214,6 @@ function renderOledGameMenu() {
       <div class="oled-game-menu-row ${isSel ? 'selected' : ''}">
         <span class="row-num">${cursor}${idx + 1}.</span>
         <span class="row-title">${g.name}</span>
-        <span class="row-icon">${g.icon}</span>
       </div>
     `;
   }
@@ -1097,15 +1225,9 @@ function renderOledGameMenu() {
     counter.textContent = `${curStr}/${totStr}`;
   }
 
-  const btnLaunch = document.getElementById('btnGameLaunch');
   const lockStatus = document.getElementById('gameLockStatus');
-  if (btnLaunch) {
-    btnLaunch.textContent = isGamePlaying ? 'KEMBALI KE MENU' : 'MULAI MAIN';
-    btnLaunch.classList.toggle('danger', isGamePlaying);
-    btnLaunch.classList.toggle('highlight', !isGamePlaying);
-  }
   if (lockStatus) {
-    lockStatus.style.display = isGamePlaying ? 'block' : 'none';
+    lockStatus.style.display = isGameActivelyPlaying ? 'block' : 'none';
   }
 }
 
@@ -1116,62 +1238,35 @@ function render10GamesGrid() {
   grid.innerHTML = '';
   GAMES_LIST.forEach((g, idx) => {
     const card = document.createElement('div');
-    card.className = `game-select-card ${idx === g_selectedGameIdx ? 'active' : ''} ${isGamePlaying ? 'locked' : ''}`;
-    card.onclick = () => selectGameByIndex(idx);
+    const isSel = (idx === g_selectedGameIdx);
+    card.className = `game-select-card ${isSel ? 'selected active' : ''} ${isGameActivelyPlaying ? 'disabled-playing locked' : ''}`;
+    card.onclick = () => selectAndLaunchGame(idx);
     card.innerHTML = `
-      <span class="game-card-num">${idx + 1}</span>
-      <span class="game-card-icon">${g.icon}</span>
-      <span class="game-card-name">${g.name}</span>
+      <span class="game-select-num">${idx + 1}</span>
+      <div class="game-select-icon">${g.svg}</div>
+      <span class="game-select-name">${g.name}</span>
     `;
     grid.appendChild(card);
   });
 }
 
-function selectGameByIndex(idx) {
-  // Syarat: hanya bisa ganti saat tidak sedang bermain game (di menu game, belum mulai, atau game over)
-  if (isGamePlaying) {
+function selectAndLaunchGame(idx) {
+  // Syarat: tidak sedang aktif memainkan game
+  // Bisa masuk jika di menu game, belum mulai, atau game over
+  if (isGameActivelyPlaying) {
     triggerHaptic(40);
+    showNeonToast('Sedang bermain game! Selesaikan game atau Game Over untuk ganti game');
     return;
   }
 
-  triggerHaptic(25);
-  g_selectedGameIdx = idx;
-  renderOledGameMenu();
-  render10GamesGrid();
-}
-
-function navigateGameMenu(dir) {
-  if (isGamePlaying) {
-    triggerHaptic(40);
-    return;
-  }
-
-  triggerHaptic(20);
-  const total = GAMES_LIST.length;
-  g_selectedGameIdx = (g_selectedGameIdx + dir + total) % total;
-  renderOledGameMenu();
-  render10GamesGrid();
-}
-
-function launchCurrentSelectedGame() {
-  triggerHaptic(35);
-  if (!isGamePlaying) {
-    const g = GAMES_LIST[g_selectedGameIdx];
-    isGamePlaying = true;
-    currentRobotMode = g.mode;
-    sendCommand({ c: 'm', v: g.mode });
-    renderOledGameMenu();
-    render10GamesGrid();
-  } else {
-    returnToGameMenuFromApp();
-  }
-}
-
-function returnToGameMenuFromApp() {
   triggerHaptic(30);
-  isGamePlaying = false;
-  currentRobotMode = 4;
-  sendCommand({ c: 'm', v: 4 });
+  g_selectedGameIdx = idx;
+  const game = GAMES_LIST[idx];
+
+  // Otomatis masuk ke game tersebut dalam status belum dimulai (IDLE/READY)
+  currentRobotMode = game.mode;
+  sendCommand({ c: 'm', v: game.mode });
+
   renderOledGameMenu();
   render10GamesGrid();
 }
@@ -1315,9 +1410,15 @@ function updateOledClockTick() {
   const detailDateEl = document.getElementById('detailClockDate');
   const detailTzEl = document.getElementById('detailClockTz');
 
-  const now = new Date();
-  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-  const targetTime = new Date(utc + (3600000 * currentTimezoneOffset));
+  let targetTime;
+  if (hasEsp32TimeSync && localTimeAtSyncMs > 0) {
+    const elapsedSinceSync = Date.now() - localTimeAtSyncMs;
+    targetTime = new Date(esp32TimeBaseMs + elapsedSinceSync);
+  } else {
+    const now = new Date();
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+    targetTime = new Date(utc + (3600000 * currentTimezoneOffset));
+  }
 
   let hours = targetTime.getHours();
   const minutes = String(targetTime.getMinutes()).padStart(2, '0');
@@ -1339,12 +1440,14 @@ function updateOledClockTick() {
   if (stageClockEl) stageClockEl.textContent = timeStr;
   if (detailClockEl) detailClockEl.textContent = timeStr;
 
-  const days = ['MIN', 'SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB'];
-  const months = ['JAN', 'FEB', 'MAR', 'APR', 'MEI', 'JUN', 'JUL', 'AGU', 'SEP', 'OKT', 'NOV', 'DES'];
+  // Format tanggal 100% PERSIS OLED: "Minggu, 05 Nov 2026"
+  const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
   const dayName = days[targetTime.getDay()];
   const dateNum = String(targetTime.getDate()).padStart(2, '0');
   const monthName = months[targetTime.getMonth()];
-  const dateStr = `${dayName}, ${dateNum} ${monthName}`;
+  const yearNum = targetTime.getFullYear();
+  const dateStr = `${dayName}, ${dateNum} ${monthName} ${yearNum}`;
 
   const mainDateEl = document.getElementById('mainClockDate');
   if (mainDateEl) mainDateEl.textContent = dateStr;
@@ -1359,7 +1462,7 @@ function updateOledClockTick() {
   if (detailTzEl) detailTzEl.textContent = tzCode;
 }
 
-// Pembaruan realtime ultra-cepat (50ms) agar detik jam berpindah seketika tanpa jeda 1-2 detik
+// Pembaruan realtime ultra-cepat (50ms) agar detik jam berpindah seketika tanpa jeda
 setInterval(updateOledClockTick, 50);
 
 // ================= 7. PENGATURAN (SETTING) =================
@@ -1405,16 +1508,26 @@ function onTimezoneSelected(val) {
   triggerHaptic(20);
 }
 
-// Sinkronisasi Jam HP & Timezone ke Robot Desk
+// Sinkronisasi Jam HP & Timezone ke Robot Desk dengan kompensasi latensi mikrodetik
 function syncClock() {
   const now = new Date();
   const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
   const targetTime = new Date(utc + (3600000 * currentTimezoneOffset));
-  const epochSec = Math.floor(targetTime.getTime() / 1000);
+  const totalMs = targetTime.getTime();
+  const epochSec = Math.floor(totalMs / 1000);
+  const remMs = (totalMs % 1000) + 30; // Kompensasi ~30ms latensi transmisi BLE
+  const us = (remMs % 1000) * 1000;
+  const finalEpoch = epochSec + Math.floor(remMs / 1000);
+
+  // Kunci waktu lokal dengan waktu ESP32 secara instan
+  esp32TimeBaseMs = (finalEpoch * 1000) + Math.floor(us / 1000);
+  localTimeAtSyncMs = Date.now();
+  hasEsp32TimeSync = true;
 
   const ok = sendCommand({
     cmd: 'time',
-    epoch: epochSec,
+    epoch: finalEpoch,
+    us: us,
     tz: currentTimezoneOffset,
     fmt: currentTimeFormat
   });
@@ -1428,11 +1541,26 @@ function syncClockQuiet() {
   const now = new Date();
   const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
   const targetTime = new Date(utc + (3600000 * currentTimezoneOffset));
-  const epochSec = Math.floor(targetTime.getTime() / 1000);
-  sendCommand({ cmd: 'time', epoch: epochSec, tz: currentTimezoneOffset, fmt: currentTimeFormat });
+  const totalMs = targetTime.getTime();
+  const epochSec = Math.floor(totalMs / 1000);
+  const remMs = (totalMs % 1000) + 30;
+  const us = (remMs % 1000) * 1000;
+  const finalEpoch = epochSec + Math.floor(remMs / 1000);
+
+  esp32TimeBaseMs = (finalEpoch * 1000) + Math.floor(us / 1000);
+  localTimeAtSyncMs = Date.now();
+  hasEsp32TimeSync = true;
+
+  sendCommand({
+    cmd: 'time',
+    epoch: finalEpoch,
+    us: us,
+    tz: currentTimezoneOffset,
+    fmt: currentTimeFormat
+  });
 }
 
-// SINKRONISASI TAMPILAN CUACA OLED
+// SINKRONISASI TAMPILAN CUACA OLED (100% PERSIS FISIK SSD1306)
 function updateOledWeatherPreview(city) {
   const cityEl = document.getElementById('oledCityPreview');
   const tempEl = document.getElementById('oledTempPreview');
@@ -1442,19 +1570,30 @@ function updateOledWeatherPreview(city) {
   const detailTempEl = document.getElementById('detailWeatherTemp');
   const cityInput = document.getElementById('cfgCityInput');
   const cityName = (city || (cityInput ? cityInput.value : 'JAKARTA')).toUpperCase();
-  const tempText = currentTempUnit === 'F' ? '84°F' : '29°C';
+  const tempVal = currentTempUnit === 'F' ? '82' : '28';
+  const tempHtml = `${tempVal}<span class="oled-deg-circle"></span>`;
 
   const mainCity = document.getElementById('mainWeatherCity');
   const mainTemp = document.getElementById('mainWeatherTemp');
   if (mainCity) mainCity.textContent = cityName;
-  if (mainTemp) mainTemp.textContent = tempText;
+  if (mainTemp) mainTemp.innerHTML = tempHtml;
 
   if (cityEl) cityEl.textContent = cityName;
   if (stageCityEl) stageCityEl.textContent = cityName;
   if (detailCityEl) detailCityEl.textContent = cityName;
-  if (tempEl) tempEl.textContent = tempText;
-  if (stageTempEl) stageTempEl.textContent = tempText;
-  if (detailTempEl) detailTempEl.textContent = tempText;
+  if (tempEl) tempEl.innerHTML = tempHtml;
+  if (stageTempEl) stageTempEl.innerHTML = tempHtml;
+  if (detailTempEl) detailTempEl.innerHTML = tempHtml;
+
+  // Nilai teks kelembapan dan angin persis format SSD1306
+  const humPreview = document.getElementById('oledWeatherHumPreview');
+  const windPreview = document.getElementById('oledWeatherWindPreview');
+  const detailHum = document.getElementById('detailWeatherHum');
+  const detailWind = document.getElementById('detailWeatherWind');
+  if (humPreview) humPreview.textContent = 'Lembap: 75';
+  if (windPreview) windPreview.textContent = 'Angin: 4 km';
+  if (detailHum) detailHum.textContent = 'Lembap: 75';
+  if (detailWind) detailWind.textContent = 'Angin: 4 km';
 }
 
 // Pengaturan Satuan Suhu (°C / °F)
@@ -1604,6 +1743,7 @@ window.addEventListener('DOMContentLoaded', () => {
   renderDetailFacesGrid();
   updateOledFacePreview(0);
   renderAlarmOledAndControls();
+  setupAlarmStepperRepeat();
   updateStopwatchDisplay();
   renderOledGameMenu();
   render10GamesGrid();
