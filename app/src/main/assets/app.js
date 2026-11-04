@@ -42,6 +42,11 @@ function switchMainTab(pageId, btn) {
 
   currentMainTab = pageId;
 
+  // Tutup detail fitur jika meninggalkan tab Robot
+  if (pageId !== 'pageRobot') {
+    closeRobotFeatureDetail();
+  }
+
   // Toggle pages
   document.querySelectorAll('.page').forEach(page => {
     page.classList.toggle('active', page.id === pageId);
@@ -468,7 +473,6 @@ window.onBluetoothPowerState = function(enabled) {
   const btnEnable = document.getElementById('btnEnableBt');
   const boxBt = document.getElementById('boxBtPower');
   const gate = document.getElementById('setupGate');
-  const btnDisc = document.getElementById('btnDisconnectBt');
 
   if (enabled) {
     if (txtBt) {
@@ -506,7 +510,6 @@ window.onBluetoothPowerState = function(enabled) {
     }
     if (btnEnable) btnEnable.style.display = 'block';
     if (boxBt) boxBt.classList.remove('ready');
-    if (btnDisc) btnDisc.style.display = 'none';
 
     updateSetupGateView(false);
 
@@ -528,12 +531,10 @@ window.onBLEStatus = function(connected, message) {
   const dot = document.getElementById('bleDot');
   const label = document.getElementById('bleStatusLabel');
   const gate = document.getElementById('setupGate');
-  const btnDisc = document.getElementById('btnDisconnectBt');
 
   if (connected) {
     if (dot) dot.className = 'pulse-dot online';
     if (label) label.textContent = 'BLE TERHUBUNG';
-    if (btnDisc) btnDisc.style.display = 'flex';
 
     localStorage.setItem('robot_saved_mac', 'connected');
     localStorage.setItem('robot_saved_name', 'Robot Desk');
@@ -550,7 +551,6 @@ window.onBLEStatus = function(connected, message) {
   } else {
     if (dot) dot.className = 'pulse-dot';
     if (label) label.textContent = 'BLE TERPUTUS';
-    if (btnDisc) btnDisc.style.display = 'none';
 
     if (!isConnecting && gate) {
       gate.classList.add('active');
@@ -658,12 +658,193 @@ function updateOledFacePreview(idx) {
   const item = OLED_FACES[idx] || OLED_FACES[0];
   const wrap = document.getElementById('oledFaceSvgWrap');
   const label = document.getElementById('oledFaceMoodLabel');
+  const detailWrap = document.getElementById('detailFaceSvgWrap');
+  const detailLabel = document.getElementById('detailFaceMoodLabel');
   if (wrap) {
     wrap.innerHTML = `<svg viewBox="0 0 100 50" class="oled-face-svg">${item.svg}</svg>`;
   }
   if (label) {
     label.textContent = `MOOD: ${item.name}`;
   }
+  if (detailWrap) {
+    detailWrap.innerHTML = `<svg viewBox="0 0 100 50" class="oled-face-svg">${item.svg}</svg>`;
+  }
+  if (detailLabel) {
+    detailLabel.textContent = `MOOD: ${item.name}`;
+  }
+}
+
+// RENDER 13 KARTU EXPRESI WAJAH OLED
+function renderDetailFacesGrid() {
+  const container = document.getElementById('detailFacesGrid');
+  if (!container) return;
+  container.innerHTML = '';
+  OLED_FACES.forEach((item, index) => {
+    const card = document.createElement('div');
+    card.className = `face-card ${index === currentFaceIndex ? 'active' : ''}`;
+    card.onclick = () => selectFaceFromDetail(index, card);
+    card.innerHTML = `
+      <div class="face-preview">
+        <svg viewBox="0 0 100 50" class="oled-face-svg">${item.svg}</svg>
+      </div>
+      <span class="face-name">${index + 1}. ${item.name}</span>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function selectFaceFromDetail(index, elem) {
+  sendCommand({ c: 'm', v: 0 }); // Pastikan mode animasi wajah aktif di ESP32
+  sendFace(index, elem);
+  const detailLabel = document.getElementById('detailFaceMoodLabel');
+  if (detailLabel && OLED_FACES[index]) {
+    detailLabel.textContent = `MOOD: ${OLED_FACES[index].name}`;
+  }
+}
+
+// BUKA TAMPILAN DETAIL FITUR ROBOT
+function openRobotFeatureDetail(featureKey) {
+  triggerHaptic(25);
+
+  const screensGrid = document.getElementById('robotScreensGrid');
+  const detailView = document.getElementById('robotFeatureDetailView');
+  const titleEl = document.getElementById('txtRobotDetailTitle');
+
+  if (screensGrid) screensGrid.style.display = 'none';
+  if (detailView) detailView.style.display = 'block';
+
+  // Sembunyikan semua sub-panel detail
+  document.querySelectorAll('.detail-feature-panel').forEach(p => p.style.display = 'none');
+
+  if (featureKey === 'face') {
+    if (titleEl) titleEl.textContent = 'EXPRESI WAJAH OLED (13 PILIHAN)';
+    const panel = document.getElementById('detailViewFace');
+    if (panel) panel.style.display = 'block';
+    renderDetailFacesGrid();
+    updateOledFacePreview(currentFaceIndex || 0);
+    sendCommand({ c: 'm', v: 0 }); // Mode Animasi (0)
+    sendCommand({ c: 'f', v: currentFaceIndex || 0 });
+    showNeonToast('Layar Robot: Expresi Wajah');
+  } else if (featureKey === 'clock') {
+    if (titleEl) titleEl.textContent = 'JAM DIGITAL OLED';
+    const panel = document.getElementById('detailViewClock');
+    if (panel) panel.style.display = 'block';
+    updateOledClockTick();
+    sendCommand({ c: 'm', v: 1 }); // Mode Jam Digital (1)
+    showNeonToast('Layar Robot: Jam Digital');
+  } else if (featureKey === 'alarm') {
+    if (titleEl) titleEl.textContent = 'PENGATURAN ALARM ROBOT';
+    const panel = document.getElementById('detailViewAlarm');
+    if (panel) panel.style.display = 'block';
+    updateOledAlarmPreview();
+    sendCommand({ c: 'm', v: 8 }); // Mode Alarm (8)
+    showNeonToast('Layar Robot: Alarm');
+  } else if (featureKey === 'stopwatch') {
+    if (titleEl) titleEl.textContent = 'STOPWATCH ROBOT';
+    const panel = document.getElementById('detailViewStopwatch');
+    if (panel) panel.style.display = 'block';
+    sendCommand({ c: 'm', v: 7 }); // Mode Stopwatch (7)
+    showNeonToast('Layar Robot: Stopwatch');
+  } else if (featureKey === 'weather') {
+    if (titleEl) titleEl.textContent = 'INFO CUACA DUNIA';
+    const panel = document.getElementById('detailViewWeather');
+    if (panel) panel.style.display = 'block';
+    updateOledWeatherPreview();
+    sendCommand({ c: 'm', v: 2 }); // Mode Cuaca (2)
+    showNeonToast('Layar Robot: Info Cuaca');
+  } else if (featureKey === 'subtitle') {
+    if (titleEl) titleEl.textContent = 'SUBTITLE / TEKS BERJALAN';
+    const panel = document.getElementById('detailViewSubtitle');
+    if (panel) panel.style.display = 'block';
+    sendCommand({ c: 'm', v: 3 }); // Mode Subtitle (3)
+    showNeonToast('Layar Robot: Subtitle Teks');
+  } else if (featureKey === 'game') {
+    if (titleEl) titleEl.textContent = '10 GAME ARCADE ROBOT';
+    const panel = document.getElementById('detailViewGame');
+    if (panel) panel.style.display = 'block';
+    sendCommand({ c: 'm', v: 4 }); // Mode Menu Game (4)
+    showNeonToast('Layar Robot: Menu Game');
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// TUTUP DETAIL FITUR & KEMBALI KE GRID FITUR ROBOT
+function closeRobotFeatureDetail() {
+  triggerHaptic(20);
+  const screensGrid = document.getElementById('robotScreensGrid');
+  const detailView = document.getElementById('robotFeatureDetailView');
+
+  if (detailView) detailView.style.display = 'none';
+  if (screensGrid) screensGrid.style.display = 'grid';
+
+  document.querySelectorAll('.detail-feature-panel').forEach(p => p.style.display = 'none');
+}
+
+// HANDLER INTERAKTIF UNTUK FITUR DETAIL
+function triggerVirtualTouchTap() {
+  triggerHaptic(30);
+  sendCommand({ c: 'tap' });
+  showNeonToast('Sentuh Layar Robot');
+}
+
+function resetStopwatchFromApp() {
+  triggerHaptic(40);
+  sendCommand({ c: 'm', v: 7 });
+  const digits = document.getElementById('detailSwDigits');
+  const status = document.getElementById('detailSwStatus');
+  if (digits) digits.textContent = '00:00:00';
+  if (status) status.textContent = 'SIAP';
+  showNeonToast('Stopwatch Direset');
+}
+
+function setWeatherCityDirect(city) {
+  triggerHaptic(25);
+  const cfgInput = document.getElementById('cfgCityInput');
+  if (cfgInput) cfgInput.value = city;
+  updateOledWeatherPreview(city);
+  saveCitySetting();
+  showNeonToast('Kota: ' + city);
+}
+
+function syncWeatherFromDetail() {
+  triggerHaptic(30);
+  const detailCity = document.getElementById('detailWeatherCity');
+  const city = (detailCity ? detailCity.textContent : 'JAKARTA') || 'JAKARTA';
+  sendCommand({ cmd: 'weather_city', city: city, unit: currentTempUnit });
+  sendCommand({ c: 'm', v: 2 });
+  showNeonToast('Cuaca ' + city + ' Dikirim ke Robot');
+}
+
+function sendSubtitleFromDetail() {
+  triggerHaptic(30);
+  const input = document.getElementById('detailSubInput');
+  const text = (input ? input.value.trim() : '') || 'Hello Robot Desk!';
+  const preview = document.getElementById('detailSubPreview');
+  if (preview) preview.textContent = text.toUpperCase();
+
+  sendCommand({ c: 'msg', v: text });
+  sendCommand({ c: 'm', v: 3 });
+  showNeonToast('Pesan Dikirim ke Robot');
+}
+
+function launchGameFromDetail(modeNum, gameName) {
+  triggerHaptic(35);
+  const activeLabel = document.getElementById('detailGameActiveLabel');
+  if (activeLabel) activeLabel.textContent = gameName.toUpperCase();
+  sendCommand({ c: 'm', v: modeNum });
+  showNeonToast('Mulai Game: ' + gameName);
+}
+
+function onDetailAlarmToggle(enabled) {
+  triggerHaptic(20);
+  const masterToggle = document.getElementById('alarmEnabledToggle');
+  if (masterToggle) masterToggle.checked = enabled;
+  updateOledAlarmPreview();
+}
+
+function saveAlarmFromDetail() {
+  saveAlarmSettings();
 }
 
 // PILIH FITUR DI MENU ROBOT -> LAYAR ESP32 OTOMATIS BERPINDAH KE HALAMAN FITUR TERSEBUT
@@ -793,6 +974,9 @@ function updateOledAlarmPreview() {
   const badgeEl = document.getElementById('oledAlarmBadgePreview');
   const stageTimeEl = document.getElementById('stageAlarmDigits');
   const stageBadgeEl = document.getElementById('stageAlarmBadge');
+  const detailTimeEl = document.getElementById('detailAlarmDigits');
+  const detailBadgeEl = document.getElementById('detailAlarmBadge');
+  const detailEn = document.getElementById('detailAlarmEn');
 
   if (h && m) {
     const hh = String(parseInt(h.value, 10) || 0).padStart(2, '0');
@@ -800,6 +984,7 @@ function updateOledAlarmPreview() {
     const timeText = `${hh}:${mm}`;
     if (timeEl) timeEl.textContent = timeText;
     if (stageTimeEl) stageTimeEl.textContent = timeText;
+    if (detailTimeEl) detailTimeEl.textContent = timeText;
   }
   if (en && daily) {
     const isEn = en.checked;
@@ -812,6 +997,13 @@ function updateOledAlarmPreview() {
     if (stageBadgeEl) {
       stageBadgeEl.textContent = badgeText;
       stageBadgeEl.style.opacity = isEn ? '1' : '0.45';
+    }
+    if (detailBadgeEl) {
+      detailBadgeEl.textContent = badgeText;
+      detailBadgeEl.style.opacity = isEn ? '1' : '0.45';
+    }
+    if (detailEn) {
+      detailEn.checked = isEn;
     }
   }
 }
@@ -867,6 +1059,9 @@ function updateOledClockTick() {
   const stageClockEl = document.getElementById('stageClockDigits');
   const stageDateEl = document.getElementById('stageClockDate');
   const stageTzEl = document.getElementById('stageOledTzLabel');
+  const detailClockEl = document.getElementById('detailClockDigits');
+  const detailDateEl = document.getElementById('detailClockDate');
+  const detailTzEl = document.getElementById('detailClockTz');
 
   const now = new Date();
   const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
@@ -888,6 +1083,7 @@ function updateOledClockTick() {
 
   if (clockEl) clockEl.textContent = timeStr;
   if (stageClockEl) stageClockEl.textContent = timeStr;
+  if (detailClockEl) detailClockEl.textContent = timeStr;
 
   const days = ['MIN', 'SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB'];
   const months = ['JAN', 'FEB', 'MAR', 'APR', 'MEI', 'JUN', 'JUL', 'AGU', 'SEP', 'OKT', 'NOV', 'DES'];
@@ -898,11 +1094,13 @@ function updateOledClockTick() {
 
   if (dateEl) dateEl.textContent = dateStr;
   if (stageDateEl) stageDateEl.textContent = dateStr;
+  if (detailDateEl) detailDateEl.textContent = dateStr;
 
   const sel = document.getElementById('selTimezoneWorld');
   const selectedText = sel ? sel.options[sel.selectedIndex]?.text : '';
   const tzCode = selectedText ? selectedText.split(' ')[0] : 'WIB';
   if (stageTzEl) stageTzEl.textContent = tzCode;
+  if (detailTzEl) detailTzEl.textContent = tzCode;
 }
 
 setInterval(updateOledClockTick, 1000);
@@ -914,8 +1112,12 @@ function setTimeFormat(fmt) {
   currentTimeFormat = fmt;
   const btn24 = document.getElementById('btnFmt24');
   const btn12 = document.getElementById('btnFmt12');
+  const dBtn24 = document.getElementById('btnDetailFmt24');
+  const dBtn12 = document.getElementById('btnDetailFmt12');
   if (btn24) btn24.classList.toggle('active', fmt === 24);
   if (btn12) btn12.classList.toggle('active', fmt === 12);
+  if (dBtn24) dBtn24.classList.toggle('active', fmt === 24);
+  if (dBtn12) dBtn12.classList.toggle('active', fmt === 12);
   localStorage.setItem('robot_cfg_time_fmt', String(fmt));
   updateOledClockTick();
   showNeonToast('Format Jam: ' + (fmt === 24 ? '24 Jam' : '12 Jam'));
@@ -979,14 +1181,18 @@ function updateOledWeatherPreview(city) {
   const tempEl = document.getElementById('oledTempPreview');
   const stageCityEl = document.getElementById('stageWeatherCity');
   const stageTempEl = document.getElementById('stageWeatherTemp');
+  const detailCityEl = document.getElementById('detailWeatherCity');
+  const detailTempEl = document.getElementById('detailWeatherTemp');
   const cityInput = document.getElementById('cfgCityInput');
   const cityName = (city || (cityInput ? cityInput.value : 'JAKARTA')).toUpperCase();
   const tempText = currentTempUnit === 'F' ? '84°F' : '29°C';
 
   if (cityEl) cityEl.textContent = cityName;
   if (stageCityEl) stageCityEl.textContent = cityName;
+  if (detailCityEl) detailCityEl.textContent = cityName;
   if (tempEl) tempEl.textContent = tempText;
   if (stageTempEl) stageTempEl.textContent = tempText;
+  if (detailTempEl) detailTempEl.textContent = tempText;
 }
 
 // Pengaturan Satuan Suhu (°C / °F)

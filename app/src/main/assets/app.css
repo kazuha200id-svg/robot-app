@@ -1311,19 +1311,21 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .neon-btn-action.btn-state-success {
-  border-color: #00FF88 !important;
-  background: rgba(0, 255, 136, 0.18) !important;
-  color: #00FF88 !important;
-  box-shadow: 0 0 20px rgba(0, 255, 136, 0.5) !important;
+  border-color: #00F0FF !important;
+  background: rgba(0, 240, 255, 0.18) !important;
+  color: #00F0FF !important;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.5) !important;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.6) !important;
   cursor: default !important;
   pointer-events: none !important;
 }
 
 .neon-btn-action.btn-state-failed {
-  border-color: #FF3366 !important;
-  background: rgba(255, 51, 102, 0.18) !important;
-  color: #FF3366 !important;
-  box-shadow: 0 0 20px rgba(255, 51, 102, 0.5) !important;
+  border-color: #00F0FF !important;
+  background: rgba(0, 240, 255, 0.18) !important;
+  color: #00F0FF !important;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.5) !important;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.6) !important;
   cursor: default !important;
 }
 
@@ -1718,4 +1720,146 @@ input[type="range"]::-webkit-slider-thumb {
   display: flex;
   align-items: center;
   padding-left: 8px;
+}
+
+/* ================= ROBOT FEATURE DETAIL & SUBVIEWS ================= */
+.subpage-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0 10px 0;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--neon-cyan-border);
+}
+
+.subpage-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid var(--neon-cyan-border);
+  border-radius: var(--radius-pill);
+  color: var(--neon-cyan);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.subpage-back-btn:active {
+  transform: scale(0.96);
+  background: var(--neon-cyan);
+  color: #000;
+}
+
+.oled-screen-card {
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.oled-screen-card:active {
+  transform: scale(0.97);
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.25);
+}
+
+/* 13 FACES GRID */
+.faces-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.face-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 4px;
+  background: rgba(5, 10, 22, 0.85);
+  border: 1px solid var(--neon-cyan-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.face-card:active {
+  transform: scale(0.96);
+  border-color: var(--neon-cyan);
+  background: rgba(0, 240, 255, 0.15);
+}
+
+.face-card.active {
+  border-color: var(--neon-cyan);
+  background: rgba(0, 240, 255, 0.18);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.35);
+}
+
+.face-card .eye-preview {
+  width: 100%;
+  max-width: 72px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.face-card .eye-preview svg {
+  width: 100%;
+  height: 100%;
+}
+
+.face-card span {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--neon-cyan);
+}
+
+/* 10 ARCADE GAMES GRID */
+.games-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.game-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  background: rgba(5, 10, 22, 0.85);
+  border: 1px solid var(--neon-cyan-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.game-btn:active {
+  transform: scale(0.96);
+  border-color: var(--neon-cyan);
+  background: rgba(0, 240, 255, 0.15);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.35);
+}
+
+.game-btn svg {
+  width: 22px;
+  height: 22px;
+  stroke: var(--neon-cyan);
+  flex-shrink: 0;
+}
+
+.game-btn span {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--neon-cyan);
 }
