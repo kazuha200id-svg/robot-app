@@ -2522,11 +2522,20 @@ input[type="range"]::-webkit-slider-thumb {
   animation: clockSyncPulse 1.2s infinite alternate ease-in-out;
 }
 
+/* Pesan Berhasil: Tetap memakai warna tema Neon Cyan */
 .btn-clock-sync.success {
-  background: rgba(0, 255, 136, 0.18);
-  border-color: #00ff88;
-  color: #00ff88;
-  box-shadow: 0 0 16px rgba(0, 255, 136, 0.45);
+  background: rgba(0, 240, 255, 0.22);
+  border-color: var(--neon-cyan);
+  color: var(--neon-cyan);
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.5);
+}
+
+/* Pesan Gagal: Tetap memakai warna tema Neon Cyan */
+.btn-clock-sync.failed {
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px dashed var(--neon-cyan);
+  color: var(--neon-cyan);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
 }
 
 .clock-sync-spinner {

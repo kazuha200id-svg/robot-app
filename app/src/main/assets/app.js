@@ -676,6 +676,11 @@ window.onBLEReceived = function(jsonStr) {
       if (sleepEl) sleepEl.textContent = data.asleep ? 'Robot Tidur' : 'Robot Aktif (Bangun)';
     }
 
+    // Time sync ACK from robot
+    if (data.action === 'time' || data.action === 't' || (data.status === 'ok' && typeof data.epoch === 'number')) {
+      clockSyncAckReceived = true;
+    }
+
     // Clock config sync
     if (data.clock) {
       if (typeof data.clock.fmt_12h === 'boolean') {
@@ -1645,33 +1650,51 @@ function selectClockFormat(is12H, btnEl) {
 
 // SINKRONKAN JAM DENGAN HP DENGAN ANIMASI MINIMAL 3 DETIK
 let isClockSyncing = false;
+let clockSyncAckReceived = false;
 
 function syncClockFromPhone(btnEl) {
   if (btnEl && typeof btnEl.blur === 'function') btnEl.blur();
   if (isClockSyncing) return;
 
-  if (!isBleConnected) {
-    triggerHaptic(40);
-    showNeonToast('Robot belum terhubung Bluetooth');
-    return;
-  }
-  if (isGameActivelyPlaying) {
-    triggerHaptic(40);
-    showNeonToast('Sedang bermain game! Selesaikan dulu untuk atur jam');
-    return;
-  }
-
-  isClockSyncing = true;
-  triggerHaptic(30);
-
   const btn = document.getElementById('btnSyncClockPhone');
   const txt = document.getElementById('btnSyncClockText');
   const spinner = document.getElementById('clockSyncSpinner');
 
+  if (!isBleConnected) {
+    triggerHaptic(40);
+    if (btn) {
+      btn.classList.remove('syncing', 'success');
+      btn.classList.add('failed');
+    }
+    if (txt) txt.textContent = 'GAGAL MENYINKRONKAN';
+    setTimeout(() => {
+      if (btn) btn.classList.remove('failed');
+      if (txt) txt.textContent = 'SINKRONKAN JAM DENGAN HP';
+    }, 2500);
+    return;
+  }
+  if (isGameActivelyPlaying) {
+    triggerHaptic(40);
+    if (btn) {
+      btn.classList.remove('syncing', 'success');
+      btn.classList.add('failed');
+    }
+    if (txt) txt.textContent = 'GAGAL MENYINKRONKAN';
+    setTimeout(() => {
+      if (btn) btn.classList.remove('failed');
+      if (txt) txt.textContent = 'SINKRONKAN JAM DENGAN HP';
+    }, 2500);
+    return;
+  }
+
+  isClockSyncing = true;
+  clockSyncAckReceived = false;
+  triggerHaptic(30);
+
   if (btn) {
     btn.disabled = true;
     btn.classList.add('syncing');
-    btn.classList.remove('success');
+    btn.classList.remove('success', 'failed');
   }
   if (spinner) spinner.style.display = 'inline-block';
   if (txt) txt.textContent = 'MENYINKRONKAN...';
@@ -1680,14 +1703,20 @@ function syncClockFromPhone(btnEl) {
   const epoch = Math.floor(now / 1000);
   const us = (now % 1000) * 1000;
 
-  // Kirim data waktu presisi UTC + offset menit ke ESP32
+  // Kirim data waktu presisi UTC + offset menit ke ESP32 (mendukung format penuh dan ringkas)
   sendCommand({
     cmd: 'time',
+    c: 't',
     epoch: epoch,
+    e: epoch,
     us: us,
+    u: us,
     tz: currentClockTzOffsetMin,
+    z: currentClockTzOffsetMin,
     fmt_12h: currentClockFormat12H,
-    show_sec: currentClockShowSec
+    f: currentClockFormat12H,
+    show_sec: currentClockShowSec,
+    s: currentClockShowSec
   }, true);
 
   esp32TimeBaseMs = now;
@@ -1703,26 +1732,51 @@ function syncClockFromPhone(btnEl) {
     const remainingWait = Math.max(0, MIN_SYNC_ANIMATION_MS - elapsed);
 
     setTimeout(() => {
-      // Fase Berhasil
-      if (btn) {
-        btn.classList.remove('syncing');
-        btn.classList.add('success');
-      }
-      if (spinner) spinner.style.display = 'none';
-      if (txt) txt.textContent = 'JAM TERSINKRON';
+      // Evaluasi apakah sinkronisasi berhasil atau gagal
+      const isSuccess = isBleConnected;
 
-      triggerHaptic(45);
-      showNeonToast('Jam berhasil disinkronkan dengan HP');
-
-      // Kembalikan tombol ke tampilan normal setelah 1.5 detik
-      setTimeout(() => {
+      if (isSuccess) {
+        // Fase Berhasil (Tetap Menggunakan Warna Tema Neon Cyan)
         if (btn) {
-          btn.disabled = false;
-          btn.classList.remove('success');
+          btn.classList.remove('syncing', 'failed');
+          btn.classList.add('success');
         }
-        if (txt) txt.textContent = 'SINKRONKAN JAM DENGAN HP';
-        isClockSyncing = false;
-      }, 1500);
+        if (spinner) spinner.style.display = 'none';
+        if (txt) txt.textContent = 'JAM TERSINKRON';
+
+        triggerHaptic(45);
+
+        // Kembalikan tombol ke tampilan normal setelah 1.8 detik
+        setTimeout(() => {
+          if (btn) {
+            btn.disabled = false;
+            btn.classList.remove('success');
+          }
+          if (txt) txt.textContent = 'SINKRONKAN JAM DENGAN HP';
+          isClockSyncing = false;
+        }, 1800);
+
+      } else {
+        // Fase Gagal (Tetap Menggunakan Warna Tema Neon Cyan)
+        if (btn) {
+          btn.classList.remove('syncing', 'success');
+          btn.classList.add('failed');
+        }
+        if (spinner) spinner.style.display = 'none';
+        if (txt) txt.textContent = 'GAGAL MENYINKRONKAN';
+
+        triggerHaptic(50);
+
+        // Kembalikan tombol ke tampilan normal setelah 2.5 detik
+        setTimeout(() => {
+          if (btn) {
+            btn.disabled = false;
+            btn.classList.remove('failed');
+          }
+          if (txt) txt.textContent = 'SINKRONKAN JAM DENGAN HP';
+          isClockSyncing = false;
+        }, 2500);
+      }
 
     }, remainingWait);
   }, 100);
