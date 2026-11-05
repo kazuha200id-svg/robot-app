@@ -687,23 +687,14 @@ window.onBLEReceived = function(jsonStr) {
       }
       if (typeof data.clock.show_sec === 'boolean') {
         currentClockShowSec = data.clock.show_sec;
-        const toggleBtn = document.getElementById('btnToggleClockSec');
-        const labelEl = document.getElementById('btnClockSecLabel');
-        if (toggleBtn) toggleBtn.classList.toggle('active', currentClockShowSec);
-        if (labelEl) {
-          labelEl.textContent = currentClockShowSec ? 'DETIK: DITAMPILKAN (HH:MM:SS)' : 'DETIK: DISEMBUNYIKAN (HH:MM)';
-        }
       }
       if (typeof data.clock.tz === 'number') {
         currentClockTzOffsetMin = data.clock.tz;
         const matched = WORLD_TIMEZONES.find(t => t.offsetMin === currentClockTzOffsetMin);
         if (matched) {
           currentClockTzTitle = matched.title;
-          currentClockTzSub = matched.cities;
           const titleEl = document.getElementById('clockActiveTzTitle');
-          const subEl = document.getElementById('clockActiveTzSub');
           if (titleEl) titleEl.textContent = matched.title;
-          if (subEl) subEl.textContent = matched.cities;
         }
       }
       updateOledClockTick();
@@ -1516,10 +1507,9 @@ let currentTempUnit = 'C';
 
 // Konfigurasi Fitur Jam Digital Robot
 let currentClockFormat12H = false; // false = 24 Jam, true = 12 Jam AM/PM
-let currentClockShowSec = true;    // true = tampil detik, false = sembunyikan detik
+let currentClockShowSec = false;   // hilangkan detik di tampilkan (format HH:MM)
 let currentClockTzOffsetMin = 420; // Default WIB = UTC+07:00 (+420 menit)
 let currentClockTzTitle = 'UTC+07:00 • WIB (Jakarta, Bangkok)';
-let currentClockTzSub = 'Asia/Jakarta';
 
 // Daftar Lengkap Seluruh Zona Waktu Dunia (UTC-12:00 s/d UTC+14:00)
 const WORLD_TIMEZONES = [
@@ -1567,11 +1557,8 @@ function renderTimezoneDropdown() {
   WORLD_TIMEZONES.forEach((item) => {
     const el = document.createElement('div');
     el.className = `tz-dropdown-item ${item.offsetMin === currentClockTzOffsetMin ? 'selected' : ''}`;
-    el.onclick = () => selectTimezoneItem(item.offsetMin, item.title, item.cities);
-    el.innerHTML = `
-      <span class="tz-item-title">${item.title}</span>
-      <span class="tz-item-cities">${item.cities}</span>
-    `;
+    el.onclick = () => selectTimezoneItem(item.offsetMin, item.title);
+    el.innerHTML = `<span class="tz-item-title">${item.title}</span>`;
     container.appendChild(el);
   });
 }
@@ -1592,16 +1579,13 @@ function toggleTimezoneDropdown() {
   }
 }
 
-function selectTimezoneItem(offsetMin, title, cities) {
+function selectTimezoneItem(offsetMin, title) {
   triggerHaptic(25);
   currentClockTzOffsetMin = offsetMin;
   currentClockTzTitle = title;
-  currentClockTzSub = cities;
 
   const titleEl = document.getElementById('clockActiveTzTitle');
-  const subEl = document.getElementById('clockActiveTzSub');
   if (titleEl) titleEl.textContent = title;
-  if (subEl) subEl.textContent = cities;
 
   const list = document.getElementById('clockTzDropdownList');
   const arrow = document.getElementById('clockTzArrow');
@@ -1611,21 +1595,6 @@ function selectTimezoneItem(offsetMin, title, cities) {
   currentTimezoneOffset = offsetMin / 60;
   updateOledClockTick();
   showNeonToast(`Zona Waktu: ${title}`);
-}
-
-function applyPhoneTimezoneAuto(btnEl) {
-  if (btnEl && typeof btnEl.blur === 'function') btnEl.blur();
-  triggerHaptic(30);
-
-  // Deteksi offset menit HP (dibalik tandanya karena getTimezoneOffset menghasilkan menit ke UTC)
-  const phoneOffsetMin = -new Date().getTimezoneOffset();
-  const matched = WORLD_TIMEZONES.find(tz => tz.offsetMin === phoneOffsetMin) ||
-                  WORLD_TIMEZONES.reduce((prev, curr) => Math.abs(curr.offsetMin - phoneOffsetMin) < Math.abs(prev.offsetMin - phoneOffsetMin) ? curr : prev);
-
-  if (matched) {
-    selectTimezoneItem(matched.offsetMin, matched.title, matched.cities);
-    showNeonToast(`✓ Zona Waktu HP Terdeteksi: ${matched.label}`);
-  }
 }
 
 function selectClockFormat(is12H, btnEl) {
@@ -1643,33 +1612,17 @@ function selectClockFormat(is12H, btnEl) {
   showNeonToast(`Format Jam: ${is12H ? '12 Jam (AM/PM)' : '24 Jam'}`);
 }
 
-function toggleClockSeconds(btnEl) {
-  if (btnEl && typeof btnEl.blur === 'function') btnEl.blur();
-  triggerHaptic(20);
-  currentClockShowSec = !currentClockShowSec;
-
-  const toggleBtn = document.getElementById('btnToggleClockSec');
-  const labelEl = document.getElementById('btnClockSecLabel');
-  if (toggleBtn) toggleBtn.classList.toggle('active', currentClockShowSec);
-  if (labelEl) {
-    labelEl.textContent = currentClockShowSec ? 'DETIK: DITAMPILKAN (HH:MM:SS)' : 'DETIK: DISEMBUNYIKAN (HH:MM)';
-  }
-
-  updateOledClockTick();
-  showNeonToast(`Detik: ${currentClockShowSec ? 'Ditampilkan' : 'Disembunyikan'}`);
-}
-
 // SINKRONKAN JAM DENGAN HP (AKSI UTAMA 1 TAP)
 function syncClockFromPhone(btnEl) {
   if (btnEl && typeof btnEl.blur === 'function') btnEl.blur();
   if (!isBleConnected) {
     triggerHaptic(40);
-    showNeonToast('⚠ Robot belum terhubung Bluetooth!');
+    showNeonToast('Robot belum terhubung Bluetooth');
     return;
   }
   if (isGameActivelyPlaying) {
     triggerHaptic(40);
-    showNeonToast('⚠ Sedang bermain game! Selesaikan dulu untuk atur jam');
+    showNeonToast('Sedang bermain game! Selesaikan dulu untuk atur jam');
     return;
   }
 
@@ -1692,7 +1645,7 @@ function syncClockFromPhone(btnEl) {
   hasEsp32TimeSync = true;
   updateOledClockTick();
 
-  showNeonToast('✓ Jam berhasil disinkronkan dengan HP!');
+  showNeonToast('Jam berhasil disinkronkan dengan HP');
 }
 
 // TERAPKAN SETELAN FORMAT & ZONA WAKTU KE ROBOT
@@ -1700,12 +1653,12 @@ function applyClockSettingsToRobot(btnEl) {
   if (btnEl && typeof btnEl.blur === 'function') btnEl.blur();
   if (!isBleConnected) {
     triggerHaptic(40);
-    showNeonToast('⚠ Robot belum terhubung Bluetooth!');
+    showNeonToast('Robot belum terhubung Bluetooth');
     return;
   }
   if (isGameActivelyPlaying) {
     triggerHaptic(40);
-    showNeonToast('⚠ Sedang bermain game! Selesaikan dulu untuk atur jam');
+    showNeonToast('Sedang bermain game! Selesaikan dulu untuk atur jam');
     return;
   }
 
@@ -1718,7 +1671,7 @@ function applyClockSettingsToRobot(btnEl) {
   });
 
   updateOledClockTick();
-  showNeonToast('✓ Pengaturan jam berhasil diterapkan ke robot!');
+  showNeonToast('Pengaturan jam berhasil diterapkan ke robot');
 }
 
 function updateOledClockTick() {
@@ -1726,16 +1679,8 @@ function updateOledClockTick() {
   const dateEl = document.getElementById('oledDatePreview');
   const detailClockEl = document.getElementById('detailClockDigits');
   const detailDateEl = document.getElementById('detailClockDate');
-  const phoneTimeEl = document.getElementById('clockCurrentPhoneTime');
 
-  // Waktu HP Saat Ini untuk teks status sinkronisasi
   const localNow = new Date();
-  const phoneH = String(localNow.getHours()).padStart(2, '0');
-  const phoneM = String(localNow.getMinutes()).padStart(2, '0');
-  const phoneS = String(localNow.getSeconds()).padStart(2, '0');
-  if (phoneTimeEl) {
-    phoneTimeEl.textContent = `${phoneH}:${phoneM}:${phoneS}`;
-  }
 
   // Waktu target dihitung dari UTC + offset zona waktu terpilih
   const utcMs = localNow.getTime() + (localNow.getTimezoneOffset() * 60000);
