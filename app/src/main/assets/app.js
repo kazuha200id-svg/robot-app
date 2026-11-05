@@ -1703,7 +1703,26 @@ function syncClockFromPhone(btnEl) {
   const epoch = Math.floor(now / 1000);
   const us = (now % 1000) * 1000;
 
-  // Kirim data waktu presisi UTC + offset menit ke ESP32 (mendukung format penuh dan ringkas)
+  // Deteksi otomatis zona waktu asli dari perangkat HP (contoh: Jawa Barat = UTC+7 / +420 menit)
+  const phoneTzOffsetMin = -new Date().getTimezoneOffset();
+  currentClockTzOffsetMin = phoneTzOffsetMin;
+  currentTimezoneOffset = phoneTzOffsetMin / 60;
+
+  // Perbarui judul selector zona waktu di UI agar sinkron dengan zona waktu HP
+  const matchedTz = WORLD_TIMEZONES.find(t => t.offsetMin === phoneTzOffsetMin);
+  if (matchedTz) {
+    currentClockTzTitle = matchedTz.title;
+    const titleEl = document.getElementById('clockActiveTzTitle');
+    if (titleEl) titleEl.textContent = matchedTz.title;
+  }
+  const oledTzLabel = document.getElementById('oledTzLabel');
+  if (oledTzLabel) {
+    const sign = phoneTzOffsetMin >= 0 ? '+' : '';
+    const hrs = phoneTzOffsetMin / 60;
+    oledTzLabel.textContent = `UTC${sign}${Number.isInteger(hrs) ? hrs : hrs.toFixed(1)}`;
+  }
+
+  // Kirim data waktu presisi UTC + offset menit zona waktu HP ke ESP32
   sendCommand({
     cmd: 'time',
     c: 't',
