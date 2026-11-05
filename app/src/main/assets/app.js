@@ -685,13 +685,11 @@ window.onBLEReceived = function(jsonStr) {
     if (data.clock) {
       if (typeof data.clock.fmt_12h === 'boolean') {
         currentClockFormat12H = data.clock.fmt_12h;
+        currentClockShowSec = !currentClockFormat12H;
         const btn24 = document.getElementById('btnClockFmt24');
         const btn12 = document.getElementById('btnClockFmt12');
         if (btn24) btn24.classList.toggle('active', !currentClockFormat12H);
         if (btn12) btn12.classList.toggle('active', currentClockFormat12H);
-      }
-      if (typeof data.clock.show_sec === 'boolean') {
-        currentClockShowSec = data.clock.show_sec;
       }
       if (typeof data.clock.tz === 'number') {
         currentClockTzOffsetMin = data.clock.tz;
@@ -1511,8 +1509,8 @@ let currentTimezoneOffset = 7;
 let currentTempUnit = 'C';
 
 // Konfigurasi Fitur Jam Digital Robot
-let currentClockFormat12H = false; // false = 24 Jam, true = 12 Jam AM/PM
-let currentClockShowSec = false;   // hilangkan detik di tampilkan (format HH:MM)
+let currentClockFormat12H = false; // false = 24 Jam (HH:MM:SS), true = 12 Jam (HH:MM AM/PM)
+let currentClockShowSec = true;    // 24 Jam menggunakan detik, 12 Jam menggunakan AM/PM
 let currentClockTzOffsetMin = 420; // Default UTC+07:00 (+420 menit)
 let currentClockTzTitle = 'UTC+07:00 (Jakarta, Bangkok, Hanoi)';
 
@@ -1626,6 +1624,7 @@ function selectClockFormat(is12H, btnEl) {
   if (btnEl && typeof btnEl.blur === 'function') btnEl.blur();
   triggerHaptic(20);
   currentClockFormat12H = is12H;
+  currentClockShowSec = !is12H; // 24 jam dengan detik (HH:MM:SS), 12 jam dengan AM/PM (HH:MM AM/PM)
   currentTimeFormat = is12H ? 12 : 24;
 
   const btn24 = document.getElementById('btnClockFmt24');
@@ -1639,13 +1638,17 @@ function selectClockFormat(is12H, btnEl) {
   if (isBleConnected && !isGameActivelyPlaying) {
     sendCommand({
       cmd: 'clock_cfg',
+      c: 'cfg_c',
       tz: currentClockTzOffsetMin,
+      z: currentClockTzOffsetMin,
       fmt_12h: currentClockFormat12H,
-      show_sec: currentClockShowSec
+      f: currentClockFormat12H,
+      show_sec: currentClockShowSec,
+      s: currentClockShowSec
     });
   }
 
-  showNeonToast(`Format Jam: ${is12H ? '12 Jam (AM/PM)' : '24 Jam'}`);
+  showNeonToast(`Format Jam: ${is12H ? '12 Jam (AM/PM)' : '24 Jam (Detik)'}`);
 }
 
 // SINKRONKAN JAM DENGAN HP DENGAN ANIMASI MINIMAL 3 DETIK
@@ -1819,22 +1822,14 @@ function updateOledClockTick() {
 
   let timeStr = '';
   if (!currentClockFormat12H) {
-    // Format 24 Jam
-    if (currentClockShowSec) {
-      timeStr = `${String(hours).padStart(2, '0')}:${minutes}:${seconds}`;
-    } else {
-      timeStr = `${String(hours).padStart(2, '0')}:${minutes}`;
-    }
+    // Mode 24 Jam: Jam Menit Detik (HH:MM:SS)
+    timeStr = `${String(hours).padStart(2, '0')}:${minutes}:${seconds}`;
   } else {
-    // Format 12 Jam AM/PM
+    // Mode 12 Jam: Jam Menit AM/PM (HH:MM AM/PM)
     const ampm = hours >= 12 ? 'PM' : 'AM';
     let h12 = hours % 12;
     if (h12 === 0) h12 = 12;
-    if (currentClockShowSec) {
-      timeStr = `${String(h12).padStart(2, '0')}:${minutes}:${seconds} ${ampm}`;
-    } else {
-      timeStr = `${String(h12).padStart(2, '0')}:${minutes} ${ampm}`;
-    }
+    timeStr = `${String(h12).padStart(2, '0')}:${minutes} ${ampm}`;
   }
 
   if (clockEl) clockEl.textContent = timeStr;
@@ -1861,16 +1856,34 @@ setInterval(updateOledClockTick, 50);
 // Pengaturan Format Waktu (24 vs 12 Jam)
 function setTimeFormat(fmt) {
   currentTimeFormat = fmt;
+  currentClockFormat12H = (fmt === 12);
+  currentClockShowSec = !currentClockFormat12H;
   const btn24 = document.getElementById('btnFmt24');
   const btn12 = document.getElementById('btnFmt12');
   const dBtn24 = document.getElementById('btnDetailFmt24');
   const dBtn12 = document.getElementById('btnDetailFmt12');
+  const cBtn24 = document.getElementById('btnClockFmt24');
+  const cBtn12 = document.getElementById('btnClockFmt12');
   if (btn24) btn24.classList.toggle('active', fmt === 24);
   if (btn12) btn12.classList.toggle('active', fmt === 12);
   if (dBtn24) dBtn24.classList.toggle('active', fmt === 24);
   if (dBtn12) dBtn12.classList.toggle('active', fmt === 12);
+  if (cBtn24) cBtn24.classList.toggle('active', fmt === 24);
+  if (cBtn12) cBtn12.classList.toggle('active', fmt === 12);
   localStorage.setItem('robot_cfg_time_fmt', String(fmt));
   updateOledClockTick();
+  if (isBleConnected && !isGameActivelyPlaying) {
+    sendCommand({
+      cmd: 'clock_cfg',
+      c: 'cfg_c',
+      tz: currentClockTzOffsetMin,
+      z: currentClockTzOffsetMin,
+      fmt_12h: currentClockFormat12H,
+      f: currentClockFormat12H,
+      show_sec: currentClockShowSec,
+      s: currentClockShowSec
+    });
+  }
   showNeonToast('Format Jam: ' + (fmt === 24 ? '24 Jam' : '12 Jam'));
   triggerHaptic(25);
 }
