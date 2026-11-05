@@ -2691,120 +2691,130 @@ input[type="range"]::-webkit-slider-thumb {
   margin-top: 14px;
 }
 
-.city-search-box {
-  position: relative;
+.weather-form-group {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.weather-city-input {
+  width: 100%;
+  height: 42px;
   background: #060B14;
   border: 1px solid var(--neon-cyan-border);
   border-radius: var(--radius-sm);
-  padding: 3px 3px 3px 12px;
-  gap: 6px;
+  padding: 0 14px;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  outline: none;
   transition: all 0.2s ease;
   box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.6);
 }
 
-.city-search-box:focus-within {
+.weather-city-input:focus {
   border-color: var(--neon-cyan);
   box-shadow: 0 0 12px var(--neon-cyan-dim), inset 0 1px 4px rgba(0, 0, 0, 0.6);
 }
 
-.city-search-box input[type="text"] {
-  flex: 1;
-  height: 36px;
-  background: transparent;
-  border: none;
-  color: var(--text-primary);
-  font-family: var(--font-sans);
-  font-size: 0.82rem;
-  outline: none;
-  padding: 0;
-  min-width: 0;
-}
-
-.city-search-box input[type="text"]::placeholder {
+.weather-city-input::placeholder {
   color: var(--text-muted);
 }
 
-.btn-inside-search {
-  height: 34px;
-  padding: 0 12px;
+.weather-action-btn {
+  position: relative;
+  width: 100%;
+  height: 42px;
   background: var(--neon-cyan-dim);
   border: 1px solid var(--neon-cyan-border);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   color: var(--neon-cyan);
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.74rem;
   font-weight: 800;
-  letter-spacing: 0.5px;
-  white-space: nowrap;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
   cursor: pointer;
-  transition: all 0.15s ease;
-  display: inline-flex;
+  overflow: hidden;
+  transition: all 0.25s ease;
+  display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.btn-inside-search:active {
-  transform: scale(0.96);
-  background: rgba(0, 240, 255, 0.28);
-  border-color: var(--neon-cyan);
+.weather-action-btn:active {
+  transform: scale(0.98);
+  background: rgba(0, 240, 255, 0.22);
 }
 
-.btn-inside-search:disabled,
-.btn-inside-search.disabled {
-  opacity: 0.45;
+.weather-action-btn:disabled,
+.weather-action-btn.disabled {
+  opacity: 0.85;
+  cursor: wait;
+}
+
+.weather-btn-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  width: 0%;
+  background: var(--neon-cyan);
+  box-shadow: 0 0 8px var(--neon-cyan);
+  transition: width 3s linear;
+}
+
+.weather-btn-bar.animate {
+  width: 100% !important;
+}
+
+.weather-btn-label {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
   pointer-events: none;
 }
 
-.weather-status-box {
-  margin-top: 10px;
-  padding: 10px 14px;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-sans);
-  line-height: 1.45;
-  transition: all 0.25s ease;
-  background: var(--neon-cyan-dim);
-  border: 1px solid var(--neon-cyan-border);
-  box-shadow: 0 0 12px rgba(0, 240, 255, 0.15);
+.weather-spinner {
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(0, 240, 255, 0.3);
+  border-top-color: var(--neon-cyan);
+  border-radius: 50%;
+  animation: spinWeather 0.75s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
 }
 
-.weather-status-box .status-title {
-  color: var(--neon-cyan);
-  font-family: var(--font-mono);
-  font-weight: 800;
-  font-size: 0.72rem;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  margin-bottom: 2px;
-  display: block;
-  text-shadow: 0 0 8px rgba(0, 240, 255, 0.45);
+@keyframes spinWeather {
+  to { transform: rotate(360deg); }
 }
 
-.weather-status-box .status-desc {
-  color: var(--text-secondary);
-  font-size: 0.68rem;
-  display: block;
-  line-height: 1.4;
+/* Shake Animation on Fail (Goyang Kiri-Kanan) */
+@keyframes cyberShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
 }
 
-.weather-status-box.success {
-  background: var(--neon-cyan-dim);
-  border: 1px solid var(--neon-cyan);
-  box-shadow: 0 0 14px rgba(0, 240, 255, 0.25);
+.weather-action-btn.is-shaking {
+  animation: cyberShake 0.35s ease;
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.45);
 }
 
-.weather-status-box.error {
-  background: rgba(0, 240, 255, 0.08);
-  border: 1px solid var(--neon-cyan-border);
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.15);
+/* Flash Glow on Success (Kedip Terang Halus) */
+@keyframes cyberFlash {
+  0% { box-shadow: 0 0 4px var(--neon-cyan); }
+  50% { box-shadow: 0 0 24px rgba(0, 240, 255, 0.8); background: rgba(0, 240, 255, 0.35); }
+  100% { box-shadow: 0 0 10px rgba(0, 240, 255, 0.4); }
 }
 
-.weather-status-box.error .status-title {
-  color: var(--neon-cyan);
-  text-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
-}
-
-.weather-status-box.error .status-desc {
-  color: var(--text-secondary);
+.weather-action-btn.is-success {
+  animation: cyberFlash 0.5s ease;
+  border-color: var(--neon-cyan);
 }

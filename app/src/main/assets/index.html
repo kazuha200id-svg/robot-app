@@ -590,15 +590,13 @@
                   <span class="config-title">PENGATURAN KOTA CUACA</span>
                 </div>
 
-                <div class="city-search-box">
-                  <input type="text" id="cfgCityInput" placeholder="Nama kota" autocomplete="off" onkeydown="if(event.key==='Enter') searchAndApplyCity(false)">
-                  <button type="button" id="btnSearchCity" class="btn-inside-search" onclick="searchAndApplyCity(false)">
-                    <span id="txtSearchCityBtn">CARI &amp; TERAPKAN</span>
+                <div class="weather-form-group">
+                  <input type="text" id="cfgCityInput" class="weather-city-input" placeholder="Nama kota" autocomplete="off" onkeydown="if(event.key==='Enter') searchAndApplyCity(false)">
+                  <button type="button" id="btnSearchCity" class="weather-action-btn" onclick="searchAndApplyCity(false)">
+                    <span class="weather-btn-bar" id="barSearchCity"></span>
+                    <span class="weather-btn-label" id="txtSearchCityBtn">CARI &amp; TERAPKAN</span>
                   </button>
                 </div>
-
-                <!-- Box Respon Status (Cyber Neon Cyan / Cyber Red, Murni Teks Tanpa Emoji) -->
-                <div id="weatherCityStatus" class="weather-status-box" style="display: none;"></div>
               </div>
             </div>
           </div>
@@ -767,15 +765,13 @@
               <span class="config-title">PENGATURAN CUACA DUNIA</span>
             </div>
 
-            <div class="city-search-box">
-              <input type="text" id="cfgCityInputSetting" placeholder="Nama kota" autocomplete="off" onkeydown="if(event.key==='Enter') searchAndApplyCity(true)">
-              <button type="button" id="btnSearchCitySetting" class="btn-inside-search" onclick="searchAndApplyCity(true)">
-                <span id="txtSearchCityBtnSetting">CARI &amp; TERAPKAN</span>
+            <div class="weather-form-group">
+              <input type="text" id="cfgCityInputSetting" class="weather-city-input" placeholder="Nama kota" autocomplete="off" onkeydown="if(event.key==='Enter') searchAndApplyCity(true)">
+              <button type="button" id="btnSearchCitySetting" class="weather-action-btn" onclick="searchAndApplyCity(true)">
+                <span class="weather-btn-bar" id="barSearchCitySetting"></span>
+                <span class="weather-btn-label" id="txtSearchCityBtnSetting">CARI &amp; TERAPKAN</span>
               </button>
             </div>
-
-            <!-- Box Respon Status (Cyber Neon Cyan / Cyber Red, Murni Teks Tanpa Emoji) -->
-            <div id="weatherCityStatusSetting" class="weather-status-box" style="display: none;"></div>
           </div>
 
           <!-- KOTAK 4: PENGATURAN PERANGKAT KERAS (HARDWARE) -->
