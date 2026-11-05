@@ -581,6 +581,35 @@
                 </div>
               </div>
             </div>
+
+            <!-- KONTROL CUACA DUNIA: PENCARIAN BEBAS & VALIDASI KETAT (TEMA CYBER NEON BLUE) -->
+            <div class="feature-ctrl-panel">
+              <div class="config-card weather-ctrl-card">
+                <div class="config-header">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>
+                  <span class="config-title">PENGATURAN KOTA CUACA</span>
+                </div>
+
+                <div class="input-inline-wrap">
+                  <input type="text" id="cfgCityInput" placeholder="Ketik nama kota di seluruh dunia..." autocomplete="off" onkeydown="if(event.key==='Enter') searchAndApplyCity(false)">
+                  <button type="button" id="btnSearchCity" class="neon-btn-action" onclick="searchAndApplyCity(false)">
+                    <span id="txtSearchCityBtn">CARI &amp; TERAPKAN</span>
+                  </button>
+                </div>
+
+                <!-- Satuan Suhu -->
+                <div class="setting-row-group mt-8">
+                  <span class="setting-sub-label">Satuan Suhu</span>
+                  <div class="format-toggle-group">
+                    <button type="button" id="btnTempC" class="chip-preset active" onclick="setTempUnit('C')">CELSIUS (&deg;C)</button>
+                    <button type="button" id="btnTempF" class="chip-preset" onclick="setTempUnit('F')">FAHRENHEIT (&deg;F)</button>
+                  </div>
+                </div>
+
+                <!-- Box Respon Status (Cyber Neon Cyan / Cyber Red, Murni Teks Tanpa Emoji) -->
+                <div id="weatherCityStatus" class="weather-status-box" style="display: none;"></div>
+              </div>
+            </div>
           </div>
 
           <!-- 6. DETAIL: SUBTITLE (100% PERSIS OLED DENGAN STATUS BAR) -->
@@ -748,32 +777,23 @@
             </div>
 
             <div class="input-inline-wrap">
-              <input type="text" id="cfgCityInput" placeholder="Ketik nama kota di seluruh dunia..." value="Jakarta">
-              <button class="neon-btn-action" onclick="saveCitySetting()">SIMPAN</button>
+              <input type="text" id="cfgCityInputSetting" placeholder="Ketik nama kota di seluruh dunia..." autocomplete="off" onkeydown="if(event.key==='Enter') searchAndApplyCity(true)">
+              <button type="button" id="btnSearchCitySetting" class="neon-btn-action" onclick="searchAndApplyCity(true)">
+                <span id="txtSearchCityBtnSetting">CARI &amp; TERAPKAN</span>
+              </button>
             </div>
 
             <!-- Satuan Suhu -->
             <div class="setting-row-group mt-8">
               <span class="setting-sub-label">Satuan Suhu</span>
               <div class="format-toggle-group">
-                <button type="button" id="btnTempC" class="chip-preset active" onclick="setTempUnit('C')">CELCIUS (°C)</button>
-                <button type="button" id="btnTempF" class="chip-preset" onclick="setTempUnit('F')">FAHRENHEIT (°F)</button>
+                <button type="button" id="btnTempCSetting" class="chip-preset active" onclick="setTempUnit('C')">CELSIUS (&deg;C)</button>
+                <button type="button" id="btnTempFSetting" class="chip-preset" onclick="setTempUnit('F')">FAHRENHEIT (&deg;F)</button>
               </div>
             </div>
 
-            <!-- Preset Cepat Kota Populer -->
-            <div class="setting-row-group mt-8">
-              <span class="setting-sub-label">Pilihan Cepat Kota Populer</span>
-              <div class="chip-preset-row">
-                <button class="chip-preset" onclick="setPresetCity('Jakarta')">Jakarta</button>
-                <button class="chip-preset" onclick="setPresetCity('Bandung')">Bandung</button>
-                <button class="chip-preset" onclick="setPresetCity('Tokyo')">Tokyo</button>
-                <button class="chip-preset" onclick="setPresetCity('London')">London</button>
-                <button class="chip-preset" onclick="setPresetCity('New York')">New York</button>
-                <button class="chip-preset" onclick="setPresetCity('Paris')">Paris</button>
-                <button class="chip-preset" onclick="setPresetCity('Bali')">Bali</button>
-              </div>
-            </div>
+            <!-- Box Respon Status (Cyber Neon Cyan / Cyber Red, Murni Teks Tanpa Emoji) -->
+            <div id="weatherCityStatusSetting" class="weather-status-box" style="display: none;"></div>
           </div>
 
           <!-- KOTAK 4: PENGATURAN PERANGKAT KERAS (HARDWARE) -->

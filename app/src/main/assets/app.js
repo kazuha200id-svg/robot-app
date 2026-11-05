@@ -1978,36 +1978,195 @@ function setTempUnit(unit) {
   currentTempUnit = unit;
   const btnC = document.getElementById('btnTempC');
   const btnF = document.getElementById('btnTempF');
+  const btnCSet = document.getElementById('btnTempCSetting');
+  const btnFSet = document.getElementById('btnTempFSetting');
   if (btnC) btnC.classList.toggle('active', unit === 'C');
   if (btnF) btnF.classList.toggle('active', unit === 'F');
+  if (btnCSet) btnCSet.classList.toggle('active', unit === 'C');
+  if (btnFSet) btnFSet.classList.toggle('active', unit === 'F');
 
   updateOledWeatherPreview();
 
   localStorage.setItem('robot_cfg_temp_unit', unit);
   sendCommand({ cmd: 'temp_unit', unit: unit });
-  showNeonToast('Satuan Suhu: °' + unit);
+  showNeonToast('SATUAN SUHU: °' + unit);
   triggerHaptic(25);
 }
 
-// Pengaturan Kota Cuaca Dunia
-function saveCitySetting() {
-  const input = document.getElementById('cfgCityInput');
-  const city = (input ? input.value.trim() : '') || 'Jakarta';
-  localStorage.setItem('robot_cfg_city', city);
+let isSearchingCity = false;
 
-  updateOledWeatherPreview(city);
-
-  const ok = sendCommand({ cmd: 'weather_city', city: city, unit: currentTempUnit });
-  if (ok) {
-    showNeonToast('Kota Disimpan: ' + city);
-  }
-  triggerHaptic(30);
+function escapeWeatherText(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function setPresetCity(name) {
-  const input = document.getElementById('cfgCityInput');
-  if (input) input.value = name;
-  saveCitySetting();
+// Pencarian Murni & Validasi Ketat Kota Dunia (Tanpa Emoji, Cyber Neon Theme)
+function searchAndApplyCity(isFromSetting) {
+  if (isSearchingCity) return;
+
+  const activeInput = isFromSetting ?
+    (document.getElementById('cfgCityInputSetting') || document.getElementById('cfgCityInput')) :
+    (document.getElementById('cfgCityInput') || document.getElementById('cfgCityInputSetting'));
+
+  const statusBox = isFromSetting ?
+    (document.getElementById('weatherCityStatusSetting') || document.getElementById('weatherCityStatus')) :
+    (document.getElementById('weatherCityStatus') || document.getElementById('weatherCityStatusSetting'));
+
+  const otherStatusBox = isFromSetting ?
+    document.getElementById('weatherCityStatus') :
+    document.getElementById('weatherCityStatusSetting');
+
+  const btn = isFromSetting ?
+    document.getElementById('btnSearchCitySetting') :
+    document.getElementById('btnSearchCity');
+
+  const btnTxt = isFromSetting ?
+    document.getElementById('txtSearchCityBtnSetting') :
+    document.getElementById('txtSearchCityBtn');
+
+  if (!activeInput) return;
+  const query = activeInput.value.trim();
+
+  // Sinkronkan teks antar kedua input jika ada
+  const inputMain = document.getElementById('cfgCityInput');
+  const inputSet = document.getElementById('cfgCityInputSetting');
+  if (inputMain) inputMain.value = query;
+  if (inputSet) inputSet.value = query;
+
+  if (!query || query.length < 2) {
+    const errHtml = '<span class="status-title">NAMA KOTA BELUM DIISI</span><span class="status-desc">Silakan ketik nama kota minimal 2 karakter.</span>';
+    if (statusBox) {
+      statusBox.className = 'weather-status-box error';
+      statusBox.innerHTML = errHtml;
+      statusBox.style.display = 'block';
+    }
+    if (otherStatusBox) {
+      otherStatusBox.className = 'weather-status-box error';
+      otherStatusBox.innerHTML = errHtml;
+      otherStatusBox.style.display = 'block';
+    }
+    triggerHaptic(50);
+    return;
+  }
+
+  isSearchingCity = true;
+  if (btn) {
+    btn.disabled = true;
+    btn.classList.add('disabled');
+  }
+  if (btnTxt) {
+    btnTxt.textContent = 'MEMVERIFIKASI...';
+  }
+  if (statusBox) statusBox.style.display = 'none';
+  if (otherStatusBox) otherStatusBox.style.display = 'none';
+
+  const url = 'https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(query) + '&count=1&language=id&format=json';
+
+  fetch(url)
+    .then(function(res) {
+      if (!res.ok) throw new Error('Network error');
+      return res.json();
+    })
+    .then(function(data) {
+      isSearchingCity = false;
+      if (btn) {
+        btn.disabled = false;
+        btn.classList.remove('disabled');
+      }
+      if (btnTxt) {
+        btnTxt.textContent = 'CARI & TERAPKAN';
+      }
+
+      if (!data || !data.results || data.results.length === 0) {
+        // Kota TIDAK DITEMUKAN di negara mana pun
+        const notFoundHtml = '<span class="status-title">KOTA TIDAK DITEMUKAN</span><span class="status-desc">Kota "' + escapeWeatherText(query) + '" tidak terdaftar di negara mana pun. Periksa kembali ejaan Anda.</span>';
+        if (statusBox) {
+          statusBox.className = 'weather-status-box error';
+          statusBox.innerHTML = notFoundHtml;
+          statusBox.style.display = 'block';
+        }
+        if (otherStatusBox) {
+          otherStatusBox.className = 'weather-status-box error';
+          otherStatusBox.innerHTML = notFoundHtml;
+          otherStatusBox.style.display = 'block';
+        }
+        triggerHaptic(60);
+        return;
+      }
+
+      // Kota DITEMUKAN & TERVALIDASI
+      const result = data.results[0];
+      const cityName = (result.name || query).toUpperCase();
+      const country = (result.country || '').toUpperCase();
+      const admin1 = (result.admin1 || '').toUpperCase();
+      const lat = parseFloat(result.latitude);
+      const lon = parseFloat(result.longitude);
+      const tz = result.timezone || 'auto';
+
+      let locationLabel = cityName;
+      if (admin1 && admin1 !== cityName) locationLabel += ', ' + admin1;
+      if (country) locationLabel += ', ' + country;
+
+      const successHtml = '<span class="status-title">TERVERIFIKASI: ' + escapeWeatherText(locationLabel) + '</span>' +
+        '<span class="status-desc">Koordinat: ' + lat.toFixed(2) + '&deg;, ' + lon.toFixed(2) + '&deg; &bull; Zona: ' + escapeWeatherText(tz) + '</span>';
+
+      if (statusBox) {
+        statusBox.className = 'weather-status-box success';
+        statusBox.innerHTML = successHtml;
+        statusBox.style.display = 'block';
+      }
+      if (otherStatusBox) {
+        otherStatusBox.className = 'weather-status-box success';
+        otherStatusBox.innerHTML = successHtml;
+        otherStatusBox.style.display = 'block';
+      }
+
+      if (inputMain) inputMain.value = result.name || query;
+      if (inputSet) inputSet.value = result.name || query;
+
+      // Update penyimpanan lokal
+      localStorage.setItem('robot_cfg_city', cityName);
+      localStorage.setItem('robot_cfg_lat', lat);
+      localStorage.setItem('robot_cfg_lon', lon);
+      localStorage.setItem('robot_cfg_tz', tz);
+
+      // Update preview OLED pada aplikasi
+      updateOledWeatherPreview(cityName);
+
+      // Kirim via BLE ke Robot ESP32
+      sendCommand({
+        cmd: 'set_weather_city',
+        city: cityName,
+        lat: lat,
+        lon: lon,
+        tz: tz,
+        unit: currentTempUnit
+      });
+
+      showNeonToast('KOTA DIATUR: ' + cityName);
+      triggerHaptic(30);
+    })
+    .catch(function(err) {
+      isSearchingCity = false;
+      if (btn) {
+        btn.disabled = false;
+        btn.classList.remove('disabled');
+      }
+      if (btnTxt) {
+        btnTxt.textContent = 'CARI & TERAPKAN';
+      }
+      const connErrHtml = '<span class="status-title">KONEKSI GAGAL</span><span class="status-desc">Gagal menghubungi database geografi dunia. Pastikan HP tersambung ke internet.</span>';
+      if (statusBox) {
+        statusBox.className = 'weather-status-box error';
+        statusBox.innerHTML = connErrHtml;
+        statusBox.style.display = 'block';
+      }
+      if (otherStatusBox) {
+        otherStatusBox.className = 'weather-status-box error';
+        otherStatusBox.innerHTML = connErrHtml;
+        otherStatusBox.style.display = 'block';
+      }
+      triggerHaptic(60);
+    });
 }
 
 // Kecerahan Layar OLED
@@ -2060,6 +2219,8 @@ window.addEventListener('DOMContentLoaded', () => {
   if (savedCity) {
     const input = document.getElementById('cfgCityInput');
     if (input) input.value = savedCity;
+    const inputSet = document.getElementById('cfgCityInputSetting');
+    if (inputSet) inputSet.value = savedCity;
     const cityPreview = document.getElementById('oledCityPreview');
     if (cityPreview) cityPreview.textContent = savedCity.toUpperCase();
   }

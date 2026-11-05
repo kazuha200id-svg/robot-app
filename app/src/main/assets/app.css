@@ -2684,5 +2684,64 @@ input[type="range"]::-webkit-slider-thumb {
   color: var(--neon-cyan);
 }
 
+/* ========================================================
+   WEATHER WORLD CONFIG & STRICT VALIDATION STATUS
+   ======================================================== */
+.weather-ctrl-card {
+  margin-top: 14px;
+}
 
+.weather-status-box {
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  line-height: 1.45;
+  transition: all 0.25s ease;
+}
 
+.weather-status-box.success {
+  background: var(--neon-cyan-dim);
+  border: 1px solid var(--neon-cyan-border);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.15);
+}
+
+.weather-status-box.success .status-title {
+  color: var(--neon-cyan);
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: 0.72rem;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+  display: block;
+}
+
+.weather-status-box.success .status-desc {
+  color: var(--text-secondary);
+  font-size: 0.68rem;
+  display: block;
+}
+
+.weather-status-box.error {
+  background: var(--neon-red-dim);
+  border: 1px solid var(--neon-red-border);
+  box-shadow: 0 0 10px rgba(255, 51, 102, 0.15);
+}
+
+.weather-status-box.error .status-title {
+  color: var(--neon-red);
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: 0.72rem;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+  display: block;
+}
+
+.weather-status-box.error .status-desc {
+  color: #FFAEC0;
+  font-size: 0.68rem;
+  display: block;
+}
