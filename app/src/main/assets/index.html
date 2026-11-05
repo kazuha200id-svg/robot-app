@@ -258,7 +258,7 @@
               <div class="oled-display-bezel">
                 <div class="oled-screen-content oled-clock-view">
                   <div class="oled-header-tiny">
-                    <span id="oledTzLabel">WIB</span>
+                    <span id="oledTzLabel">UTC+7</span>
                     <span>BAT 100%</span>
                   </div>
                   <div class="oled-big-time" id="oledClockPreview">12:30</div>
@@ -426,17 +426,15 @@
               <!-- 1. SINKRONISASI JAM HP -->
               <div class="clock-ctrl-block">
                 <button type="button" class="btn-clock-sync" id="btnSyncClockPhone" onclick="syncClockFromPhone(this)">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
-                  </svg>
-                  <span>SINKRONKAN JAM DENGAN HP</span>
+                  <span class="clock-sync-spinner" id="clockSyncSpinner" style="display: none;"></span>
+                  <span id="btnSyncClockText">SINKRONKAN JAM DENGAN HP</span>
                 </button>
               </div>
 
               <!-- 2. ZONA WAKTU INTERNASIONAL (TIMEZONE) -->
               <div class="clock-ctrl-block">
                 <div class="tz-picker-trigger" id="btnOpenTzPicker" onclick="toggleTimezoneDropdown()">
-                  <span class="tz-trigger-title" id="clockActiveTzTitle">UTC+07:00 • WIB (Jakarta, Bangkok)</span>
+                  <span class="tz-trigger-title" id="clockActiveTzTitle">UTC+07:00 (Jakarta, Bangkok, Hanoi)</span>
                   <span class="tz-trigger-arrow" id="clockTzArrow">▼</span>
                 </div>
 
@@ -446,7 +444,7 @@
                 </div>
               </div>
 
-              <!-- 3. FORMAT TAMPILAN 24 JAM vs 12 JAM -->
+              <!-- 3. FORMAT TAMPILAN 24 JAM vs 12 JAM (INSTANT AUTO-APPLY) -->
               <div class="clock-ctrl-block">
                 <div class="clock-fmt-btn-row">
                   <button type="button" class="btn-fmt-pill active" id="btnClockFmt24" onclick="selectClockFormat(false, this)">
@@ -456,16 +454,6 @@
                     <span class="fmt-pill-name">12 JAM (AM/PM)</span>
                   </button>
                 </div>
-              </div>
-
-              <!-- 4. TOMBOL TERAPKAN KE ROBOT -->
-              <div class="clock-ctrl-block" style="margin-top: 4px;">
-                <button type="button" class="btn-clock-apply" id="btnApplyClockCfg" onclick="applyClockSettingsToRobot(this)">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                  <span>TERAPKAN KE ROBOT</span>
-                </button>
               </div>
 
             </div>

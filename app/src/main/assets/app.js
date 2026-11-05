@@ -1508,46 +1508,46 @@ let currentTempUnit = 'C';
 // Konfigurasi Fitur Jam Digital Robot
 let currentClockFormat12H = false; // false = 24 Jam, true = 12 Jam AM/PM
 let currentClockShowSec = false;   // hilangkan detik di tampilkan (format HH:MM)
-let currentClockTzOffsetMin = 420; // Default WIB = UTC+07:00 (+420 menit)
-let currentClockTzTitle = 'UTC+07:00 • WIB (Jakarta, Bangkok)';
+let currentClockTzOffsetMin = 420; // Default UTC+07:00 (+420 menit)
+let currentClockTzTitle = 'UTC+07:00 (Jakarta, Bangkok, Hanoi)';
 
-// Daftar Lengkap Seluruh Zona Waktu Dunia (UTC-12:00 s/d UTC+14:00)
+// Daftar Lengkap Seluruh Zona Waktu Dunia Format Internasional (UTC-12:00 s/d UTC+14:00)
 const WORLD_TIMEZONES = [
-  { offsetMin: -720, label: 'UTC-12:00', title: 'UTC-12:00 • Baker Island (AoE)', cities: 'Baker Island, Howland Island' },
-  { offsetMin: -660, label: 'UTC-11:00', title: 'UTC-11:00 • Samoa Standard (SST)', cities: 'Pago Pago, Niue, Midway' },
-  { offsetMin: -600, label: 'UTC-10:00', title: 'UTC-10:00 • Hawaii (HST)', cities: 'Honolulu, Tahiti, Rarotonga' },
-  { offsetMin: -540, label: 'UTC-09:00', title: 'UTC-09:00 • Alaska (AKST)', cities: 'Anchorage, Juneau, Gambier' },
-  { offsetMin: -480, label: 'UTC-08:00', title: 'UTC-08:00 • Pasifik (PST)', cities: 'Los Angeles, San Francisco, Vancouver' },
-  { offsetMin: -420, label: 'UTC-07:00', title: 'UTC-07:00 • Mountain (MST)', cities: 'Denver, Phoenix, Calgary, Salt Lake' },
-  { offsetMin: -360, label: 'UTC-06:00', title: 'UTC-06:00 • Central (CST)', cities: 'Chicago, Houston, Dallas, Mexico City' },
-  { offsetMin: -300, label: 'UTC-05:00', title: 'UTC-05:00 • Eastern (EST)', cities: 'New York, Washington DC, Toronto, Bogota' },
-  { offsetMin: -240, label: 'UTC-04:00', title: 'UTC-04:00 • Atlantic (AST)', cities: 'Santiago, Santo Domingo, Halifax, Caracas' },
-  { offsetMin: -210, label: 'UTC-03:30', title: 'UTC-03:30 • Newfoundland (NST)', cities: 'St. John\'s, Labrador' },
-  { offsetMin: -180, label: 'UTC-03:00', title: 'UTC-03:00 • Brasilia / Argentina', cities: 'Sao Paulo, Buenos Aires, Montevideo' },
-  { offsetMin: -120, label: 'UTC-02:00', title: 'UTC-02:00 • Atlantik Tengah', cities: 'South Georgia, Fernando de Noronha' },
-  { offsetMin: -60,  label: 'UTC-01:00', title: 'UTC-01:00 • Azores / Tanjung Verde', cities: 'Ponta Delgada, Praia' },
-  { offsetMin: 0,    label: 'UTC+00:00', title: 'UTC+00:00 • GMT / WET (London)', cities: 'London, Dublin, Lisbon, Reykjavik, Accra' },
-  { offsetMin: 60,   label: 'UTC+01:00', title: 'UTC+01:00 • Eropa Tengah (CET)', cities: 'Paris, Berlin, Roma, Madrid, Amsterdam' },
-  { offsetMin: 120,  label: 'UTC+02:00', title: 'UTC+02:00 • Eropa Timur (EET)', cities: 'Kairo, Athena, Yerusalem, Johannesburg' },
-  { offsetMin: 180,  label: 'UTC+03:00', title: 'UTC+03:00 • Arab / Moskow (AST)', cities: 'Mekkah, Riyadh, Moskow, Istanbul, Nairobi' },
-  { offsetMin: 210,  label: 'UTC+03:30', title: 'UTC+03:30 • Iran (IRST)', cities: 'Teheran, Isfahan, Tabriz' },
-  { offsetMin: 240,  label: 'UTC+04:00', title: 'UTC+04:00 • Gulf (GST)', cities: 'Dubai, Abu Dhabi, Baku, Tbilisi' },
-  { offsetMin: 270,  label: 'UTC+04:30', title: 'UTC+04:30 • Afganistan (AFT)', cities: 'Kabul, Kandahar, Herat' },
-  { offsetMin: 300,  label: 'UTC+05:00', title: 'UTC+05:00 • Pakistan (PKT)', cities: 'Karachi, Islamabad, Tashkent, Yekaterinburg' },
-  { offsetMin: 330,  label: 'UTC+05:30', title: 'UTC+05:30 • India (IST)', cities: 'New Delhi, Mumbai, Kolkata, Colombo' },
-  { offsetMin: 345,  label: 'UTC+05:45', title: 'UTC+05:45 • Nepal (NPT)', cities: 'Kathmandu, Pokhara' },
-  { offsetMin: 360,  label: 'UTC+06:00', title: 'UTC+06:00 • Bangladesh (BST)', cities: 'Dhaka, Almaty, Omsk, Bishkek' },
-  { offsetMin: 390,  label: 'UTC+06:30', title: 'UTC+06:30 • Myanmar (MMT)', cities: 'Yangon, Mandalay, Naypyidaw' },
-  { offsetMin: 420,  label: 'UTC+07:00', title: 'UTC+07:00 • WIB (Jakarta, Bangkok)', cities: 'Jakarta, Surabaya, Medan, Bangkok, Hanoi' },
-  { offsetMin: 480,  label: 'UTC+08:00', title: 'UTC+08:00 • WITA (Bali, Singapura)', cities: 'Bali, Makassar, Singapura, Kuala Lumpur, Beijing' },
-  { offsetMin: 540,  label: 'UTC+09:00', title: 'UTC+09:00 • WIT (Tokyo, Jayapura)', cities: 'Tokyo, Seoul, Jayapura, Ambon, Pyongyang' },
-  { offsetMin: 570,  label: 'UTC+09:30', title: 'UTC+09:30 • Australia Tengah (ACST)', cities: 'Adelaide, Darwin, Alice Springs' },
-  { offsetMin: 600,  label: 'UTC+10:00', title: 'UTC+10:00 • Australia Timur (AEST)', cities: 'Sydney, Melbourne, Brisbane, Guam, Vladivostok' },
-  { offsetMin: 660,  label: 'UTC+11:00', title: 'UTC+11:00 • Solomon Islands', cities: 'Honiara, Noumea, Magadan' },
-  { offsetMin: 720,  label: 'UTC+12:00', title: 'UTC+12:00 • Selandia Baru (NZST)', cities: 'Auckland, Wellington, Fiji, Kamchatka' },
-  { offsetMin: 765,  label: 'UTC+12:45', title: 'UTC+12:45 • Chatham Islands', cities: 'Chatham Islands' },
-  { offsetMin: 780,  label: 'UTC+13:00', title: 'UTC+13:00 • Tonga / Samoa', cities: 'Nuku\'alofa, Apia, Tokelau' },
-  { offsetMin: 840,  label: 'UTC+14:00', title: 'UTC+14:00 • Line Islands', cities: 'Kiritimati (Christmas Island)' }
+  { offsetMin: -720, label: 'UTC-12:00', title: 'UTC-12:00 (Baker Island, Howland Island)' },
+  { offsetMin: -660, label: 'UTC-11:00', title: 'UTC-11:00 (Pago Pago, Niue, Midway)' },
+  { offsetMin: -600, label: 'UTC-10:00', title: 'UTC-10:00 (Honolulu, Tahiti, Rarotonga)' },
+  { offsetMin: -540, label: 'UTC-09:00', title: 'UTC-09:00 (Anchorage, Juneau, Gambier)' },
+  { offsetMin: -480, label: 'UTC-08:00', title: 'UTC-08:00 (Los Angeles, San Francisco, Vancouver)' },
+  { offsetMin: -420, label: 'UTC-07:00', title: 'UTC-07:00 (Denver, Phoenix, Calgary, Salt Lake)' },
+  { offsetMin: -360, label: 'UTC-06:00', title: 'UTC-06:00 (Chicago, Houston, Dallas, Mexico City)' },
+  { offsetMin: -300, label: 'UTC-05:00', title: 'UTC-05:00 (New York, Washington DC, Toronto, Bogota)' },
+  { offsetMin: -240, label: 'UTC-04:00', title: 'UTC-04:00 (Santiago, Santo Domingo, Halifax, Caracas)' },
+  { offsetMin: -210, label: 'UTC-03:30', title: 'UTC-03:30 (St. John\'s, Newfoundland)' },
+  { offsetMin: -180, label: 'UTC-03:00', title: 'UTC-03:00 (Sao Paulo, Buenos Aires, Montevideo)' },
+  { offsetMin: -120, label: 'UTC-02:00', title: 'UTC-02:00 (South Georgia, Fernando de Noronha)' },
+  { offsetMin: -60,  label: 'UTC-01:00', title: 'UTC-01:00 (Azores, Cape Verde, Praia)' },
+  { offsetMin: 0,    label: 'UTC+00:00', title: 'UTC+00:00 (London, Dublin, Lisbon, Reykjavik)' },
+  { offsetMin: 60,   label: 'UTC+01:00', title: 'UTC+01:00 (Paris, Berlin, Rome, Madrid, Amsterdam)' },
+  { offsetMin: 120,  label: 'UTC+02:00', title: 'UTC+02:00 (Cairo, Athens, Jerusalem, Helsinki)' },
+  { offsetMin: 180,  label: 'UTC+03:00', title: 'UTC+03:00 (Riyadh, Moscow, Istanbul, Nairobi)' },
+  { offsetMin: 210,  label: 'UTC+03:30', title: 'UTC+03:30 (Tehran, Isfahan)' },
+  { offsetMin: 240,  label: 'UTC+04:00', title: 'UTC+04:00 (Dubai, Abu Dhabi, Baku, Tbilisi)' },
+  { offsetMin: 270,  label: 'UTC+04:30', title: 'UTC+04:30 (Kabul, Kandahar)' },
+  { offsetMin: 300,  label: 'UTC+05:00', title: 'UTC+05:00 (Karachi, Tashkent, Islamabad, Yekaterinburg)' },
+  { offsetMin: 330,  label: 'UTC+05:30', title: 'UTC+05:30 (New Delhi, Mumbai, Kolkata, Colombo)' },
+  { offsetMin: 345,  label: 'UTC+05:45', title: 'UTC+05:45 (Kathmandu, Pokhara)' },
+  { offsetMin: 360,  label: 'UTC+06:00', title: 'UTC+06:00 (Dhaka, Almaty, Omsk, Bishkek)' },
+  { offsetMin: 390,  label: 'UTC+06:30', title: 'UTC+06:30 (Yangon, Naypyidaw)' },
+  { offsetMin: 420,  label: 'UTC+07:00', title: 'UTC+07:00 (Jakarta, Bangkok, Hanoi, Surabaya)' },
+  { offsetMin: 480,  label: 'UTC+08:00', title: 'UTC+08:00 (Singapore, Beijing, Kuala Lumpur, Perth)' },
+  { offsetMin: 540,  label: 'UTC+09:00', title: 'UTC+09:00 (Tokyo, Seoul, Jayapura, Pyongyang)' },
+  { offsetMin: 570,  label: 'UTC+09:30', title: 'UTC+09:30 (Adelaide, Darwin)' },
+  { offsetMin: 600,  label: 'UTC+10:00', title: 'UTC+10:00 (Sydney, Melbourne, Brisbane, Guam)' },
+  { offsetMin: 660,  label: 'UTC+11:00', title: 'UTC+11:00 (Honiara, Noumea, Magadan)' },
+  { offsetMin: 720,  label: 'UTC+12:00', title: 'UTC+12:00 (Auckland, Wellington, Fiji)' },
+  { offsetMin: 765,  label: 'UTC+12:45', title: 'UTC+12:45 (Chatham Islands)' },
+  { offsetMin: 780,  label: 'UTC+13:00', title: 'UTC+13:00 (Nuku\'alofa, Apia, Tokelau)' },
+  { offsetMin: 840,  label: 'UTC+14:00', title: 'UTC+14:00 (Kiritimati, Line Islands)' }
 ];
 
 function renderTimezoneDropdown() {
@@ -1579,6 +1579,7 @@ function toggleTimezoneDropdown() {
   }
 }
 
+// PEMILIHAN ZONA WAKTU INTERNASIONAL (OTOMATIS LANGSUNG DITERAPKAN KE ESP32)
 function selectTimezoneItem(offsetMin, title) {
   triggerHaptic(25);
   currentClockTzOffsetMin = offsetMin;
@@ -1593,10 +1594,29 @@ function selectTimezoneItem(offsetMin, title) {
   if (arrow) arrow.classList.remove('open');
 
   currentTimezoneOffset = offsetMin / 60;
+  const oledTzLabel = document.getElementById('oledTzLabel');
+  if (oledTzLabel) {
+    const sign = offsetMin >= 0 ? '+' : '';
+    const hrs = offsetMin / 60;
+    oledTzLabel.textContent = `UTC${sign}${Number.isInteger(hrs) ? hrs : hrs.toFixed(1)}`;
+  }
+
   updateOledClockTick();
+
+  // OTOMATIS BERUBAH DI ESP32 C3 (TANPA TOMBOL TERAPKAN)
+  if (isBleConnected && !isGameActivelyPlaying) {
+    sendCommand({
+      cmd: 'clock_cfg',
+      tz: currentClockTzOffsetMin,
+      fmt_12h: currentClockFormat12H,
+      show_sec: currentClockShowSec
+    });
+  }
+
   showNeonToast(`Zona Waktu: ${title}`);
 }
 
+// PEMILIHAN FORMAT 24H vs 12H (OTOMATIS LANGSUNG DITERAPKAN KE ESP32)
 function selectClockFormat(is12H, btnEl) {
   if (btnEl && typeof btnEl.blur === 'function') btnEl.blur();
   triggerHaptic(20);
@@ -1609,12 +1629,27 @@ function selectClockFormat(is12H, btnEl) {
   if (btn12) btn12.classList.toggle('active', is12H);
 
   updateOledClockTick();
+
+  // OTOMATIS BERUBAH DI ESP32 C3 (TANPA TOMBOL TERAPKAN)
+  if (isBleConnected && !isGameActivelyPlaying) {
+    sendCommand({
+      cmd: 'clock_cfg',
+      tz: currentClockTzOffsetMin,
+      fmt_12h: currentClockFormat12H,
+      show_sec: currentClockShowSec
+    });
+  }
+
   showNeonToast(`Format Jam: ${is12H ? '12 Jam (AM/PM)' : '24 Jam'}`);
 }
 
-// SINKRONKAN JAM DENGAN HP (AKSI UTAMA 1 TAP)
+// SINKRONKAN JAM DENGAN HP DENGAN ANIMASI MINIMAL 3 DETIK
+let isClockSyncing = false;
+
 function syncClockFromPhone(btnEl) {
   if (btnEl && typeof btnEl.blur === 'function') btnEl.blur();
+  if (isClockSyncing) return;
+
   if (!isBleConnected) {
     triggerHaptic(40);
     showNeonToast('Robot belum terhubung Bluetooth');
@@ -1626,11 +1661,26 @@ function syncClockFromPhone(btnEl) {
     return;
   }
 
-  triggerHaptic(35);
+  isClockSyncing = true;
+  triggerHaptic(30);
+
+  const btn = document.getElementById('btnSyncClockPhone');
+  const txt = document.getElementById('btnSyncClockText');
+  const spinner = document.getElementById('clockSyncSpinner');
+
+  if (btn) {
+    btn.disabled = true;
+    btn.classList.add('syncing');
+    btn.classList.remove('success');
+  }
+  if (spinner) spinner.style.display = 'inline-block';
+  if (txt) txt.textContent = 'MENYINKRONKAN...';
+
   const now = Date.now();
   const epoch = Math.floor(now / 1000);
   const us = (now % 1000) * 1000;
 
+  // Kirim data waktu presisi UTC + offset menit ke ESP32
   sendCommand({
     cmd: 'time',
     epoch: epoch,
@@ -1638,40 +1688,44 @@ function syncClockFromPhone(btnEl) {
     tz: currentClockTzOffsetMin,
     fmt_12h: currentClockFormat12H,
     show_sec: currentClockShowSec
-  });
+  }, true);
 
   esp32TimeBaseMs = now;
   localTimeAtSyncMs = now;
   hasEsp32TimeSync = true;
   updateOledClockTick();
 
-  showNeonToast('Jam berhasil disinkronkan dengan HP');
-}
+  const syncStartTime = Date.now();
+  const MIN_SYNC_ANIMATION_MS = 3000; // Minimal durasi animasi 3 detik
 
-// TERAPKAN SETELAN FORMAT & ZONA WAKTU KE ROBOT
-function applyClockSettingsToRobot(btnEl) {
-  if (btnEl && typeof btnEl.blur === 'function') btnEl.blur();
-  if (!isBleConnected) {
-    triggerHaptic(40);
-    showNeonToast('Robot belum terhubung Bluetooth');
-    return;
-  }
-  if (isGameActivelyPlaying) {
-    triggerHaptic(40);
-    showNeonToast('Sedang bermain game! Selesaikan dulu untuk atur jam');
-    return;
-  }
+  setTimeout(() => {
+    const elapsed = Date.now() - syncStartTime;
+    const remainingWait = Math.max(0, MIN_SYNC_ANIMATION_MS - elapsed);
 
-  triggerHaptic(30);
-  sendCommand({
-    cmd: 'clock_cfg',
-    tz: currentClockTzOffsetMin,
-    fmt_12h: currentClockFormat12H,
-    show_sec: currentClockShowSec
-  });
+    setTimeout(() => {
+      // Fase Berhasil
+      if (btn) {
+        btn.classList.remove('syncing');
+        btn.classList.add('success');
+      }
+      if (spinner) spinner.style.display = 'none';
+      if (txt) txt.textContent = 'JAM TERSINKRON';
 
-  updateOledClockTick();
-  showNeonToast('Pengaturan jam berhasil diterapkan ke robot');
+      triggerHaptic(45);
+      showNeonToast('Jam berhasil disinkronkan dengan HP');
+
+      // Kembalikan tombol ke tampilan normal setelah 1.5 detik
+      setTimeout(() => {
+        if (btn) {
+          btn.disabled = false;
+          btn.classList.remove('success');
+        }
+        if (txt) txt.textContent = 'SINKRONKAN JAM DENGAN HP';
+        isClockSyncing = false;
+      }, 1500);
+
+    }, remainingWait);
+  }, 100);
 }
 
 function updateOledClockTick() {
@@ -1774,53 +1828,26 @@ function onTimezoneSelected(val) {
 
 // Sinkronisasi Jam HP & Timezone ke Robot Desk dengan kompensasi latensi mikrodetik
 function syncClock() {
-  const now = new Date();
-  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-  const targetTime = new Date(utc + (3600000 * currentTimezoneOffset));
-  const totalMs = targetTime.getTime();
-  const epochSec = Math.floor(totalMs / 1000);
-  const remMs = (totalMs % 1000) + 30; // Kompensasi ~30ms latensi transmisi BLE
-  const us = (remMs % 1000) * 1000;
-  const finalEpoch = epochSec + Math.floor(remMs / 1000);
-
-  // Kunci waktu lokal dengan waktu ESP32 secara instan
-  esp32TimeBaseMs = (finalEpoch * 1000) + Math.floor(us / 1000);
-  localTimeAtSyncMs = Date.now();
-  hasEsp32TimeSync = true;
-
-  const ok = sendCommand({
-    cmd: 'time',
-    epoch: finalEpoch,
-    us: us,
-    tz: currentTimezoneOffset,
-    fmt: currentTimeFormat
-  });
-  if (ok) {
-    showNeonToast('Jam Disinkronkan (' + (currentTimezoneOffset >= 0 ? '+' : '') + currentTimezoneOffset + ' UTC)');
-    triggerHaptic(35);
-  }
+  syncClockFromPhone();
 }
 
 function syncClockQuiet() {
-  const now = new Date();
-  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-  const targetTime = new Date(utc + (3600000 * currentTimezoneOffset));
-  const totalMs = targetTime.getTime();
-  const epochSec = Math.floor(totalMs / 1000);
-  const remMs = (totalMs % 1000) + 30;
-  const us = (remMs % 1000) * 1000;
-  const finalEpoch = epochSec + Math.floor(remMs / 1000);
+  if (!isBleConnected) return;
+  const now = Date.now();
+  const epoch = Math.floor(now / 1000);
+  const us = (now % 1000) * 1000;
 
-  esp32TimeBaseMs = (finalEpoch * 1000) + Math.floor(us / 1000);
-  localTimeAtSyncMs = Date.now();
+  esp32TimeBaseMs = now;
+  localTimeAtSyncMs = now;
   hasEsp32TimeSync = true;
 
   sendCommand({
     cmd: 'time',
-    epoch: finalEpoch,
+    epoch: epoch,
     us: us,
-    tz: currentTimezoneOffset,
-    fmt: currentTimeFormat
+    tz: currentClockTzOffsetMin,
+    fmt_12h: currentClockFormat12H,
+    show_sec: currentClockShowSec
   });
 }
 

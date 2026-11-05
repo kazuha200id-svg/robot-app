@@ -2484,14 +2484,13 @@ input[type="range"]::-webkit-slider-thumb {
   text-transform: uppercase;
 }
 
-/* Tombol Sinkronisasi Utama */
 .btn-clock-sync {
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 12px 14px;
+  gap: 10px;
+  padding: 13px 14px;
   background: rgba(0, 240, 255, 0.12);
   border: 1px solid var(--neon-cyan);
   border-radius: var(--radius-sm);
@@ -2499,23 +2498,54 @@ input[type="range"]::-webkit-slider-thumb {
   font-family: var(--font-mono);
   font-size: 0.72rem;
   font-weight: 800;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.6px;
   cursor: pointer;
   outline: none;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 0.12s ease;
+  transition: all 0.2s ease;
 }
 
-.btn-clock-sync svg {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-  stroke: var(--neon-cyan);
-}
-
-.btn-clock-sync:active {
+.btn-clock-sync:active:not(:disabled) {
   transform: scale(0.97);
   background: rgba(0, 240, 255, 0.22);
+}
+
+.btn-clock-sync:disabled {
+  cursor: not-allowed;
+  opacity: 0.92;
+}
+
+.btn-clock-sync.syncing {
+  background: rgba(0, 240, 255, 0.18);
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.35);
+  animation: clockSyncPulse 1.2s infinite alternate ease-in-out;
+}
+
+.btn-clock-sync.success {
+  background: rgba(0, 255, 136, 0.18);
+  border-color: #00ff88;
+  color: #00ff88;
+  box-shadow: 0 0 16px rgba(0, 255, 136, 0.45);
+}
+
+.clock-sync-spinner {
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(0, 240, 255, 0.25);
+  border-top-color: var(--neon-cyan);
+  border-radius: 50%;
+  animation: clockSpin 0.75s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes clockSpin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes clockSyncPulse {
+  0% { box-shadow: 0 0 8px rgba(0, 240, 255, 0.25); }
+  100% { box-shadow: 0 0 18px rgba(0, 240, 255, 0.5); }
 }
 
 /* Trigger Selector Timezone Dropdown */
@@ -2645,36 +2675,5 @@ input[type="range"]::-webkit-slider-thumb {
   color: var(--neon-cyan);
 }
 
-/* Tombol Terapkan ke Robot */
-.btn-clock-apply {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 11px 14px;
-  background: rgba(0, 240, 255, 0.18);
-  border: 1px solid var(--neon-cyan);
-  border-radius: var(--radius-sm);
-  color: var(--neon-cyan);
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  cursor: pointer;
-  outline: none;
-  -webkit-tap-highlight-color: transparent;
-  transition: transform 0.12s ease;
-}
 
-.btn-clock-apply svg {
-  width: 16px;
-  height: 16px;
-  stroke: var(--neon-cyan);
-}
-
-.btn-clock-apply:active {
-  transform: scale(0.97);
-  background: rgba(0, 240, 255, 0.28);
-}
 
