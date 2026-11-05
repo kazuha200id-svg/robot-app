@@ -2042,7 +2042,7 @@ function fetchGeocoding(url) {
   });
 }
 
-// Pengontrol Visual & Animasi Tombol Cuaca (Hover, Shake, Flash Glow Tanpa Garis)
+// Pengontrol Visual & Animasi Tombol Cuaca (Hover Murni Tanpa Terjebak Selected Active)
 function setWeatherBtnVisual(state, text) {
   const btns = [document.getElementById('btnSearchCity'), document.getElementById('btnSearchCitySetting')].filter(Boolean);
   const txts = [document.getElementById('txtSearchCityBtn'), document.getElementById('txtSearchCityBtnSetting')].filter(Boolean);
@@ -2051,21 +2051,23 @@ function setWeatherBtnVisual(state, text) {
   if (state === 'loading') {
     btns.forEach(b => {
       b.disabled = true;
-      b.classList.add('disabled');
+      b.classList.add('disabled', 'is-loading');
       b.classList.remove('is-shaking', 'is-success');
+      b.blur();
     });
     inputs.forEach(i => {
       i.classList.add('is-processing');
       i.readOnly = true;
     });
     txts.forEach(t => {
-      t.innerHTML = '<span class="weather-spinner"></span> MENGAMBIL CUACA...';
+      t.innerHTML = '<span class="weather-spinner-cyber"></span> MEMPROSES CUACA...';
     });
   } else if (state === 'error') {
     btns.forEach(b => {
       b.disabled = false;
-      b.classList.remove('disabled');
+      b.classList.remove('disabled', 'is-loading');
       b.classList.add('is-shaking');
+      b.blur();
     });
     inputs.forEach(i => {
       i.classList.remove('is-processing');
@@ -2075,18 +2077,23 @@ function setWeatherBtnVisual(state, text) {
       t.textContent = text || 'KOTA TIDAK DITEMUKAN';
     });
     setTimeout(() => {
-      btns.forEach(b => b.classList.remove('is-shaking'));
-    }, 400);
+      btns.forEach(b => {
+        b.classList.remove('is-shaking');
+        b.blur();
+      });
+    }, 450);
     setTimeout(() => {
       if (!isSearchingCity) {
         txts.forEach(t => { t.textContent = 'TERAPKAN CUACA'; });
+        btns.forEach(b => { b.blur(); });
       }
-    }, 2200);
+    }, 2400);
   } else if (state === 'success') {
     btns.forEach(b => {
       b.disabled = false;
-      b.classList.remove('disabled');
+      b.classList.remove('disabled', 'is-loading');
       b.classList.add('is-success');
+      b.blur();
     });
     inputs.forEach(i => {
       i.classList.remove('is-processing');
@@ -2096,17 +2103,22 @@ function setWeatherBtnVisual(state, text) {
       t.textContent = text || 'KOTA BERHASIL DIATUR';
     });
     setTimeout(() => {
-      btns.forEach(b => b.classList.remove('is-success'));
-    }, 500);
+      btns.forEach(b => {
+        b.classList.remove('is-success');
+        b.blur();
+      });
+    }, 550);
     setTimeout(() => {
       if (!isSearchingCity) {
         txts.forEach(t => { t.textContent = 'TERAPKAN CUACA'; });
+        btns.forEach(b => { b.blur(); });
       }
-    }, 2200);
+    }, 2400);
   } else {
     btns.forEach(b => {
       b.disabled = false;
-      b.classList.remove('disabled', 'is-shaking', 'is-success');
+      b.classList.remove('disabled', 'is-loading', 'is-shaking', 'is-success');
+      b.blur();
     });
     inputs.forEach(i => {
       i.classList.remove('is-processing');
@@ -2181,7 +2193,7 @@ function searchCitySuggestions(query, isSetting) {
     });
 }
 
-// Eksekusi Terapkan Cuaca (Ambil Data Cuaca Real-Time & Sinkron 100% dengan ESP32)
+// Eksekusi Terapkan Cuaca (Animasi Terjamin Minimal 3 Detik & Sinkron 100% Real-Time)
 function applyWeatherCity(isFromSetting) {
   if (isSearchingCity) return;
 
@@ -2190,18 +2202,33 @@ function applyWeatherCity(isFromSetting) {
     (document.getElementById('cfgCityInput') || document.getElementById('cfgCityInputSetting'));
 
   if (!activeInput) return;
-  const rawQuery = activeInput.value.trim();
-
-  if (!rawQuery || rawQuery.length < 2) {
-    setWeatherBtnVisual('error', 'NAMA KOTA BELUM DIISI');
-    triggerHaptic(50);
-    setTimeout(() => triggerHaptic(50), 120);
-    return;
+  
+  // Jika input kosong, gunakan nama kota yang tersimpan atau default BANDUNG
+  let rawQuery = (activeInput.value || '').trim();
+  if (!rawQuery) {
+    const saved = localStorage.getItem('robot_cfg_city') || 'BANDUNG';
+    activeInput.value = saved;
+    rawQuery = saved;
   }
+
+  const MIN_ANIMATION_MS = 3000;
+  const startTime = Date.now();
 
   isSearchingCity = true;
   setWeatherBtnVisual('loading');
   triggerHaptic(25);
+
+  if (rawQuery.length < 2) {
+    const elapsed = Date.now() - startTime;
+    const remainingTime = Math.max(0, MIN_ANIMATION_MS - elapsed);
+    setTimeout(() => {
+      isSearchingCity = false;
+      setWeatherBtnVisual('error', 'NAMA KOTA HARUS DIISI');
+      triggerHaptic(50);
+      setTimeout(() => triggerHaptic(50), 120);
+    }, remainingTime);
+    return;
+  }
 
   // Jika belum memilih dari dropdown, resolve koordinat terlebih dahulu
   let resolvePromise;
@@ -2222,7 +2249,6 @@ function applyWeatherCity(isFromSetting) {
       const rawResults = (data && data.results) ? data.results : [];
       if (rawResults.length === 0) return null;
 
-      // Filter exact name atau sort by population
       let exact = rawResults.filter(item => item.name && item.name.toLowerCase() === targetCity);
       if (exact.length === 0) exact = rawResults;
 
@@ -2248,57 +2274,73 @@ function applyWeatherCity(isFromSetting) {
                          '&longitude=' + lon +
                          '&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto';
 
-      return fetchGeocoding(weatherUrl).then(function(wData) {
-        if (!wData || !wData.current) {
-          throw new Error('WEATHER_FAIL');
-        }
+      return fetchGeocoding(weatherUrl)
+        .then(function(wData) {
+          if (!wData || !wData.current) {
+            throw new Error('WEATHER_FAIL');
+          }
 
-        const cur = wData.current;
-        const temp = Math.round(cur.temperature_2m);
-        const hum = Math.round(cur.relative_humidity_2m);
-        const wind = Math.round(cur.wind_speed_10m);
-        const code = cur.weather_code;
-        const cond = getWeatherConditionText(code);
+          // Pastikan animasi berjalan minimal 3000ms penuh
+          const elapsed = Date.now() - startTime;
+          const remainingTime = Math.max(0, MIN_ANIMATION_MS - elapsed);
 
-        // 1. UPDATE LAYAR OLED PREVIEW DI HP DENGAN DATA ASLI REALTIME
-        updateOledWeatherPreviewWithData(cityName, temp, hum, wind, cond);
+          return new Promise(function(resolve) {
+            setTimeout(function() {
+              resolve({ wData: wData, cityName: cityName, lat: lat, lon: lon, tz: tz });
+            }, remainingTime);
+          });
+        })
+        .then(function(res) {
+          const cur = res.wData.current;
+          const temp = Math.round(cur.temperature_2m);
+          const hum = Math.round(cur.relative_humidity_2m);
+          const wind = Math.round(cur.wind_speed_10m);
+          const code = cur.weather_code;
+          const cond = getWeatherConditionText(code);
 
-        // 2. SIMPAN PREFERENSI KE HP
-        localStorage.setItem('robot_cfg_city', cityName);
-        localStorage.setItem('robot_cfg_lat', lat);
-        localStorage.setItem('robot_cfg_lon', lon);
-        localStorage.setItem('robot_cfg_tz', tz);
-        localStorage.setItem('robot_cfg_temp', temp);
-        localStorage.setItem('robot_cfg_hum', hum);
-        localStorage.setItem('robot_cfg_wind', wind);
-        localStorage.setItem('robot_cfg_cond', cond);
-        localStorage.setItem('robot_cfg_temp_unit', 'C');
+          // 1. UPDATE LAYAR OLED PREVIEW DI HP DENGAN DATA ASLI REALTIME
+          updateOledWeatherPreviewWithData(res.cityName, temp, hum, wind, cond);
 
-        // 3. KIRIM DATA REALTIME LENGKAP VIA BLE KE ROBOT ESP32 (SINKRONISASI 100%)
-        sendCommand({
-          cmd: 'set_weather_live',
-          city: cityName,
-          temp: temp,
-          hum: hum,
-          wind: wind,
-          code: code,
-          lat: lat,
-          lon: lon,
-          tz: tz
+          // 2. SIMPAN PREFERENSI KE HP
+          localStorage.setItem('robot_cfg_city', res.cityName);
+          localStorage.setItem('robot_cfg_lat', res.lat);
+          localStorage.setItem('robot_cfg_lon', res.lon);
+          localStorage.setItem('robot_cfg_tz', res.tz);
+          localStorage.setItem('robot_cfg_temp', temp);
+          localStorage.setItem('robot_cfg_hum', hum);
+          localStorage.setItem('robot_cfg_wind', wind);
+          localStorage.setItem('robot_cfg_cond', cond);
+          localStorage.setItem('robot_cfg_temp_unit', 'C');
+
+          // 3. KIRIM DATA REALTIME LENGKAP VIA BLE KE ROBOT ESP32 (SINKRONISASI 100%)
+          sendCommand({
+            cmd: 'set_weather_live',
+            city: res.cityName,
+            temp: temp,
+            hum: hum,
+            wind: wind,
+            code: code,
+            lat: res.lat,
+            lon: res.lon,
+            tz: res.tz
+          });
+
+          // 4. EFEK SUKSES PADA TOMBOL & HAPTIC
+          isSearchingCity = false;
+          setWeatherBtnVisual('success', 'KOTA BERHASIL DIATUR');
+          triggerHaptic(35);
         });
-
-        // 4. EFEK SUKSES PADA TOMBOL & HAPTIC
-        isSearchingCity = false;
-        setWeatherBtnVisual('success', 'KOTA BERHASIL DIATUR');
-        triggerHaptic(35);
-      });
     })
     .catch(function(err) {
-      isSearchingCity = false;
-      const msg = (err && err.message === 'NOT_FOUND') ? 'KOTA TIDAK DITEMUKAN' : 'KONEKSI INTERNET GAGAL';
-      setWeatherBtnVisual('error', msg);
-      triggerHaptic(60);
-      setTimeout(() => triggerHaptic(60), 120);
+      const elapsed = Date.now() - startTime;
+      const remainingTime = Math.max(0, MIN_ANIMATION_MS - elapsed);
+      setTimeout(function() {
+        isSearchingCity = false;
+        const msg = (err && err.message === 'NOT_FOUND') ? 'KOTA TIDAK DITEMUKAN' : 'KONEKSI INTERNET GAGAL';
+        setWeatherBtnVisual('error', msg);
+        triggerHaptic(60);
+        setTimeout(() => triggerHaptic(60), 120);
+      }, remainingTime);
     });
 }
 
@@ -2348,22 +2390,28 @@ function restartRobot() {
 
 // Restore saved preferences on startup & trigger auto check
 window.addEventListener('DOMContentLoaded', () => {
-  const savedCity = localStorage.getItem('robot_cfg_city');
-  const savedTemp = localStorage.getItem('robot_cfg_temp');
-  const savedHum = localStorage.getItem('robot_cfg_hum');
-  const savedWind = localStorage.getItem('robot_cfg_wind');
-  const savedCond = localStorage.getItem('robot_cfg_cond');
-  if (savedCity) {
-    const input = document.getElementById('cfgCityInput');
-    if (input) input.value = savedCity;
-    const inputSet = document.getElementById('cfgCityInputSetting');
-    if (inputSet) inputSet.value = savedCity;
-    if (savedTemp !== null) {
-      updateOledWeatherPreviewWithData(savedCity, savedTemp, savedHum || '75', savedWind || '4', savedCond || 'CERAH');
-    } else {
-      updateOledWeatherPreview(savedCity);
+  const savedCity = localStorage.getItem('robot_cfg_city') || 'BANDUNG';
+  const savedTemp = localStorage.getItem('robot_cfg_temp') || '26';
+  const savedHum = localStorage.getItem('robot_cfg_hum') || '75';
+  const savedWind = localStorage.getItem('robot_cfg_wind') || '4';
+  const savedCond = localStorage.getItem('robot_cfg_cond') || 'CERAH';
+  
+  const input = document.getElementById('cfgCityInput');
+  if (input) input.value = savedCity;
+  const inputSet = document.getElementById('cfgCityInputSetting');
+  if (inputSet) inputSet.value = savedCity;
+
+  updateOledWeatherPreviewWithData(savedCity, savedTemp, savedHum, savedWind, savedCond);
+
+  // Mencegah Tombol Terjebak State Active/Selected di Layar Sentuh Mobile (Murni Hover)
+  ['btnSearchCity', 'btnSearchCitySetting'].forEach(function(btnId) {
+    const el = document.getElementById(btnId);
+    if (el) {
+      el.addEventListener('pointerup', function() { el.blur(); });
+      el.addEventListener('touchend', function() { el.blur(); });
+      el.addEventListener('mouseleave', function() { el.blur(); });
     }
-  }
+  });
 
   // Pasang Live Autocomplete pada Input Pencarian Kota
   const setupCityInputListener = (inputId, isSetting) => {

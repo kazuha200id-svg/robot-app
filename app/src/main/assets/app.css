@@ -2794,12 +2794,12 @@ input[type="range"]::-webkit-slider-thumb {
   text-align: center;
 }
 
-/* Tombol Aksi Cuaca (Dengan Hover & Tanpa Garis) */
+/* Tombol Aksi Cuaca (Murni Hover, Tanpa Terjebak Active/Selected) */
 .weather-action-btn {
   position: relative;
   width: 100%;
   height: 42px;
-  background: var(--neon-cyan-dim);
+  background: rgba(0, 240, 255, 0.1);
   border: 1px solid var(--neon-cyan-border);
   border-radius: var(--radius-sm);
   color: var(--neon-cyan);
@@ -2810,27 +2810,83 @@ input[type="range"]::-webkit-slider-thumb {
   text-transform: uppercase;
   cursor: pointer;
   overflow: hidden;
-  transition: all 0.2s ease;
+  outline: none !important;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.weather-action-btn:hover {
-  background: rgba(0, 240, 255, 0.22);
-  border-color: #00F0FF;
-  box-shadow: 0 0 16px rgba(0, 240, 255, 0.45);
+/* Hover aktif HANYA untuk pointer mouse di desktop (Bukan di layar sentuh ponsel) */
+@media (hover: hover) and (pointer: fine) {
+  .weather-action-btn:hover:not(:disabled) {
+    background: rgba(0, 240, 255, 0.22);
+    border-color: #00F0FF;
+    box-shadow: 0 0 16px rgba(0, 240, 255, 0.45);
+    transform: translateY(-1.5px);
+  }
 }
 
-.weather-action-btn:active {
-  transform: scale(0.98);
-  background: rgba(0, 240, 255, 0.3);
+/* Sentuhan sesaat (active) hanya saat ditekan tanpa mengubah warna menjadi selected tebal */
+.weather-action-btn:active:not(:disabled) {
+  transform: scale(0.97);
+  background: rgba(0, 240, 255, 0.18);
+}
+
+/* HILANGKAN SEMUA STATE FOCUS / SELECTED (Tidak ada efek terpilih / menempel) */
+.weather-action-btn:focus,
+.weather-action-btn:focus-visible,
+.weather-action-btn:focus-within,
+.weather-action-btn.selected,
+.weather-action-btn.active {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .weather-action-btn:disabled,
 .weather-action-btn.disabled {
-  opacity: 0.85;
+  opacity: 0.95;
   cursor: wait;
+}
+
+/* ANIMASI PEMROSESAN CUACA (MINIMAL 3 DETIK BERJALAN) */
+.weather-action-btn.is-loading {
+  background: rgba(0, 240, 255, 0.18) !important;
+  border-color: #00F0FF !important;
+  animation: cyberButtonPulse 1.2s infinite alternate ease-in-out !important;
+  cursor: wait;
+  pointer-events: none;
+}
+
+@keyframes cyberButtonPulse {
+  0% {
+    box-shadow: 0 0 8px rgba(0, 240, 255, 0.25), inset 0 0 6px rgba(0, 240, 255, 0.1);
+    border-color: rgba(0, 240, 255, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 22px rgba(0, 240, 255, 0.75), inset 0 0 12px rgba(0, 240, 255, 0.25);
+    border-color: #00F0FF;
+  }
+}
+
+/* Efek shimmer sweep cyber yang melintas terus-menerus selama loading */
+.weather-action-btn.is-loading::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.4), transparent);
+  animation: cyberSweep 1.2s infinite ease-in-out;
+  pointer-events: none;
+}
+
+@keyframes cyberSweep {
+  0% { left: -100%; }
+  100% { left: 200%; }
 }
 
 .weather-btn-label {
@@ -2844,18 +2900,22 @@ input[type="range"]::-webkit-slider-thumb {
   pointer-events: none;
 }
 
-.weather-spinner {
-  width: 13px;
-  height: 13px;
-  border: 2px solid rgba(0, 240, 255, 0.3);
-  border-top-color: var(--neon-cyan);
+.weather-spinner-cyber {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(0, 240, 255, 0.25);
+  border-top-color: #00F0FF;
+  border-right-color: #00F0FF;
   border-radius: 50%;
-  animation: spinWeather 0.75s linear infinite;
+  animation: cyberSpin 0.7s linear infinite;
   display: inline-block;
   vertical-align: middle;
+  filter: drop-shadow(0 0 4px #00F0FF);
+  margin-right: 6px;
+  flex-shrink: 0;
 }
 
-@keyframes spinWeather {
+@keyframes cyberSpin {
   to { transform: rotate(360deg); }
 }
 

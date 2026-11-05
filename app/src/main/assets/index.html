@@ -595,7 +595,7 @@
                     <input type="text" id="cfgCityInput" class="weather-city-input" placeholder="Ketik nama kota..." autocomplete="off">
                     <div id="cityDropdown" class="city-autocomplete-dropdown" style="display: none;"></div>
                   </div>
-                  <button type="button" id="btnSearchCity" class="weather-action-btn" onclick="applyWeatherCity(false)">
+                  <button type="button" id="btnSearchCity" class="weather-action-btn" onclick="applyWeatherCity(false)" onpointerup="this.blur()" ontouchend="this.blur()">
                     <span class="weather-btn-label" id="txtSearchCityBtn">TERAPKAN CUACA</span>
                   </button>
                 </div>
@@ -772,7 +772,7 @@
                 <input type="text" id="cfgCityInputSetting" class="weather-city-input" placeholder="Ketik nama kota..." autocomplete="off">
                 <div id="cityDropdownSetting" class="city-autocomplete-dropdown" style="display: none;"></div>
               </div>
-              <button type="button" id="btnSearchCitySetting" class="weather-action-btn" onclick="applyWeatherCity(true)">
+              <button type="button" id="btnSearchCitySetting" class="weather-action-btn" onclick="applyWeatherCity(true)" onpointerup="this.blur()" ontouchend="this.blur()">
                 <span class="weather-btn-label" id="txtSearchCityBtnSetting">TERAPKAN CUACA</span>
               </button>
             </div>
