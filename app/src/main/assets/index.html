@@ -591,10 +591,12 @@
                 </div>
 
                 <div class="weather-form-group">
-                  <input type="text" id="cfgCityInput" class="weather-city-input" placeholder="Nama kota" autocomplete="off" onkeydown="if(event.key==='Enter') searchAndApplyCity(false)">
-                  <button type="button" id="btnSearchCity" class="weather-action-btn" onclick="searchAndApplyCity(false)">
-                    <span class="weather-btn-bar" id="barSearchCity"></span>
-                    <span class="weather-btn-label" id="txtSearchCityBtn">CARI &amp; TERAPKAN</span>
+                  <div class="weather-input-container">
+                    <input type="text" id="cfgCityInput" class="weather-city-input" placeholder="Ketik nama kota..." autocomplete="off">
+                    <div id="cityDropdown" class="city-autocomplete-dropdown" style="display: none;"></div>
+                  </div>
+                  <button type="button" id="btnSearchCity" class="weather-action-btn" onclick="applyWeatherCity(false)">
+                    <span class="weather-btn-label" id="txtSearchCityBtn">TERAPKAN CUACA</span>
                   </button>
                 </div>
               </div>
@@ -766,10 +768,12 @@
             </div>
 
             <div class="weather-form-group">
-              <input type="text" id="cfgCityInputSetting" class="weather-city-input" placeholder="Nama kota" autocomplete="off" onkeydown="if(event.key==='Enter') searchAndApplyCity(true)">
-              <button type="button" id="btnSearchCitySetting" class="weather-action-btn" onclick="searchAndApplyCity(true)">
-                <span class="weather-btn-bar" id="barSearchCitySetting"></span>
-                <span class="weather-btn-label" id="txtSearchCityBtnSetting">CARI &amp; TERAPKAN</span>
+              <div class="weather-input-container">
+                <input type="text" id="cfgCityInputSetting" class="weather-city-input" placeholder="Ketik nama kota..." autocomplete="off">
+                <div id="cityDropdownSetting" class="city-autocomplete-dropdown" style="display: none;"></div>
+              </div>
+              <button type="button" id="btnSearchCitySetting" class="weather-action-btn" onclick="applyWeatherCity(true)">
+                <span class="weather-btn-label" id="txtSearchCityBtnSetting">TERAPKAN CUACA</span>
               </button>
             </div>
           </div>

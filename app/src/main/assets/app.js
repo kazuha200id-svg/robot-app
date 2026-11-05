@@ -1937,40 +1937,70 @@ function syncClockQuiet() {
   });
 }
 
-// SINKRONISASI TAMPILAN CUACA OLED (100% PERSIS FISIK SSD1306)
-function updateOledWeatherPreview(city) {
-  const cityEl = document.getElementById('oledCityPreview');
-  const tempEl = document.getElementById('oledTempPreview');
-  const stageCityEl = document.getElementById('stageWeatherCity');
-  const stageTempEl = document.getElementById('stageWeatherTemp');
-  const detailCityEl = document.getElementById('detailWeatherCity');
-  const detailTempEl = document.getElementById('detailWeatherTemp');
-  const cityInput = document.getElementById('cfgCityInput');
-  const cityName = (city || (cityInput ? cityInput.value : 'JAKARTA')).toUpperCase();
-  const tempVal = '28';
-  const tempHtml = `${tempVal}<span class="oled-deg-circle"></span>`;
+// State Cuaca & Autocomplete Terpilih
+let selectedCityData = null;
+let citySearchTimer = null;
+
+function getWeatherConditionText(code) {
+  if (code === 0) return 'Cerah';
+  if (code === 1 || code === 2) return 'Berawan';
+  if (code === 3) return 'Mendung';
+  if (code === 45 || code === 48) return 'Kabut';
+  if (code >= 51 && code <= 55) return 'Gerimis';
+  if (code >= 61 && code <= 82) return 'Hujan';
+  if (code >= 95) return 'Badai';
+  return 'Berawan';
+}
+
+// SINKRONISASI TAMPILAN CUACA OLED (100% PERSIS FISIK SSD1306 DENGAN DATA REALTIME)
+function updateOledWeatherPreviewWithData(cityName, temp, hum, wind, cond) {
+  const cityUpper = (cityName || 'JAKARTA').toUpperCase();
+  const tempHtml = `${temp}<span class="oled-deg-circle"></span>`;
 
   const mainCity = document.getElementById('mainWeatherCity');
   const mainTemp = document.getElementById('mainWeatherTemp');
-  if (mainCity) mainCity.textContent = cityName;
+  if (mainCity) mainCity.textContent = cityUpper;
   if (mainTemp) mainTemp.innerHTML = tempHtml;
 
-  if (cityEl) cityEl.textContent = cityName;
-  if (stageCityEl) stageCityEl.textContent = cityName;
-  if (detailCityEl) detailCityEl.textContent = cityName;
+  const cityEl = document.getElementById('oledCityPreview');
+  const stageCityEl = document.getElementById('stageWeatherCity');
+  const detailCityEl = document.getElementById('detailWeatherCity');
+  const tempEl = document.getElementById('oledTempPreview');
+  const stageTempEl = document.getElementById('stageWeatherTemp');
+  const detailTempEl = document.getElementById('detailWeatherTemp');
+
+  if (cityEl) cityEl.textContent = cityUpper;
+  if (stageCityEl) stageCityEl.textContent = cityUpper;
+  if (detailCityEl) detailCityEl.textContent = cityUpper;
   if (tempEl) tempEl.innerHTML = tempHtml;
   if (stageTempEl) stageTempEl.innerHTML = tempHtml;
   if (detailTempEl) detailTempEl.innerHTML = tempHtml;
 
-  // Nilai teks kelembapan dan angin persis format SSD1306
   const humPreview = document.getElementById('oledWeatherHumPreview');
   const windPreview = document.getElementById('oledWeatherWindPreview');
   const detailHum = document.getElementById('detailWeatherHum');
   const detailWind = document.getElementById('detailWeatherWind');
-  if (humPreview) humPreview.textContent = 'Lembap: 75';
-  if (windPreview) windPreview.textContent = 'Angin: 4 km';
-  if (detailHum) detailHum.textContent = 'Lembap: 75';
-  if (detailWind) detailWind.textContent = 'Angin: 4 km';
+  const condPreview = document.getElementById('oledWeatherCondPreview');
+  const detailCond = document.getElementById('detailWeatherCond');
+
+  const humText = 'Lembap: ' + hum;
+  const windText = 'Angin: ' + wind + ' km';
+
+  if (humPreview) humPreview.textContent = humText;
+  if (detailHum) detailHum.textContent = humText;
+  if (windPreview) windPreview.textContent = windText;
+  if (detailWind) detailWind.textContent = windText;
+
+  if (condPreview && cond) condPreview.textContent = cond.toUpperCase();
+  if (detailCond && cond) detailCond.textContent = cond.toUpperCase();
+}
+
+function updateOledWeatherPreview(city) {
+  const savedTemp = localStorage.getItem('robot_cfg_temp') || '28';
+  const savedHum = localStorage.getItem('robot_cfg_hum') || '75';
+  const savedWind = localStorage.getItem('robot_cfg_wind') || '4';
+  const savedCond = localStorage.getItem('robot_cfg_cond') || 'CERAH';
+  updateOledWeatherPreviewWithData(city, savedTemp, savedHum, savedWind, savedCond);
 }
 
 // Pengaturan Satuan Suhu (Default Permanen Celsius °C)
@@ -2012,11 +2042,11 @@ function fetchGeocoding(url) {
   });
 }
 
-// Pengontrol Visual & Animasi Tombol Cuaca (All-in-One Interactive Button)
+// Pengontrol Visual & Animasi Tombol Cuaca (Hover, Shake, Flash Glow Tanpa Garis)
 function setWeatherBtnVisual(state, text) {
   const btns = [document.getElementById('btnSearchCity'), document.getElementById('btnSearchCitySetting')].filter(Boolean);
-  const bars = [document.getElementById('barSearchCity'), document.getElementById('barSearchCitySetting')].filter(Boolean);
   const txts = [document.getElementById('txtSearchCityBtn'), document.getElementById('txtSearchCityBtnSetting')].filter(Boolean);
+  const inputs = [document.getElementById('cfgCityInput'), document.getElementById('cfgCityInputSetting')].filter(Boolean);
 
   if (state === 'loading') {
     btns.forEach(b => {
@@ -2024,13 +2054,12 @@ function setWeatherBtnVisual(state, text) {
       b.classList.add('disabled');
       b.classList.remove('is-shaking', 'is-success');
     });
-    bars.forEach(bar => {
-      bar.classList.remove('animate');
-      void bar.offsetWidth; // Force reflow to restart CSS transition
-      bar.classList.add('animate');
+    inputs.forEach(i => {
+      i.classList.add('is-processing');
+      i.readOnly = true;
     });
     txts.forEach(t => {
-      t.innerHTML = '<span class="weather-spinner"></span> MENCARI KOTA...';
+      t.innerHTML = '<span class="weather-spinner"></span> MENGAMBIL CUACA...';
     });
   } else if (state === 'error') {
     btns.forEach(b => {
@@ -2038,8 +2067,9 @@ function setWeatherBtnVisual(state, text) {
       b.classList.remove('disabled');
       b.classList.add('is-shaking');
     });
-    bars.forEach(bar => {
-      bar.classList.remove('animate');
+    inputs.forEach(i => {
+      i.classList.remove('is-processing');
+      i.readOnly = false;
     });
     txts.forEach(t => {
       t.textContent = text || 'KOTA TIDAK DITEMUKAN';
@@ -2049,7 +2079,7 @@ function setWeatherBtnVisual(state, text) {
     }, 400);
     setTimeout(() => {
       if (!isSearchingCity) {
-        txts.forEach(t => { t.textContent = 'CARI & TERAPKAN'; });
+        txts.forEach(t => { t.textContent = 'TERAPKAN CUACA'; });
       }
     }, 2200);
   } else if (state === 'success') {
@@ -2058,8 +2088,9 @@ function setWeatherBtnVisual(state, text) {
       b.classList.remove('disabled');
       b.classList.add('is-success');
     });
-    bars.forEach(bar => {
-      bar.classList.remove('animate');
+    inputs.forEach(i => {
+      i.classList.remove('is-processing');
+      i.readOnly = false;
     });
     txts.forEach(t => {
       t.textContent = text || 'KOTA BERHASIL DIATUR';
@@ -2069,7 +2100,7 @@ function setWeatherBtnVisual(state, text) {
     }, 500);
     setTimeout(() => {
       if (!isSearchingCity) {
-        txts.forEach(t => { t.textContent = 'CARI & TERAPKAN'; });
+        txts.forEach(t => { t.textContent = 'TERAPKAN CUACA'; });
       }
     }, 2200);
   } else {
@@ -2077,17 +2108,81 @@ function setWeatherBtnVisual(state, text) {
       b.disabled = false;
       b.classList.remove('disabled', 'is-shaking', 'is-success');
     });
-    bars.forEach(bar => {
-      bar.classList.remove('animate');
+    inputs.forEach(i => {
+      i.classList.remove('is-processing');
+      i.readOnly = false;
     });
     txts.forEach(t => {
-      t.textContent = 'CARI & TERAPKAN';
+      t.textContent = 'TERAPKAN CUACA';
     });
   }
 }
 
-// Pencarian Super Ketat & Validasi Eksak Kota Dunia (Min 3 Detik Animasi)
-function searchAndApplyCity(isFromSetting) {
+// Live Autocomplete Pencarian Kota (Menampilkan Pilihan Dropdown di Seluruh Dunia)
+function searchCitySuggestions(query, isSetting) {
+  const dropdown = document.getElementById(isSetting ? 'cityDropdownSetting' : 'cityDropdown');
+  if (!dropdown) return;
+
+  const clean = (query || '').trim();
+  if (clean.length < 2) {
+    dropdown.innerHTML = '';
+    dropdown.style.display = 'none';
+    return;
+  }
+
+  const url = 'https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(clean) + '&count=6&language=id&format=json';
+
+  fetchGeocoding(url)
+    .then(function(data) {
+      const results = (data && data.results) ? data.results : [];
+      if (results.length === 0) {
+        dropdown.innerHTML = '<div class="city-item-empty">Tidak ada kota yang cocok</div>';
+        dropdown.style.display = 'block';
+        return;
+      }
+
+      dropdown.innerHTML = '';
+      results.forEach(function(item) {
+        const row = document.createElement('div');
+        row.className = 'city-autocomplete-item';
+
+        const nameEl = document.createElement('span');
+        nameEl.className = 'city-item-name';
+        nameEl.textContent = item.name.toUpperCase();
+
+        const descParts = [item.admin1, item.country].filter(Boolean);
+        const descEl = document.createElement('span');
+        descEl.className = 'city-item-desc';
+        descEl.textContent = descParts.join(', ');
+
+        row.appendChild(nameEl);
+        row.appendChild(descEl);
+
+        row.addEventListener('click', function() {
+          selectedCityData = item;
+          const displayLabel = item.name + (item.country ? (', ' + item.country) : '');
+
+          const inputMain = document.getElementById('cfgCityInput');
+          const inputSet = document.getElementById('cfgCityInputSetting');
+          if (inputMain) inputMain.value = displayLabel;
+          if (inputSet) inputSet.value = displayLabel;
+
+          dropdown.style.display = 'none';
+          triggerHaptic(20);
+        });
+
+        dropdown.appendChild(row);
+      });
+
+      dropdown.style.display = 'block';
+    })
+    .catch(function(err) {
+      console.warn('Autocomplete fetch failed:', err);
+    });
+}
+
+// Eksekusi Terapkan Cuaca (Ambil Data Cuaca Real-Time & Sinkron 100% dengan ESP32)
+function applyWeatherCity(isFromSetting) {
   if (isSearchingCity) return;
 
   const activeInput = isFromSetting ?
@@ -2097,23 +2192,7 @@ function searchAndApplyCity(isFromSetting) {
   if (!activeInput) return;
   const rawQuery = activeInput.value.trim();
 
-  // Sinkronkan teks antar kedua input jika ada
-  const inputMain = document.getElementById('cfgCityInput');
-  const inputSet = document.getElementById('cfgCityInputSetting');
-  if (inputMain) inputMain.value = rawQuery;
-  if (inputSet) inputSet.value = rawQuery;
-
-  // Parsing kota dan negara (jika ada koma)
-  const clean = rawQuery.toLowerCase();
-  let targetCity = clean;
-  let targetCountry = '';
-  if (clean.includes(',')) {
-    const parts = clean.split(',');
-    targetCity = parts[0].trim();
-    targetCountry = parts[1].trim();
-  }
-
-  if (!targetCity || targetCity.length < 2) {
+  if (!rawQuery || rawQuery.length < 2) {
     setWeatherBtnVisual('error', 'NAMA KOTA BELUM DIISI');
     triggerHaptic(50);
     setTimeout(() => triggerHaptic(50), 120);
@@ -2123,96 +2202,103 @@ function searchAndApplyCity(isFromSetting) {
   isSearchingCity = true;
   setWeatherBtnVisual('loading');
   triggerHaptic(25);
-  const startTime = Date.now();
 
-  const url = 'https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(targetCity) + '&count=10&language=id&format=json';
+  // Jika belum memilih dari dropdown, resolve koordinat terlebih dahulu
+  let resolvePromise;
+  if (selectedCityData && selectedCityData.name && rawQuery.toLowerCase().includes(selectedCityData.name.toLowerCase())) {
+    resolvePromise = Promise.resolve(selectedCityData);
+  } else {
+    let clean = rawQuery.toLowerCase();
+    let targetCity = clean;
+    let targetCountry = '';
+    if (clean.includes(',')) {
+      const parts = clean.split(',');
+      targetCity = parts[0].trim();
+      targetCountry = parts[1].trim();
+    }
 
-  fetchGeocoding(url)
-    .then(function(data) {
-      // Jamin animasi berjalan minimal 3 detik (3000ms)
-      const elapsed = Date.now() - startTime;
-      const waitMs = Math.max(0, 3000 - elapsed);
-      return new Promise(function(resolve) {
-        setTimeout(function() { resolve(data); }, waitMs);
-      });
-    })
-    .then(function(data) {
-      isSearchingCity = false;
+    const geoUrl = 'https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(targetCity) + '&count=8&language=id&format=json';
+    resolvePromise = fetchGeocoding(geoUrl).then(function(data) {
       const rawResults = (data && data.results) ? data.results : [];
+      if (rawResults.length === 0) return null;
 
-      // 1. FILTER EKSAK (Strict Exact Match): Nama kota harus 100% sama dengan yang diketik
-      const exactMatches = rawResults.filter(function(item) {
-        if (!item.name) return false;
-        const candName = item.name.trim().toLowerCase();
-        if (candName !== targetCity) return false;
+      // Filter exact name atau sort by population
+      let exact = rawResults.filter(item => item.name && item.name.toLowerCase() === targetCity);
+      if (exact.length === 0) exact = rawResults;
 
-        if (targetCountry) {
-          const cName = (item.country || '').toLowerCase();
-          const cCode = (item.country_code || '').toLowerCase();
-          if (!cName.includes(targetCountry) && !cCode.includes(targetCountry)) {
-            return false;
-          }
-        }
-        return true;
-      });
+      exact.sort((a, b) => (b.population || 0) - (a.population || 0));
+      return exact[0];
+    });
+  }
 
-      if (exactMatches.length === 0) {
-        // Tidak ada yang persis sama (misal ketik 'bandu' atau 'xjxjxjjx')
-        setWeatherBtnVisual('error', 'KOTA TIDAK DITEMUKAN');
-        triggerHaptic(60);
-        setTimeout(function() { triggerHaptic(60); }, 120);
-        return;
+  resolvePromise
+    .then(function(cityItem) {
+      if (!cityItem) {
+        throw new Error('NOT_FOUND');
       }
 
-      // 2. PRIORITAS POPULASI TERBESAR (misal: "Bali" di Indonesia, bukan desa kecil di India)
-      exactMatches.sort(function(a, b) {
-        const popA = typeof a.population === 'number' ? a.population : 0;
-        const popB = typeof b.population === 'number' ? b.population : 0;
-        return popB - popA;
-      });
+      selectedCityData = cityItem;
+      const cityName = (cityItem.name || rawQuery).toUpperCase();
+      const lat = parseFloat(cityItem.latitude);
+      const lon = parseFloat(cityItem.longitude);
+      const tz = cityItem.timezone || 'auto';
 
-      const result = exactMatches[0];
-      const cityName = (result.name || targetCity).toUpperCase();
-      const lat = parseFloat(result.latitude);
-      const lon = parseFloat(result.longitude);
-      const tz = result.timezone || 'auto';
+      // AMBIL CUACA REALTIME SEBENARNYA DARI SATELIT OPEN-METEO
+      const weatherUrl = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat +
+                         '&longitude=' + lon +
+                         '&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto';
 
-      if (inputMain) inputMain.value = result.name || targetCity;
-      if (inputSet) inputSet.value = result.name || targetCity;
+      return fetchGeocoding(weatherUrl).then(function(wData) {
+        if (!wData || !wData.current) {
+          throw new Error('WEATHER_FAIL');
+        }
 
-      // Update penyimpanan lokal
-      localStorage.setItem('robot_cfg_city', cityName);
-      localStorage.setItem('robot_cfg_lat', lat);
-      localStorage.setItem('robot_cfg_lon', lon);
-      localStorage.setItem('robot_cfg_tz', tz);
-      localStorage.setItem('robot_cfg_temp_unit', 'C');
+        const cur = wData.current;
+        const temp = Math.round(cur.temperature_2m);
+        const hum = Math.round(cur.relative_humidity_2m);
+        const wind = Math.round(cur.wind_speed_10m);
+        const code = cur.weather_code;
+        const cond = getWeatherConditionText(code);
 
-      // Animasi & Teks Sukses pada Tombol
-      setWeatherBtnVisual('success', 'KOTA BERHASIL DIATUR');
-      triggerHaptic(35);
+        // 1. UPDATE LAYAR OLED PREVIEW DI HP DENGAN DATA ASLI REALTIME
+        updateOledWeatherPreviewWithData(cityName, temp, hum, wind, cond);
 
-      // Update preview OLED pada aplikasi
-      updateOledWeatherPreview(cityName);
+        // 2. SIMPAN PREFERENSI KE HP
+        localStorage.setItem('robot_cfg_city', cityName);
+        localStorage.setItem('robot_cfg_lat', lat);
+        localStorage.setItem('robot_cfg_lon', lon);
+        localStorage.setItem('robot_cfg_tz', tz);
+        localStorage.setItem('robot_cfg_temp', temp);
+        localStorage.setItem('robot_cfg_hum', hum);
+        localStorage.setItem('robot_cfg_wind', wind);
+        localStorage.setItem('robot_cfg_cond', cond);
+        localStorage.setItem('robot_cfg_temp_unit', 'C');
 
-      // Kirim via BLE ke Robot ESP32 (Permanen Celcius 'C')
-      sendCommand({
-        cmd: 'set_weather_city',
-        city: cityName,
-        lat: lat,
-        lon: lon,
-        tz: tz,
-        unit: 'C'
+        // 3. KIRIM DATA REALTIME LENGKAP VIA BLE KE ROBOT ESP32 (SINKRONISASI 100%)
+        sendCommand({
+          cmd: 'set_weather_live',
+          city: cityName,
+          temp: temp,
+          hum: hum,
+          wind: wind,
+          code: code,
+          lat: lat,
+          lon: lon,
+          tz: tz
+        });
+
+        // 4. EFEK SUKSES PADA TOMBOL & HAPTIC
+        isSearchingCity = false;
+        setWeatherBtnVisual('success', 'KOTA BERHASIL DIATUR');
+        triggerHaptic(35);
       });
     })
     .catch(function(err) {
       isSearchingCity = false;
-      const elapsed = Date.now() - startTime;
-      const waitMs = Math.max(0, 3000 - elapsed);
-      setTimeout(function() {
-        setWeatherBtnVisual('error', 'KONEKSI INTERNET GAGAL');
-        triggerHaptic(60);
-        setTimeout(function() { triggerHaptic(60); }, 120);
-      }, waitMs);
+      const msg = (err && err.message === 'NOT_FOUND') ? 'KOTA TIDAK DITEMUKAN' : 'KONEKSI INTERNET GAGAL';
+      setWeatherBtnVisual('error', msg);
+      triggerHaptic(60);
+      setTimeout(() => triggerHaptic(60), 120);
     });
 }
 
@@ -2263,14 +2349,53 @@ function restartRobot() {
 // Restore saved preferences on startup & trigger auto check
 window.addEventListener('DOMContentLoaded', () => {
   const savedCity = localStorage.getItem('robot_cfg_city');
+  const savedTemp = localStorage.getItem('robot_cfg_temp');
+  const savedHum = localStorage.getItem('robot_cfg_hum');
+  const savedWind = localStorage.getItem('robot_cfg_wind');
+  const savedCond = localStorage.getItem('robot_cfg_cond');
   if (savedCity) {
     const input = document.getElementById('cfgCityInput');
     if (input) input.value = savedCity;
     const inputSet = document.getElementById('cfgCityInputSetting');
     if (inputSet) inputSet.value = savedCity;
-    const cityPreview = document.getElementById('oledCityPreview');
-    if (cityPreview) cityPreview.textContent = savedCity.toUpperCase();
+    if (savedTemp !== null) {
+      updateOledWeatherPreviewWithData(savedCity, savedTemp, savedHum || '75', savedWind || '4', savedCond || 'CERAH');
+    } else {
+      updateOledWeatherPreview(savedCity);
+    }
   }
+
+  // Pasang Live Autocomplete pada Input Pencarian Kota
+  const setupCityInputListener = (inputId, isSetting) => {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    input.addEventListener('input', (e) => {
+      const q = e.target.value;
+      if (citySearchTimer) clearTimeout(citySearchTimer);
+      citySearchTimer = setTimeout(() => {
+        searchCitySuggestions(q, isSetting);
+      }, 250);
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const dropdown = document.getElementById(isSetting ? 'cityDropdownSetting' : 'cityDropdown');
+        if (dropdown) dropdown.style.display = 'none';
+        applyWeatherCity(isSetting);
+      }
+    });
+  };
+  setupCityInputListener('cfgCityInput', false);
+  setupCityInputListener('cfgCityInputSetting', true);
+
+  // Tutup dropdown jika klik di luar
+  document.addEventListener('click', (e) => {
+    const d1 = document.getElementById('cityDropdown');
+    const d2 = document.getElementById('cityDropdownSetting');
+    const i1 = document.getElementById('cfgCityInput');
+    const i2 = document.getElementById('cfgCityInputSetting');
+    if (d1 && !d1.contains(e.target) && e.target !== i1) d1.style.display = 'none';
+    if (d2 && !d2.contains(e.target) && e.target !== i2) d2.style.display = 'none';
+  });
 
   const savedFmt = localStorage.getItem('robot_cfg_time_fmt');
   if (savedFmt) {

@@ -2697,6 +2697,11 @@ input[type="range"]::-webkit-slider-thumb {
   gap: 10px;
 }
 
+.weather-input-container {
+  position: relative;
+  width: 100%;
+}
+
 .weather-city-input {
   width: 100%;
   height: 42px;
@@ -2717,10 +2722,79 @@ input[type="range"]::-webkit-slider-thumb {
   box-shadow: 0 0 12px var(--neon-cyan-dim), inset 0 1px 4px rgba(0, 0, 0, 0.6);
 }
 
+.weather-city-input.is-processing {
+  border-color: var(--neon-cyan) !important;
+  box-shadow: 0 0 14px var(--neon-cyan-glow), inset 0 1px 4px rgba(0, 0, 0, 0.6) !important;
+  animation: pulseInput 1.2s infinite ease-in-out;
+  cursor: wait;
+}
+
+@keyframes pulseInput {
+  0%, 100% { box-shadow: 0 0 6px var(--neon-cyan-dim); }
+  50% { box-shadow: 0 0 18px var(--neon-cyan-glow); }
+}
+
 .weather-city-input::placeholder {
   color: var(--text-muted);
 }
 
+/* Autocomplete Suggestion Dropdown (Cyber Neon Blue) */
+.city-autocomplete-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  background: #060B14;
+  border: 1px solid var(--neon-cyan);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.9), 0 0 16px rgba(0, 240, 255, 0.3);
+  z-index: 1000;
+  scrollbar-width: thin;
+}
+
+.city-autocomplete-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(0, 240, 255, 0.1);
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.city-autocomplete-item:last-child {
+  border-bottom: none;
+}
+
+.city-autocomplete-item:hover,
+.city-autocomplete-item:active {
+  background: var(--neon-cyan-dim);
+}
+
+.city-item-name {
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.80rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.city-item-desc {
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+}
+
+.city-item-empty {
+  padding: 12px 14px;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  text-align: center;
+}
+
+/* Tombol Aksi Cuaca (Dengan Hover & Tanpa Garis) */
 .weather-action-btn {
   position: relative;
   width: 100%;
@@ -2736,36 +2810,27 @@ input[type="range"]::-webkit-slider-thumb {
   text-transform: uppercase;
   cursor: pointer;
   overflow: hidden;
-  transition: all 0.25s ease;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+.weather-action-btn:hover {
+  background: rgba(0, 240, 255, 0.22);
+  border-color: #00F0FF;
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.45);
+}
+
 .weather-action-btn:active {
   transform: scale(0.98);
-  background: rgba(0, 240, 255, 0.22);
+  background: rgba(0, 240, 255, 0.3);
 }
 
 .weather-action-btn:disabled,
 .weather-action-btn.disabled {
   opacity: 0.85;
   cursor: wait;
-}
-
-.weather-btn-bar {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  height: 3px;
-  width: 0%;
-  background: var(--neon-cyan);
-  box-shadow: 0 0 8px var(--neon-cyan);
-  transition: width 3s linear;
-}
-
-.weather-btn-bar.animate {
-  width: 100% !important;
 }
 
 .weather-btn-label {
