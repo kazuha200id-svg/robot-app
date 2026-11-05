@@ -1991,8 +1991,9 @@ function updateOledWeatherPreviewWithData(cityName, temp, hum, wind, cond) {
   if (windPreview) windPreview.textContent = windText;
   if (detailWind) detailWind.textContent = windText;
 
-  if (condPreview && cond) condPreview.textContent = cond.toUpperCase();
-  if (detailCond && cond) detailCond.textContent = cond.toUpperCase();
+  const formatCond = cond ? (cond.charAt(0).toUpperCase() + cond.slice(1).toLowerCase()) : 'Cerah';
+  if (condPreview) condPreview.textContent = formatCond;
+  if (detailCond) detailCond.textContent = formatCond;
 }
 
 function updateOledWeatherPreview(city) {

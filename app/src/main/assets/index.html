@@ -312,16 +312,18 @@
             <div class="oled-screen-card" onclick="openRobotFeatureDetail('weather')">
               <div class="oled-display-bezel">
                 <div class="oled-screen-content oled-weather-view">
-                  <div class="oled-weather-row">
-                    <div class="oled-weather-left">
-                      <div class="oled-weather-city" id="oledCityPreview">JAKARTA</div>
-                      <div class="oled-weather-temp" id="oledTempPreview">28<span class="oled-deg-circle"></span></div>
-                    </div>
-                    <div class="oled-weather-dotted-divider"></div>
-                    <div class="oled-weather-right">
-                      <div class="oled-weather-info" id="oledWeatherCondPreview">CERAH</div>
-                      <div class="oled-weather-sub" id="oledWeatherHumPreview">Lembap: 75</div>
-                      <div class="oled-weather-sub" id="oledWeatherWindPreview">Angin: 4 km</div>
+                  <div class="oled-weather-layout">
+                    <div class="oled-weather-city-top" id="oledCityPreview">BANDUNG</div>
+                    <div class="oled-weather-body">
+                      <div class="oled-weather-col-left">
+                        <div class="oled-weather-temp" id="oledTempPreview">28<span class="oled-deg-circle"></span></div>
+                        <div class="oled-weather-cond" id="oledWeatherCondPreview">CERAH</div>
+                      </div>
+                      <div class="oled-weather-dotted-divider"></div>
+                      <div class="oled-weather-col-right">
+                        <div class="oled-weather-sub" id="oledWeatherHumPreview">Lembap: 75</div>
+                        <div class="oled-weather-sub" id="oledWeatherWindPreview">Angin: 4 km</div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -565,16 +567,18 @@
                     </div>
                   </div>
                   <div class="oled-mode-layer active">
-                    <div class="oled-weather-row">
-                      <div class="oled-weather-left">
-                        <div class="oled-weather-city" id="detailWeatherCity">JAKARTA</div>
-                        <div class="oled-weather-temp" id="detailWeatherTemp">28<span class="oled-deg-circle"></span></div>
-                      </div>
-                      <div class="oled-weather-dotted-divider"></div>
-                      <div class="oled-weather-right">
-                        <div class="oled-weather-info" id="detailWeatherCond">CERAH</div>
-                        <div class="oled-weather-sub" id="detailWeatherHum">Lembap: 75</div>
-                        <div class="oled-weather-sub" id="detailWeatherWind">Angin: 4 km</div>
+                    <div class="oled-weather-layout">
+                      <div class="oled-weather-city-top" id="detailWeatherCity">BANDUNG</div>
+                      <div class="oled-weather-body">
+                        <div class="oled-weather-col-left">
+                          <div class="oled-weather-temp" id="detailWeatherTemp">28<span class="oled-deg-circle"></span></div>
+                          <div class="oled-weather-cond" id="detailWeatherCond">CERAH</div>
+                        </div>
+                        <div class="oled-weather-dotted-divider"></div>
+                        <div class="oled-weather-col-right">
+                          <div class="oled-weather-sub" id="detailWeatherHum">Lembap: 75</div>
+                          <div class="oled-weather-sub" id="detailWeatherWind">Angin: 4 km</div>
+                        </div>
                       </div>
                     </div>
                   </div>

@@ -1510,38 +1510,54 @@ input[type="range"]::-webkit-slider-thumb {
   margin: auto 0;
 }
 
-/* Weather View in OLED (100% Persis Fisik SSD1306) */
-.oled-weather-row {
+/* Weather View in OLED (100% Persis Format Baru Fisik SSD1306) */
+.oled-weather-layout {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: calc(100% - 14px);
+  padding: 1px 4px 2px;
+  box-sizing: border-box;
+  justify-content: space-between;
+}
+
+.oled-weather-city-top {
+  width: 100%;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--neon-cyan);
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.1;
+  padding-top: 1px;
+}
+
+.oled-weather-body {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  height: calc(100% - 14px);
-  padding: 3px 6px;
-  box-sizing: border-box;
+  flex: 1;
+  margin-top: 1px;
 }
 
-.oled-weather-left {
+.oled-weather-col-left {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  height: 100%;
-  padding: 1px 0;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
   width: 48px;
-}
-
-.oled-weather-city {
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  letter-spacing: 0.5px;
-  font-weight: 700;
-  color: var(--neon-cyan);
-  text-transform: uppercase;
 }
 
 .oled-weather-temp {
   font-family: var(--font-mono);
-  font-size: 1.45rem;
+  font-size: 1.25rem;
   font-weight: 800;
   line-height: 1;
   color: var(--neon-cyan);
@@ -1560,34 +1576,38 @@ input[type="range"]::-webkit-slider-thumb {
   box-sizing: border-box;
 }
 
+.oled-weather-cond {
+  font-family: var(--font-mono);
+  font-size: 0.54rem;
+  font-weight: 700;
+  color: var(--neon-cyan);
+  text-transform: capitalize;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 48px;
+}
+
 .oled-weather-dotted-divider {
   width: 1px;
-  height: 40px;
+  height: 28px;
   border-left: 1px dotted var(--neon-cyan);
   margin: 0 4px;
   opacity: 0.8;
 }
 
-.oled-weather-right {
+.oled-weather-col-right {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  height: 100%;
-  padding: 1px 0 1px 4px;
+  justify-content: center;
+  gap: 5px;
   flex: 1;
-}
-
-.oled-weather-info {
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  font-weight: 700;
-  color: var(--neon-cyan);
-  text-transform: uppercase;
+  padding-left: 4px;
 }
 
 .oled-weather-sub {
   font-family: var(--font-mono);
-  font-size: 0.56rem;
+  font-size: 0.54rem;
   font-weight: 600;
   color: var(--neon-cyan);
   white-space: nowrap;
