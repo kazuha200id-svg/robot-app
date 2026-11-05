@@ -1947,7 +1947,7 @@ function updateOledWeatherPreview(city) {
   const detailTempEl = document.getElementById('detailWeatherTemp');
   const cityInput = document.getElementById('cfgCityInput');
   const cityName = (city || (cityInput ? cityInput.value : 'JAKARTA')).toUpperCase();
-  const tempVal = currentTempUnit === 'F' ? '82' : '28';
+  const tempVal = '28';
   const tempHtml = `${tempVal}<span class="oled-deg-circle"></span>`;
 
   const mainCity = document.getElementById('mainWeatherCity');
@@ -1973,24 +1973,12 @@ function updateOledWeatherPreview(city) {
   if (detailWind) detailWind.textContent = 'Angin: 4 km';
 }
 
-// Pengaturan Satuan Suhu (°C / °F)
+// Pengaturan Satuan Suhu (Default Permanen Celsius °C)
 function setTempUnit(unit) {
-  currentTempUnit = unit;
-  const btnC = document.getElementById('btnTempC');
-  const btnF = document.getElementById('btnTempF');
-  const btnCSet = document.getElementById('btnTempCSetting');
-  const btnFSet = document.getElementById('btnTempFSetting');
-  if (btnC) btnC.classList.toggle('active', unit === 'C');
-  if (btnF) btnF.classList.toggle('active', unit === 'F');
-  if (btnCSet) btnCSet.classList.toggle('active', unit === 'C');
-  if (btnFSet) btnFSet.classList.toggle('active', unit === 'F');
-
+  currentTempUnit = 'C';
   updateOledWeatherPreview();
-
-  localStorage.setItem('robot_cfg_temp_unit', unit);
-  sendCommand({ cmd: 'temp_unit', unit: unit });
-  showNeonToast('SATUAN SUHU: °' + unit);
-  triggerHaptic(25);
+  localStorage.setItem('robot_cfg_temp_unit', 'C');
+  sendCommand({ cmd: 'temp_unit', unit: 'C' });
 }
 
 let isSearchingCity = false;
@@ -1999,7 +1987,32 @@ function escapeWeatherText(s) {
   return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-// Pencarian Murni & Validasi Ketat Kota Dunia (Tanpa Emoji, Cyber Neon Theme)
+// Helper Fetch Antar-Platform (Bypass batasan CORS WebView via Native AndroidBLE bridge jika tersedia)
+function fetchGeocoding(url) {
+  return new Promise(function(resolve, reject) {
+    if (window.AndroidBLE && typeof window.AndroidBLE.httpGet === 'function') {
+      try {
+        const raw = window.AndroidBLE.httpGet(url);
+        if (raw && raw.length > 0) {
+          const parsed = JSON.parse(raw);
+          return resolve(parsed);
+        }
+      } catch (err) {
+        console.warn('[HTTP] Native bridge error, mencoba fetch biasa:', err);
+      }
+    }
+
+    fetch(url)
+      .then(function(res) {
+        if (!res.ok) throw new Error('HTTP Status ' + res.status);
+        return res.json();
+      })
+      .then(resolve)
+      .catch(reject);
+  });
+}
+
+// Pencarian Murni & Validasi Ketat Kota Dunia (100% Cyber Neon Theme & Tanpa Emoji)
 function searchAndApplyCity(isFromSetting) {
   if (isSearchingCity) return;
 
@@ -2061,11 +2074,7 @@ function searchAndApplyCity(isFromSetting) {
 
   const url = 'https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(query) + '&count=1&language=id&format=json';
 
-  fetch(url)
-    .then(function(res) {
-      if (!res.ok) throw new Error('Network error');
-      return res.json();
-    })
+  fetchGeocoding(url)
     .then(function(data) {
       isSearchingCity = false;
       if (btn) {
@@ -2128,18 +2137,19 @@ function searchAndApplyCity(isFromSetting) {
       localStorage.setItem('robot_cfg_lat', lat);
       localStorage.setItem('robot_cfg_lon', lon);
       localStorage.setItem('robot_cfg_tz', tz);
+      localStorage.setItem('robot_cfg_temp_unit', 'C');
 
       // Update preview OLED pada aplikasi
       updateOledWeatherPreview(cityName);
 
-      // Kirim via BLE ke Robot ESP32
+      // Kirim via BLE ke Robot ESP32 (Permanen Celcius 'C')
       sendCommand({
         cmd: 'set_weather_city',
         city: cityName,
         lat: lat,
         lon: lon,
         tz: tz,
-        unit: currentTempUnit
+        unit: 'C'
       });
 
       showNeonToast('KOTA DIATUR: ' + cityName);
