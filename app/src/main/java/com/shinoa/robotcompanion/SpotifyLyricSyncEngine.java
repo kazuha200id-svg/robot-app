@@ -51,9 +51,10 @@ public class SpotifyLyricSyncEngine {
         }
     }
 
+    @FunctionalInterface
     public interface SyncListener {
         void onMusicStateChanged(String title, String artist, double posSec, double durSec, boolean isPlaying, String activeLyric);
-        void onLyricsLoaded(String title, String artist, List<LyricLine> lyrics);
+        default void onLyricsLoaded(String title, String artist, List<LyricLine> lyrics) {}
     }
 
     private Context appContext;
