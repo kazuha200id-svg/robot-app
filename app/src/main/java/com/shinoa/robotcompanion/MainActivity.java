@@ -38,10 +38,16 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import android.companion.AssociationRequest;
+import android.companion.BluetoothDeviceFilter;
+import android.companion.CompanionDeviceManager;
+import android.content.IntentSender;
+import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity implements BleManager.BleListener {
     private static final int REQ_NEARBY = 101;
     private static final int REQ_LOCATION = 102;
+    private static final int REQ_COMPANION = 104;
 
     private WebView webView;
     private BleManager bleManager;
@@ -249,23 +255,6 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
                     }
                 );
                 return;
-            }
-        }
-
-        // Minta Izin Latar Belakang Resmi (Abaikan Pengoptimalan Baterai agar proses background tidak pernah dibatasi OS)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            android.os.PowerManager pm = (android.os.PowerManager) getSystemService(Context.POWER_SERVICE);
-            if (pm != null && !pm.isIgnoringBatteryOptimizations(getPackageName())) {
-                try {
-                    Intent bgIntent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-                    bgIntent.setData(Uri.parse("package:" + getPackageName()));
-                    startActivity(bgIntent);
-                } catch (Exception e) {
-                    try {
-                        Intent bgIntent = new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
-                        startActivity(bgIntent);
-                    } catch (Exception ignored) {}
-                }
             }
         }
 
@@ -481,6 +470,75 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
         }
     }
 
+    public void requestCompanionAssociation() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            try {
+                CompanionDeviceManager cdm = (CompanionDeviceManager) getSystemService(Context.COMPANION_DEVICE_SERVICE);
+                if (cdm != null) {
+                    AssociationRequest.Builder reqBuilder = new AssociationRequest.Builder();
+
+                    BluetoothDeviceFilter btFilter = new BluetoothDeviceFilter.Builder()
+                            .setNamePattern(Pattern.compile(".*"))
+                            .build();
+                    reqBuilder.addDeviceFilter(btFilter);
+
+                    try {
+                        android.companion.BluetoothLeDeviceFilter bleFilter = new android.companion.BluetoothLeDeviceFilter.Builder()
+                                .setNamePattern(Pattern.compile(".*"))
+                                .build();
+                        reqBuilder.addDeviceFilter(bleFilter);
+                    } catch (Exception ignored) {}
+
+                    AssociationRequest request = reqBuilder
+                            .setSingleDevice(false)
+                            .build();
+
+                    cdm.associate(request, new CompanionDeviceManager.Callback() {
+                        @Override
+                        public void onDeviceFound(IntentSender chooserLauncher) {
+                            try {
+                                startIntentSenderForResult(chooserLauncher, REQ_COMPANION, null, 0, 0, 0);
+                            } catch (Exception ignored) {}
+                        }
+
+                        @Override
+                        public void onAssociationPending(IntentSender intentSender) {
+                            try {
+                                startIntentSenderForResult(intentSender, REQ_COMPANION, null, 0, 0, 0);
+                            } catch (Exception ignored) {}
+                        }
+
+                        @Override
+                        public void onFailure(CharSequence error) {}
+                    }, null);
+                }
+            } catch (Exception ignored) {}
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQ_COMPANION && resultCode == RESULT_OK && data != null) {
+            try {
+                android.bluetooth.BluetoothDevice device = data.getParcelableExtra(CompanionDeviceManager.EXTRA_DEVICE);
+                if (device == null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    android.companion.AssociationInfo info = data.getParcelableExtra(CompanionDeviceManager.EXTRA_ASSOCIATION_INFO);
+                    if (info != null && info.getDeviceMacAddress() != null) {
+                        BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+                        if (adapter != null) {
+                            device = adapter.getRemoteDevice(info.getDeviceMacAddress().toString().toUpperCase());
+                        }
+                    }
+                }
+                if (device != null && bleManager != null) {
+                    bleManager.saveDevice(device);
+                    bleManager.connectToDevice(device);
+                }
+            } catch (Exception ignored) {}
+        }
+    }
+
     public class WebAppInterface {
         @JavascriptInterface
         public boolean isBluetoothEnabled() {
@@ -614,24 +672,8 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
         }
 
         @JavascriptInterface
-        public void requestBackgroundPermission() {
-            runOnUiThread(() -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    android.os.PowerManager pm = (android.os.PowerManager) getSystemService(Context.POWER_SERVICE);
-                    if (pm != null && !pm.isIgnoringBatteryOptimizations(getPackageName())) {
-                        try {
-                            Intent bgIntent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-                            bgIntent.setData(Uri.parse("package:" + getPackageName()));
-                            startActivity(bgIntent);
-                        } catch (Exception e) {
-                            try {
-                                Intent bgIntent = new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
-                                startActivity(bgIntent);
-                            } catch (Exception ignored) {}
-                        }
-                    }
-                }
-            });
+        public void requestCompanionDeviceAssociation() {
+            runOnUiThread(() -> requestCompanionAssociation());
         }
 
         @JavascriptInterface

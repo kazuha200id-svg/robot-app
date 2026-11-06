@@ -25,8 +25,11 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
-    <!-- Izin Eksekusi Latar Belakang Penuh (Tanpa Pembatasan Penghemat Baterai) -->
-    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <!-- Fitur & Izin Resmi Perangkat Pendamping (Companion Device) Berjalan di Latar Belakang -->
+    <uses-feature android:name="android.software.companion_device_setup" />
+    <uses-permission android:name="android.permission.REQUEST_COMPANION_RUN_IN_BACKGROUND" />
+    <uses-permission android:name="android.permission.REQUEST_COMPANION_START_FOREGROUND_SERVICES_FROM_BACKGROUND" />
+    <uses-permission android:name="android.permission.REQUEST_COMPANION_USE_DATA_IN_BACKGROUND" />
 
     <!-- Internet Access for Weather Geocoding & Open-Meteo API -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -74,6 +77,16 @@
                 <action android:name="com.spotify.music.queuechanged" />
             </intent-filter>
         </receiver>
+
+        <!-- Layanan Resmi Pengelola Perangkat Pendamping (Companion Device Service) -->
+        <service
+            android:name=".RobotCompanionDeviceService"
+            android:exported="true"
+            android:permission="android.permission.BIND_COMPANION_DEVICE_SERVICE">
+            <intent-filter>
+                <action android:name="android.companion.CompanionDeviceService" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>
