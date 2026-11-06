@@ -64,39 +64,7 @@ public class SpotifyMediaManager {
             receiver = new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context ctx, Intent intent) {
-                    if (intent == null || intent.getAction() == null) return;
-                    String action = intent.getAction();
-
-                    if ("com.spotify.music.metadatachanged".equals(action)) {
-                        String track = intent.getStringExtra("track");
-                        String artist = intent.getStringExtra("artist");
-                        int lengthMs = intent.getIntExtra("length", 0);
-                        int posMs = intent.getIntExtra("playbackPosition", -1);
-
-                        if (track != null) currentTitle = track;
-                        if (artist != null) currentArtist = artist;
-                        if (lengthMs > 0) currentDurationSec = lengthMs / 1000.0;
-                        if (posMs >= 0) currentPositionSec = posMs / 1000.0;
-                        inactiveAudioSeconds = 0;
-
-                        dispatchState();
-                    } else if ("com.spotify.music.playbackstatechanged".equals(action)) {
-                        boolean playing = intent.getBooleanExtra("playing", false);
-                        isPlaying = playing;
-                        inactiveAudioSeconds = 0;
-
-                        // JANGAN reset currentPositionSec ke 0 saat pause kecuali ada data valid > 0
-                        if (intent.hasExtra("playbackPosition")) {
-                            int posMs = intent.getIntExtra("playbackPosition", -1);
-                            if (posMs > 0) {
-                                currentPositionSec = posMs / 1000.0;
-                            }
-                        }
-
-                        dispatchState();
-                    } else if ("com.spotify.music.queuechanged".equals(action)) {
-                        dispatchState();
-                    }
+                    handleIntent(intent);
                 }
             };
 
@@ -128,6 +96,41 @@ public class SpotifyMediaManager {
             } catch (Exception ignored) {}
             isRegistered = false;
             receiver = null;
+        }
+    }
+
+    public void handleIntent(Intent intent) {
+        if (intent == null || intent.getAction() == null) return;
+        String action = intent.getAction();
+
+        if ("com.spotify.music.metadatachanged".equals(action)) {
+            String track = intent.getStringExtra("track");
+            String artist = intent.getStringExtra("artist");
+            int lengthMs = intent.getIntExtra("length", 0);
+            int posMs = intent.getIntExtra("playbackPosition", -1);
+
+            if (track != null) currentTitle = track;
+            if (artist != null) currentArtist = artist;
+            if (lengthMs > 0) currentDurationSec = lengthMs / 1000.0;
+            if (posMs >= 0) currentPositionSec = posMs / 1000.0;
+            inactiveAudioSeconds = 0;
+
+            dispatchState();
+        } else if ("com.spotify.music.playbackstatechanged".equals(action)) {
+            boolean playing = intent.getBooleanExtra("playing", false);
+            isPlaying = playing;
+            inactiveAudioSeconds = 0;
+
+            if (intent.hasExtra("playbackPosition")) {
+                int posMs = intent.getIntExtra("playbackPosition", -1);
+                if (posMs > 0) {
+                    currentPositionSec = posMs / 1000.0;
+                }
+            }
+
+            dispatchState();
+        } else if ("com.spotify.music.queuechanged".equals(action)) {
+            dispatchState();
         }
     }
 

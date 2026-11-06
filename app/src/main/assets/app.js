@@ -2880,6 +2880,9 @@ function updateSpotifyPreviewCard(curPos) {
 }
 
 function dispatchRealtimeLyricSync(forcePriority = false) {
+  // Jika berjalan di dalam aplikasi Android native, transmisi BLE lirik ditangani 100% oleh SpotifyLyricSyncEngine di Java Foreground Service
+  if (window.AndroidBLE) return;
+
   if (!isBleConnected || currentRobotMode !== 17) return;
 
   if (!currentSpotifyState.title || currentSpotifyState.title.length === 0) {

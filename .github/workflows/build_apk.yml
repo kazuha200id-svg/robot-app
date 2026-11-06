@@ -38,14 +38,14 @@ jobs:
       - name: Rename APK Output
         run: |
           mkdir -p output_apk
-          cp app/build/outputs/apk/debug/app-debug.apk output_apk/RobotCompanion.apk
-          echo "APK successfully built: output_apk/RobotCompanion.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk output_apk/RobotDesk.apk
+          echo "APK successfully built: output_apk/RobotDesk.apk"
 
       - name: Upload APK as Workflow Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: RobotCompanion-APK
-          path: output_apk/RobotCompanion.apk
+          name: RobotDesk-APK
+          path: output_apk/RobotDesk.apk
           if-no-files-found: error
           retention-days: 30
 
@@ -54,18 +54,19 @@ jobs:
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         with:
           tag_name: v1.0.${{ github.run_number }}
-          name: Robot Companion v1.0.${{ github.run_number }}
+          name: Robot Desk v1.0.${{ github.run_number }}
           body: |
-            ## Robot Companion Android APK (Pure Neon Blue)
+            ## Robot Desk Android APK (Pure Neon Blue)
             - **Desain**: 100% Monokrom Biru Neon (Electric Cyan `#00F0FF`)
-            - **Ikon**: Vektor Garis Kustom (Zero Emoji Berwarna)
+            - **Ikon**: Cute Yeti Digital Clock
             - **Navigasi**: Sistem Multi-Halaman Penuh (Non-Scrollable)
             - **Konektivitas**: Native Bluetooth Low Energy (BLE) Direct Chip-to-Chip
+            - **Spotify Sync**: Background Execution & Persistent Foreground Service (Zero notification-listener)
             
             ### Cara Install:
-            1. Download file `RobotCompanion.apk` di bawah.
+            1. Download file `RobotDesk.apk` di bawah.
             2. Buka di HP Android Anda dan klik **Install**.
-          files: output_apk/RobotCompanion.apk
+          files: output_apk/RobotDesk.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true

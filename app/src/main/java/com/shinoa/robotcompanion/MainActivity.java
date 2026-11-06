@@ -109,7 +109,7 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
         setContentView(webView);
 
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-        bleManager = new BleManager(this);
+        bleManager = BleManager.getInstance(this);
         bleManager.setListener(this);
 
         WebSettings settings = webView.getSettings();
@@ -149,7 +149,15 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
     @Override
     protected void onResume() {
         super.onResume();
-        SpotifyMediaManager.getInstance().register(this, (title, artist, posSec, durSec, isPlaying) -> {
+        if (bleManager != null) {
+            bleManager.setListener(this);
+            runOnUiThread(() -> {
+                if (webView != null) {
+                    webView.evaluateJavascript("if (window.onBLEStatus) window.onBLEStatus(" + bleManager.isConnected() + ", '" + (bleManager.isConnected() ? "Tersambung ke Robot" : "Terputus") + "');", null);
+                }
+            });
+        }
+        SpotifyLyricSyncEngine.getInstance().setSyncListener((title, artist, posSec, durSec, isPlaying, activeLyric) -> {
             runOnUiThread(() -> {
                 if (webView != null) {
                     try {
@@ -159,6 +167,7 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
                         obj.put("pos", posSec);
                         obj.put("dur", durSec);
                         obj.put("play", isPlaying);
+                        obj.put("lyric", activeLyric);
                         webView.evaluateJavascript("if (window.onMusicStateChanged) window.onMusicStateChanged(" + obj.toString() + ");", null);
                     } catch (Exception ignored) {}
                 }
@@ -708,10 +717,11 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
             } catch (Exception ignored) {}
             receiverRegistered = false;
         }
-        SpotifyMediaManager.getInstance().unregister(this);
-        RobotCompanionService.stop(this);
         if (bleManager != null) {
-            bleManager.disconnect();
+            bleManager.setListener(null);
         }
+        SpotifyLyricSyncEngine.getInstance().setSyncListener(null);
+        // Layanan latar belakang RobotCompanionService dan koneksi BLE tetap dijaga aktif
+        // agar sinkronisasi lirik ke robot tidak pernah terhenti saat aplikasi di-minimize atau layar mati!
     }
 }

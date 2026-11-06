@@ -59,11 +59,21 @@ public class RobotCompanionService extends Service {
     public void onCreate() {
         super.onCreate();
         createNotificationChannel();
+
+        // Mulai mesin sinkronisasi lirik Spotify native di latar belakang
+        SpotifyLyricSyncEngine.getInstance().start(this);
+
+        // Pertahankan atau sambungkan kembali koneksi Bluetooth Low Energy jika ada perangkat tersimpan
+        BleManager ble = BleManager.getInstance(this);
+        if (!ble.isConnected() && ble.hasSavedDevice()) {
+            ble.connectToSavedDevice();
+        }
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null && ACTION_STOP.equals(intent.getAction())) {
+            SpotifyLyricSyncEngine.getInstance().stop();
             stopForeground(true);
             stopSelf();
             isRunning = false;
@@ -71,8 +81,8 @@ public class RobotCompanionService extends Service {
         }
 
         Notification notification = buildNotification(
-                "Robot Companion Terhubung",
-                "Sinkronisasi lirik Spotify & status aktif di latar belakang"
+                "Robot Desk Terhubung",
+                "Sinkronisasi lirik Spotify & koneksi robot aktif"
         );
 
         try {
@@ -100,6 +110,7 @@ public class RobotCompanionService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        SpotifyLyricSyncEngine.getInstance().stop();
         isRunning = false;
     }
 
@@ -112,7 +123,7 @@ public class RobotCompanionService extends Service {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
                     CHANNEL_ID,
-                    "Robot Companion Background Service",
+                    "Robot Desk Background Service",
                     NotificationManager.IMPORTANCE_LOW
             );
             channel.setDescription("Menjaga koneksi Bluetooth dan sinkronisasi lirik Spotify tetap stabil di latar belakang");
@@ -146,7 +157,7 @@ public class RobotCompanionService extends Service {
         return new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle(title)
                 .setContentText(content)
-                .setSmallIcon(R.drawable.ic_launcher)
+                .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentIntent(pendingIntent)
                 .setOngoing(true)
                 .setPriority(NotificationCompat.PRIORITY_LOW)

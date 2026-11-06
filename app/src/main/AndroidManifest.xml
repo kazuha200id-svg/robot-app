@@ -24,6 +24,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <!-- Internet Access for Weather Geocoding & Open-Meteo API -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -38,9 +39,9 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@drawable/ic_launcher"
+        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@drawable/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.RobotCompanion">
         <activity
@@ -60,6 +61,17 @@
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="connectedDevice" />
+
+        <!-- Receiver Spotify Broadcast untuk update di latar belakang -->
+        <receiver
+            android:name=".SpotifyBroadcastReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.spotify.music.metadatachanged" />
+                <action android:name="com.spotify.music.playbackstatechanged" />
+                <action android:name="com.spotify.music.queuechanged" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

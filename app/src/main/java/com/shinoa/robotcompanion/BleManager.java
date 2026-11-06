@@ -63,9 +63,19 @@ public class BleManager {
     private static final String KEY_SAVED_MAC = "saved_mac_address";
     private static final String KEY_SAVED_NAME = "saved_device_name";
 
+    private static BleManager sInstance;
+
+    public static synchronized BleManager getInstance(Context context) {
+        if (sInstance == null) {
+            sInstance = new BleManager(context.getApplicationContext());
+        }
+        return sInstance;
+    }
+
     public BleManager(Context context) {
         this.context = context.getApplicationContext();
         this.bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        sInstance = this;
     }
 
     public void setListener(BleListener listener) {
@@ -482,6 +492,15 @@ public class BleManager {
                 byte[] data = characteristic.getValue();
                 if (data != null && data.length > 0) {
                     String json = new String(data, StandardCharsets.UTF_8);
+                    if (json.contains("\"media_ctrl\"")) {
+                        if (json.contains("\"play_pause\"")) {
+                            SpotifyMediaManager.playPause(context);
+                        } else if (json.contains("\"next\"")) {
+                            SpotifyMediaManager.skipNext(context);
+                        } else if (json.contains("\"prev\"")) {
+                            SpotifyMediaManager.skipPrev(context);
+                        }
+                    }
                     if (listener != null) {
                         mainHandler.post(() -> listener.onDataReceived(json));
                     }
