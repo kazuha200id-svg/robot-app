@@ -141,6 +141,9 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
         receiverRegistered = true;
 
         backgroundTicker.postDelayed(backgroundTickRunnable, 1000);
+
+        // Jalankan Foreground Service resmi untuk menjaga koneksi BLE & Spotify di latar belakang
+        RobotCompanionService.start(this);
     }
 
     @Override
@@ -237,6 +240,13 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
                     }
                 );
                 return;
+            }
+        }
+
+        // Minta izin notifikasi di Android 13+ agar Foreground Service tampil resmi di status bar
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 103);
             }
         }
 
@@ -699,6 +709,7 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
             receiverRegistered = false;
         }
         SpotifyMediaManager.getInstance().unregister(this);
+        RobotCompanionService.stop(this);
         if (bleManager != null) {
             bleManager.disconnect();
         }
