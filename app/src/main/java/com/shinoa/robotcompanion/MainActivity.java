@@ -621,35 +621,6 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
         public void requestMusicSync() {
             SpotifyMediaManager.getInstance().dispatchState();
         }
-
-        @JavascriptInterface
-        public boolean isNotificationAccessGranted() {
-            return RobotNotificationListenerService.isNotificationAccessGranted(MainActivity.this);
-        }
-
-        @JavascriptInterface
-        public void openNotificationAccessSettings() {
-            RobotNotificationListenerService.openNotificationAccessSettings(MainActivity.this);
-        }
-
-        @JavascriptInterface
-        public void testNotification(String type) {
-            RobotNotificationListenerService.testNotification(MainActivity.this, type);
-        }
-
-        @JavascriptInterface
-        public void saveNotifSetting(String key, boolean val) {
-            getSharedPreferences(RobotNotificationListenerService.PREF_NOTIF, Context.MODE_PRIVATE)
-                    .edit()
-                    .putBoolean(key, val)
-                    .apply();
-        }
-
-        @JavascriptInterface
-        public boolean getNotifSetting(String key, boolean defVal) {
-            return getSharedPreferences(RobotNotificationListenerService.PREF_NOTIF, Context.MODE_PRIVATE)
-                    .getBoolean(key, defVal);
-        }
     }
 
     @Override
@@ -696,15 +667,6 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
                 SpotifyMediaManager.skipNext(this);
             } else if (json.contains("\"prev\"")) {
                 SpotifyMediaManager.skipPrev(this);
-            }
-        }
-        if (json != null && json.contains("\"call_act\"")) {
-            if (json.contains("\"answer\"")) {
-                RobotNotificationListenerService.answerCall(this);
-            } else if (json.contains("\"reject\"")) {
-                RobotNotificationListenerService.rejectCall(this);
-            } else if (json.contains("\"mute\"")) {
-                RobotNotificationListenerService.muteCall(this);
             }
         }
         runOnUiThread(() -> {
