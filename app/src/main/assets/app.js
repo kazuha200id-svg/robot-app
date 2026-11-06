@@ -2707,9 +2707,8 @@ function getActiveLyricAtTime(sec) {
 function updateSpotifyPermissionUI() {
   const banner = document.getElementById('spotifyPermBanner');
   if (!banner) return;
-  if (window.AndroidBLE && typeof window.AndroidBLE.isMusicNotificationGranted === 'function') {
-    const granted = window.AndroidBLE.isMusicNotificationGranted();
-    banner.style.display = granted ? 'none' : 'flex';
+  if (!currentSpotifyState.title) {
+    banner.style.display = 'flex';
   } else {
     banner.style.display = 'none';
   }
@@ -2717,10 +2716,12 @@ function updateSpotifyPermissionUI() {
 
 function openSpotifyPermissionSettings() {
   triggerHaptic(30);
-  if (window.AndroidBLE && typeof window.AndroidBLE.openMusicNotificationSettings === 'function') {
+  if (window.AndroidBLE && typeof window.AndroidBLE.openSpotifyApp === 'function') {
+    window.AndroidBLE.openSpotifyApp();
+  } else if (window.AndroidBLE && typeof window.AndroidBLE.openMusicNotificationSettings === 'function') {
     window.AndroidBLE.openMusicNotificationSettings();
   } else {
-    showNeonToast('Buka Pengaturan HP > Akses Notifikasi');
+    showNeonToast('Buka Pengaturan Spotify > Status Siaran Perangkat');
   }
 }
 

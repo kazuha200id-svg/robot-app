@@ -133,23 +133,21 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
     @Override
     protected void onResume() {
         super.onResume();
-        if (MusicNotificationListener.getInstance() != null) {
-            MusicNotificationListener.getInstance().setStateListener((title, artist, posSec, durSec, isPlaying) -> {
-                runOnUiThread(() -> {
-                    if (webView != null) {
-                        try {
-                            org.json.JSONObject obj = new org.json.JSONObject();
-                            obj.put("title", title);
-                            obj.put("artist", artist);
-                            obj.put("pos", posSec);
-                            obj.put("dur", durSec);
-                            obj.put("play", isPlaying);
-                            webView.evaluateJavascript("if (window.onMusicStateChanged) window.onMusicStateChanged(" + obj.toString() + ");", null);
-                        } catch (Exception ignored) {}
-                    }
-                });
+        SpotifyMediaManager.getInstance().register(this, (title, artist, posSec, durSec, isPlaying) -> {
+            runOnUiThread(() -> {
+                if (webView != null) {
+                    try {
+                        org.json.JSONObject obj = new org.json.JSONObject();
+                        obj.put("title", title);
+                        obj.put("artist", artist);
+                        obj.put("pos", posSec);
+                        obj.put("dur", durSec);
+                        obj.put("play", isPlaying);
+                        webView.evaluateJavascript("if (window.onMusicStateChanged) window.onMusicStateChanged(" + obj.toString() + ");", null);
+                    } catch (Exception ignored) {}
+                }
             });
-        }
+        });
         checkPermissionsAndProceed();
     }
 
@@ -574,34 +572,37 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
 
         @JavascriptInterface
         public boolean isMusicNotificationGranted() {
-            return MusicNotificationListener.isNotificationAccessGranted(MainActivity.this);
+            return true;
         }
 
         @JavascriptInterface
         public void openMusicNotificationSettings() {
-            MusicNotificationListener.openNotificationAccessSettings(MainActivity.this);
+            SpotifyMediaManager.openSpotify(MainActivity.this);
+        }
+
+        @JavascriptInterface
+        public void openSpotifyApp() {
+            SpotifyMediaManager.openSpotify(MainActivity.this);
         }
 
         @JavascriptInterface
         public void mediaPlayPause() {
-            MusicNotificationListener.playPause();
+            SpotifyMediaManager.playPause(MainActivity.this);
         }
 
         @JavascriptInterface
         public void mediaNext() {
-            MusicNotificationListener.skipNext();
+            SpotifyMediaManager.skipNext(MainActivity.this);
         }
 
         @JavascriptInterface
         public void mediaPrev() {
-            MusicNotificationListener.skipPrev();
+            SpotifyMediaManager.skipPrev(MainActivity.this);
         }
 
         @JavascriptInterface
         public void requestMusicSync() {
-            if (MusicNotificationListener.getInstance() != null) {
-                MusicNotificationListener.getInstance().dispatchCurrentMusicState();
-            }
+            SpotifyMediaManager.getInstance().dispatchState();
         }
     }
 
@@ -644,11 +645,11 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
     public void onDataReceived(String json) {
         if (json != null && json.contains("\"media_ctrl\"")) {
             if (json.contains("\"play_pause\"")) {
-                MusicNotificationListener.playPause();
+                SpotifyMediaManager.playPause(this);
             } else if (json.contains("\"next\"")) {
-                MusicNotificationListener.skipNext();
+                SpotifyMediaManager.skipNext(this);
             } else if (json.contains("\"prev\"")) {
-                MusicNotificationListener.skipPrev();
+                SpotifyMediaManager.skipPrev(this);
             }
         }
         runOnUiThread(() -> {
@@ -682,6 +683,7 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
             } catch (Exception ignored) {}
             receiverRegistered = false;
         }
+        SpotifyMediaManager.getInstance().unregister(this);
         if (bleManager != null) {
             bleManager.disconnect();
         }

@@ -751,11 +751,11 @@
 
             <!-- KONTROL MUSIK & SINKRONISASI -->
             <div class="feature-ctrl-panel spotify-ctrl-card">
-              <!-- Banner Peringatan Izin Akses Notifikasi jika belum diberikan -->
-              <div class="spotify-perm-banner" id="spotifyPermBanner" style="display: none;">
-                <div style="font-weight: 700; color: #FFAA00;">IZIN AKSES NOTIFIKASI DIBUTUHKAN</div>
-                <div>Aplikasi membutuhkan izin akses notifikasi agar dapat mendeteksi lagu dan memutar musik Spotify secara realtime.</div>
-                <button type="button" class="btn-grant-perm" onclick="openSpotifyPermissionSettings()">AKTIFKAN IZIN SEKARANG</button>
+              <!-- Petunjuk Pengaturan Siaran Spotify (Bebas Izin Sensitif) -->
+              <div class="spotify-perm-banner" id="spotifyPermBanner" style="display: none; border-color: rgba(29, 185, 84, 0.4); background: rgba(29, 185, 84, 0.08);">
+                <div style="font-weight: 700; color: #1DB954;">STATUS SIARAN SPOTIFY</div>
+                <div style="color: #D2E4F5;">Pastikan opsi <b>"Status Siaran Perangkat"</b> aktif di Pengaturan Spotify agar judul lagu &amp; lirik otomatis tersinkron ke robot.</div>
+                <button type="button" class="btn-grant-perm" style="background: #1DB954; color: #051016;" onclick="openSpotifyPermissionSettings()">BUKA APLIKASI SPOTIFY</button>
               </div>
 
               <!-- Info Lagu Aktif -->
