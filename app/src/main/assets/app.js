@@ -3042,3 +3042,21 @@ function initSpotifyFeature() {
     window.AndroidBLE.requestMusicSync();
   }
 }
+
+// Dipicu setiap 150ms oleh Native Android Java agar sinkronisasi lirik tidak pernah mati di latar belakang
+window.onBackgroundTick = function() {
+  if (currentSpotifyState.isPlaying && currentSpotifyState.title) {
+    const now = Date.now();
+    const elapsed = (currentSpotifyState.lastUpdateTimestamp > 0)
+      ? (now - currentSpotifyState.lastUpdateTimestamp) / 1000
+      : 0;
+    const curPos = Math.min(currentSpotifyState.positionSec + elapsed, currentSpotifyState.durationSec || 9999);
+
+    if (currentOpenDetailFeature === 'spotify') {
+      updateSpotifyDetailUI();
+    } else {
+      updateSpotifyPreviewCard(curPos);
+    }
+    dispatchRealtimeLyricSync(false);
+  }
+};

@@ -34,22 +34,11 @@ public class SpotifyMediaManager {
                 boolean isMusicActive = (am != null && am.isMusicActive());
 
                 if (!isMusicActive) {
-                    inactiveAudioSeconds++;
                     if (isPlaying) {
-                        // Musik terdeteksi berhenti berbunyi di level audio OS
-                        isPlaying = false;
-                        dispatchState();
-                    } else if (inactiveAudioSeconds >= 3 && !currentTitle.isEmpty()) {
-                        // Spotify ditutup / musik di-stop total selama 3 detik
-                        currentTitle = "";
-                        currentArtist = "";
-                        currentPositionSec = 0;
-                        currentDurationSec = 0;
+                        // Musik terdeteksi berhenti berbunyi di level audio OS -> set jeda tanpa hapus data lagu
                         isPlaying = false;
                         dispatchState();
                     }
-                } else {
-                    inactiveAudioSeconds = 0;
                 }
             }
             watchdogHandler.postDelayed(this, 1000);

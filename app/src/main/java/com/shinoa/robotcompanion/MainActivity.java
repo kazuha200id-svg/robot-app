@@ -53,6 +53,17 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
     private boolean hasDeniedLocation = false;
     private Dialog activeDialog = null;
 
+    private final android.os.Handler backgroundTicker = new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable backgroundTickRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (webView != null) {
+                webView.evaluateJavascript("if (window.onBackgroundTick) window.onBackgroundTick();", null);
+            }
+            backgroundTicker.postDelayed(this, 150);
+        }
+    };
+
     private final BroadcastReceiver btStateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -128,6 +139,8 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
         IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
         registerReceiver(btStateReceiver, filter);
         receiverRegistered = true;
+
+        backgroundTicker.postDelayed(backgroundTickRunnable, 1000);
     }
 
     @Override
@@ -677,6 +690,7 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        backgroundTicker.removeCallbacks(backgroundTickRunnable);
         if (receiverRegistered) {
             try {
                 unregisterReceiver(btStateReceiver);
