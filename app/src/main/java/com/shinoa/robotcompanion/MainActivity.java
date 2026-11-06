@@ -252,10 +252,20 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
             }
         }
 
-        // Minta izin notifikasi di Android 13+ agar Foreground Service tampil resmi di status bar
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 103);
+        // Minta Izin Latar Belakang Resmi (Abaikan Pengoptimalan Baterai agar proses background tidak pernah dibatasi OS)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            android.os.PowerManager pm = (android.os.PowerManager) getSystemService(Context.POWER_SERVICE);
+            if (pm != null && !pm.isIgnoringBatteryOptimizations(getPackageName())) {
+                try {
+                    Intent bgIntent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                    bgIntent.setData(Uri.parse("package:" + getPackageName()));
+                    startActivity(bgIntent);
+                } catch (Exception e) {
+                    try {
+                        Intent bgIntent = new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+                        startActivity(bgIntent);
+                    } catch (Exception ignored) {}
+                }
             }
         }
 
@@ -604,13 +614,24 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
         }
 
         @JavascriptInterface
-        public boolean isMusicNotificationGranted() {
-            return true;
-        }
-
-        @JavascriptInterface
-        public void openMusicNotificationSettings() {
-            SpotifyMediaManager.openSpotify(MainActivity.this);
+        public void requestBackgroundPermission() {
+            runOnUiThread(() -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    android.os.PowerManager pm = (android.os.PowerManager) getSystemService(Context.POWER_SERVICE);
+                    if (pm != null && !pm.isIgnoringBatteryOptimizations(getPackageName())) {
+                        try {
+                            Intent bgIntent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                            bgIntent.setData(Uri.parse("package:" + getPackageName()));
+                            startActivity(bgIntent);
+                        } catch (Exception e) {
+                            try {
+                                Intent bgIntent = new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+                                startActivity(bgIntent);
+                            } catch (Exception ignored) {}
+                        }
+                    }
+                }
+            });
         }
 
         @JavascriptInterface

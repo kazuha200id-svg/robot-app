@@ -2725,8 +2725,6 @@ function openSpotifyPermissionSettings() {
   triggerHaptic(30);
   if (window.AndroidBLE && typeof window.AndroidBLE.openSpotifyApp === 'function') {
     window.AndroidBLE.openSpotifyApp();
-  } else if (window.AndroidBLE && typeof window.AndroidBLE.openMusicNotificationSettings === 'function') {
-    window.AndroidBLE.openMusicNotificationSettings();
   } else {
     showNeonToast('Buka Pengaturan Spotify > Status Siaran Perangkat');
   }

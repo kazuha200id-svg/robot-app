@@ -23,8 +23,10 @@
     <!-- Foreground Service Permissions untuk sinkronisasi latar belakang resmi (Android 9+) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- Izin Eksekusi Latar Belakang Penuh (Tanpa Pembatasan Penghemat Baterai) -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <!-- Internet Access for Weather Geocoding & Open-Meteo API -->
     <uses-permission android:name="android.permission.INTERNET" />
