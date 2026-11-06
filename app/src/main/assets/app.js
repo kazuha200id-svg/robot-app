@@ -857,7 +857,6 @@ function openRobotFeatureDetail(featureKey) {
     const panel = document.getElementById('detailViewClock');
     if (panel) panel.style.display = 'block';
     updateOledClockTick();
-    syncClockQuiet(); // Sinkronkan detik jam HP ke robot seketika
     currentRobotMode = 1;
     sendCommand({ c: 'm', v: 1 });
   } else if (featureKey === 'alarm') {
@@ -1402,9 +1401,7 @@ function selectRobotMenuFeature(featureKey, btnEl) {
   const targetMode = modeMap[featureKey];
   if (targetMode !== undefined) {
     currentRobotMode = targetMode;
-    if (featureKey === 'clock') {
-      syncClockQuiet();
-    } else if (featureKey === 'spotify') {
+    if (featureKey === 'spotify') {
       if (window.AndroidBLE && typeof window.AndroidBLE.requestMusicSync === 'function') {
         window.AndroidBLE.requestMusicSync();
       }
