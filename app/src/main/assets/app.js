@@ -2742,8 +2742,18 @@ function mediaControlAction(action) {
   if (window.AndroidBLE) {
     if (action === 'play_pause' && typeof window.AndroidBLE.mediaPlayPause === 'function') {
       window.AndroidBLE.mediaPlayPause();
-      currentSpotifyState.isPlaying = !currentSpotifyState.isPlaying;
-      updateSpotifyPlayPauseIcon(currentSpotifyState.isPlaying);
+      const willPlay = !currentSpotifyState.isPlaying;
+      const now = Date.now();
+      if (!willPlay) {
+        // Bekukan posisi detik saat pause agar waktu tidak meloncat mundur
+        const elapsed = (currentSpotifyState.lastUpdateTimestamp > 0)
+          ? (now - currentSpotifyState.lastUpdateTimestamp) / 1000
+          : 0;
+        currentSpotifyState.positionSec = Math.min(currentSpotifyState.positionSec + elapsed, currentSpotifyState.durationSec || 9999);
+      }
+      currentSpotifyState.isPlaying = willPlay;
+      currentSpotifyState.lastUpdateTimestamp = now;
+      updateSpotifyPlayPauseIcon(willPlay);
       dispatchRealtimeLyricSync(true);
     } else if (action === 'next' && typeof window.AndroidBLE.mediaNext === 'function') {
       window.AndroidBLE.mediaNext();
@@ -2815,7 +2825,7 @@ function updateSpotifyDetailUI() {
   const evalPos = curPos + 0.15;
   const activeLyric = getActiveLyricAtTime(evalPos);
 
-  if (activeLyric && activeLyric.length > 0) {
+  if (activeLyric && activeLyric.length > 0 && currentSpotifyState.title) {
     if (lyricsWrap) lyricsWrap.style.display = 'flex';
     if (eqWrap) eqWrap.style.display = 'none';
 
@@ -2847,7 +2857,7 @@ function updateSpotifyDetailUI() {
       if (lyric3) lyric3.textContent = '';
     }
   } else {
-    if (isPlaying) {
+    if (isPlaying && currentSpotifyState.title) {
       if (lyricsWrap) lyricsWrap.style.display = 'none';
       if (eqWrap) eqWrap.style.display = 'flex';
     } else {
@@ -2875,7 +2885,26 @@ function updateSpotifyPreviewCard(curPos) {
 }
 
 function dispatchRealtimeLyricSync(forcePriority = false) {
-  if (!isBleConnected || currentRobotMode !== 17 || !currentSpotifyState.title) return;
+  if (!isBleConnected || currentRobotMode !== 17) return;
+
+  if (!currentSpotifyState.title || currentSpotifyState.title.length === 0) {
+    if (lastSentLyricLine !== '__STANDBY__') {
+      sendCommand({
+        c: 'spotify',
+        t: '',
+        a: '',
+        l: '',
+        p: 0,
+        d: 0,
+        play: false
+      }, true);
+      lastSentLyricLine = '__STANDBY__';
+      lastSentPlayingState = false;
+      lastSentSpotifyPos = 0;
+    }
+    return;
+  }
+
   const isPlaying = currentSpotifyState.isPlaying;
   const now = Date.now();
   const elapsed = (isPlaying && currentSpotifyState.lastUpdateTimestamp > 0)
@@ -2887,7 +2916,6 @@ function dispatchRealtimeLyricSync(forcePriority = false) {
   const intPos = Math.floor(curPos);
 
   // Kirim ke ESP32 HANYA jika baris lirik berubah atau status play/pause berubah
-  // Ini mencegah antrean BLE macet/lag dan memastikan lirik tampil seketika (0 ms delay)
   if (forcePriority || activeLyric !== lastSentLyricLine || isPlaying !== lastSentPlayingState) {
     sendCommand({
       c: 'spotify',
@@ -2934,19 +2962,72 @@ window.onMusicStateChanged = function(data) {
   const dur = typeof data.dur === 'number' ? data.dur : 0;
   const isPlaying = !!data.play;
 
+  // Jika title kosong -> Spotify ditutup / musik stop total
+  if (title.length === 0) {
+    currentSpotifyState.title = '';
+    currentSpotifyState.artist = '';
+    currentSpotifyState.durationSec = 0;
+    currentSpotifyState.positionSec = 0;
+    currentSpotifyState.isPlaying = false;
+    currentSpotifyState.lastUpdateTimestamp = Date.now();
+    currentLyricsLines = [];
+    currentLyricsTrackKey = '';
+    lastSentLyricLine = '';
+    lastSentPlayingState = false;
+    lastSentSpotifyPos = -1;
+
+    updateSpotifyDetailUI();
+
+    if (isBleConnected && currentRobotMode === 17) {
+      sendCommand({
+        c: 'spotify',
+        t: '',
+        a: '',
+        l: '',
+        p: 0,
+        d: 0,
+        play: false
+      }, true);
+    }
+    return;
+  }
+
   const trackChanged = (title !== currentSpotifyState.title || artist !== currentSpotifyState.artist);
 
-  currentSpotifyState.title = title;
-  currentSpotifyState.artist = artist;
-  currentSpotifyState.positionSec = pos;
-  currentSpotifyState.durationSec = dur;
-  currentSpotifyState.isPlaying = isPlaying;
-  currentSpotifyState.lastUpdateTimestamp = Date.now();
-
-  if (trackChanged && title.length > 0) {
+  if (trackChanged) {
+    currentSpotifyState.title = title;
+    currentSpotifyState.artist = artist;
+    currentSpotifyState.durationSec = dur;
+    currentSpotifyState.positionSec = pos;
+    currentSpotifyState.isPlaying = isPlaying;
+    currentSpotifyState.lastUpdateTimestamp = Date.now();
     lastSentLyricLine = '';
     lastSentSpotifyPos = -1;
     fetchLrclibLyrics(title, artist, dur);
+  } else {
+    // Lagu yang sama:
+    const prevPlaying = currentSpotifyState.isPlaying;
+    currentSpotifyState.isPlaying = isPlaying;
+    if (dur > 0) currentSpotifyState.durationSec = dur;
+
+    if (!prevPlaying && isPlaying) {
+      // RESUME: lagu baru saja kembali diputar setelah dijeda
+      if (pos > 0) currentSpotifyState.positionSec = pos;
+      currentSpotifyState.lastUpdateTimestamp = Date.now();
+    } else if (prevPlaying && !isPlaying) {
+      // PAUSE: lagu baru saja dijeda
+      // Bekukan posisi detik saat pause tepat di titik terakhir!
+      const now = Date.now();
+      const elapsed = (currentSpotifyState.lastUpdateTimestamp > 0)
+        ? (now - currentSpotifyState.lastUpdateTimestamp) / 1000
+        : 0;
+      currentSpotifyState.positionSec = Math.min(currentSpotifyState.positionSec + elapsed, currentSpotifyState.durationSec || 9999);
+      currentSpotifyState.lastUpdateTimestamp = now;
+    } else if (pos > 0) {
+      // Update berkala posisi dari broadcast resmi
+      currentSpotifyState.positionSec = pos;
+      currentSpotifyState.lastUpdateTimestamp = Date.now();
+    }
   }
 
   updateSpotifyDetailUI();
