@@ -18,12 +18,12 @@ public class SpotifyMediaManager {
 
     private String currentTitle = "";
     private String currentArtist = "";
-    private long currentDurationSec = 0;
-    private long currentPositionSec = 0;
+    private double currentDurationSec = 0;
+    private double currentPositionSec = 0;
     private boolean isPlaying = false;
 
     public interface MusicStateListener {
-        void onMusicStateChanged(String title, String artist, long posSec, long durSec, boolean isPlaying);
+        void onMusicStateChanged(String title, String artist, double posSec, double durSec, boolean isPlaying);
     }
 
     public static synchronized SpotifyMediaManager getInstance() {
@@ -50,8 +50,8 @@ public class SpotifyMediaManager {
 
                         if (track != null) currentTitle = track;
                         if (artist != null) currentArtist = artist;
-                        if (lengthMs > 0) currentDurationSec = lengthMs / 1000;
-                        if (posMs > 0) currentPositionSec = posMs / 1000;
+                        if (lengthMs > 0) currentDurationSec = lengthMs / 1000.0;
+                        if (posMs >= 0) currentPositionSec = posMs / 1000.0;
 
                         dispatchState();
                     } else if ("com.spotify.music.playbackstatechanged".equals(action)) {
@@ -59,7 +59,7 @@ public class SpotifyMediaManager {
                         int posMs = intent.getIntExtra("playbackPosition", 0);
 
                         isPlaying = playing;
-                        if (posMs >= 0) currentPositionSec = posMs / 1000;
+                        if (posMs >= 0) currentPositionSec = posMs / 1000.0;
 
                         dispatchState();
                     } else if ("com.spotify.music.queuechanged".equals(action)) {

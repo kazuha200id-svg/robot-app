@@ -221,17 +221,17 @@
             <span class="card-title">MENU GAME</span>
           </button>
 
-          <!-- BARIS 4 KANAN: SPOTIFY MUSIK & LIRIK -->
+          <!-- BARIS 4 KANAN: SPOTIFY -->
           <button id="btnMenuSpotify" type="button" class="menu-action-card" onclick="selectRobotMenuFeature('spotify', this)">
             <div class="card-icon-wrap">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#1DB954" stroke-width="2">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
                 <circle cx="12" cy="12" r="10"></circle>
                 <path d="M8 11.5c3-1 6-0.5 8 0.5"></path>
                 <path d="M7 14c3.5-1 7-0.5 10 0.5"></path>
                 <path d="M9 9c3-1 6-0.8 7.5 0.2"></path>
               </svg>
             </div>
-            <span class="card-title">SPOTIFY & LIRIK</span>
+            <span class="card-title">SPOTIFY</span>
           </button>
         </div>
       </section>
@@ -382,12 +382,12 @@
               </div>
             </div>
 
-            <!-- 8. BARIS 4 KANAN: SPOTIFY MUSIK & LIRIK (1:1) -->
+            <!-- 8. BARIS 4 KANAN: SPOTIFY (1:1) -->
             <div class="oled-screen-card" onclick="openRobotFeatureDetail('spotify')">
               <div class="oled-display-bezel">
                 <div class="oled-screen-content oled-msg-view">
                   <div class="oled-spotify-preview-wrap">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#1DB954" stroke-width="2.5" class="oled-sp-mini-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2.5" class="oled-sp-mini-icon">
                       <circle cx="12" cy="12" r="10"></circle>
                       <path d="M8 11.5c3-1 6-0.5 8 0.5"></path>
                       <path d="M7 14c3.5-1 7-0.5 10 0.5"></path>
@@ -398,7 +398,7 @@
                 </div>
               </div>
               <div class="screen-card-meta">
-                <span class="screen-title">SPOTIFY & LIRIK</span>
+                <span class="screen-title">SPOTIFY</span>
               </div>
             </div>
           </div>
@@ -702,30 +702,17 @@
             </div>
           </div>
 
-          <!-- 7. DETAIL: SPOTIFY MUSIK & LIRIK (100% PERSIS OLED FISIK ESP32) -->
+          <!-- 7. DETAIL: SPOTIFY (PANGGUNG LIRIK PENUH 100% PERSIS OLED ROBOT) -->
           <div id="detailViewSpotify" class="detail-feature-panel" style="display: none;">
             <div class="main-oled-stage-wrap">
               <div class="oled-display-bezel stage-bezel">
-                <div class="oled-screen-content stage-screen-content">
-                  <div class="oled-status-bar">
-                    <div class="oled-status-left">
-                      <svg viewBox="0 0 9 9" class="oled-status-wifi"><path d="M0 1.5C2.5 -0.5 6.5 -0.5 9 1.5l-1 1C6.2 0.8 2.8 0.8 1 2.5L0 1.5zm2 2.5c1.4 -1.2 3.6 -1.2 5 0l-1 1c-0.8 -0.7 -2.2 -0.7 -3 0l-1 -1zm2.5 3a1 1 0 1 1 0 2 1 1 0 0 1 0 -2z"/></svg>
-                      <svg viewBox="0 0 8 8" class="oled-status-alarm detail-status-alarm-icon"><path d="M3 0h2v1H3zM2 1h4v1H2zM2 2h4v1H2zM1 3h6v1H1zM0 4h8v2H0zM3 6h2v2H3z"/></svg>
-                    </div>
-                    <div class="oled-status-title">SPOTIFY</div>
-                    <div class="oled-status-right">
-                      <svg viewBox="0 0 5 8" class="oled-status-lightning"><path d="M2 0h1v3h2L1 8l1-4H0z"/></svg>
-                      <div class="oled-battery-vert"><div class="oled-batt-pip"></div><div class="oled-batt-body"><div class="oled-batt-fill" style="height: 100%;"></div></div></div>
-                    </div>
-                  </div>
+                <div class="oled-screen-content stage-screen-content oled-stage-spotify-clean">
                   <div class="oled-mode-layer active">
-                    <!-- Judul & Artis Lagu (Marquee Scroll) -->
-                    <div class="oled-sp-track" id="stageSpotifyTrack">Belum Ada Musik</div>
-                    
-                    <!-- Lirik Realtime / Equalizer Retro -->
-                    <div class="oled-sp-lyrics" id="stageSpotifyLyricsWrap">
-                      <div class="oled-sp-lyric-line" id="stageSpotifyLyric1">Buka Spotify di HP</div>
-                      <div class="oled-sp-lyric-line" id="stageSpotifyLyric2">Lirik akan sinkron otomatis</div>
+                    <!-- Panggung Lirik Realtime / Equalizer Retro (Tanpa Status Bar, Tanpa Judul) -->
+                    <div class="oled-sp-lyrics oled-sp-lyrics-expanded" id="stageSpotifyLyricsWrap">
+                      <div class="oled-sp-lyric-line" id="stageSpotifyLyric1">Putar lagu di Spotify</div>
+                      <div class="oled-sp-lyric-line" id="stageSpotifyLyric2">Lirik sinkron otomatis</div>
+                      <div class="oled-sp-lyric-line" id="stageSpotifyLyric3"></div>
                     </div>
 
                     <div class="oled-sp-eq-wrap" id="stageSpotifyEqWrap" style="display: none;">
@@ -734,9 +721,11 @@
                       <div class="oled-sp-eq-bar"></div>
                       <div class="oled-sp-eq-bar"></div>
                       <div class="oled-sp-eq-bar"></div>
+                      <div class="oled-sp-eq-bar"></div>
+                      <div class="oled-sp-eq-bar"></div>
                     </div>
 
-                    <!-- Progress Bar & Durasi mm:ss -->
+                    <!-- Progress Bar Bawah & Durasi mm:ss -->
                     <div class="oled-sp-progress-wrap">
                       <span class="oled-sp-time" id="stageSpotifyCurrentTime">00:00</span>
                       <div class="oled-sp-progress-bar">
@@ -749,82 +738,47 @@
               </div>
             </div>
 
-            <!-- KONTROL MUSIK & SINKRONISASI -->
+            <!-- KONTROL MUSIK TEMA CYBER NEON -->
             <div class="feature-ctrl-panel spotify-ctrl-card">
-              <!-- Petunjuk Pengaturan Siaran Spotify (Bebas Izin Sensitif) -->
-              <div class="spotify-perm-banner" id="spotifyPermBanner" style="display: none; border-color: rgba(29, 185, 84, 0.4); background: rgba(29, 185, 84, 0.08);">
-                <div style="font-weight: 700; color: #1DB954;">STATUS SIARAN SPOTIFY</div>
-                <div style="color: #D2E4F5;">Pastikan opsi <b>"Status Siaran Perangkat"</b> aktif di Pengaturan Spotify agar judul lagu &amp; lirik otomatis tersinkron ke robot.</div>
-                <button type="button" class="btn-grant-perm" style="background: #1DB954; color: #051016;" onclick="openSpotifyPermissionSettings()">BUKA APLIKASI SPOTIFY</button>
-              </div>
-
-              <!-- Info Lagu Aktif -->
+              <!-- Info Lagu Aktif Tema Neon Cyan -->
               <div class="spotify-track-status-box">
                 <div class="spotify-badge-icon">
-                  <svg viewBox="0 0 24 24" fill="currentColor">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
                     <circle cx="12" cy="12" r="10"></circle>
-                    <path fill="#051016" d="M17.5 16.5c-.2.3-.5.4-.8.2-2.2-1.3-5-1.6-8.3-.9-.3.1-.7-.1-.8-.4-.1-.3.1-.7.4-.8 3.6-.8 6.7-.4 9.3 1.1.2.2.3.5.2.8zm1.2-2.7c-.3.4-.8.5-1.2.3-2.6-1.6-6.5-2.1-9.5-1.1-.5.1-.9-.2-1-.6-.1-.5.2-.9.6-1 3.5-1.1 7.8-.5 10.8 1.3.4.2.5.7.3 1.1zm.1-2.8C15.7 9.2 10.4 9 7.3 10c-.5.2-1.1-.1-1.3-.6-.2-.5.1-1.1.6-1.3 3.6-1.1 9.6-.9 13.3 1.3.5.3.6.9.3 1.4-.3.4-.9.5-1.4.2z"/>
+                    <path d="M8 11.5c3-1 6-0.5 8 0.5"></path>
+                    <path d="M7 14c3.5-1 7-0.5 10 0.5"></path>
+                    <path d="M9 9c3-1 6-0.8 7.5 0.2"></path>
                   </svg>
                 </div>
                 <div class="spotify-track-details">
                   <div class="spotify-track-name" id="spInfoTrack">Belum Ada Musik</div>
-                  <div class="spotify-artist-name" id="spInfoArtist">Buka Spotify / Pemutar Musik di HP</div>
+                  <div class="spotify-artist-name" id="spInfoArtist">Buka Spotify di HP Anda</div>
                 </div>
               </div>
 
-              <!-- Tombol Kontrol Media (Prev, Play/Pause, Next) -->
+              <!-- Tombol Kontrol Media Tema Neon Cyan -->
               <div class="spotify-media-controls">
-                <button type="button" class="btn-media-round" onclick="mediaControlAction('prev')" title="Lagu Sebelumnya (3x Tap Kepala)">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <polygon points="19 20 9 12 19 4 19 20" fill="currentColor"></polygon>
+                <button type="button" class="btn-media-round" onclick="mediaControlAction('prev')" title="Lagu Sebelumnya">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2.5">
+                    <polygon points="19 20 9 12 19 4 19 20" fill="#00F0FF"></polygon>
                     <line x1="5" y1="19" x2="5" y2="5"></line>
                   </svg>
                 </button>
-                <button type="button" class="btn-media-round btn-play-pause" id="btnMediaPlayPause" onclick="mediaControlAction('play_pause')" title="Putar / Jeda (1x Tap Kepala)">
+                <button type="button" class="btn-media-round btn-play-pause" id="btnMediaPlayPause" onclick="mediaControlAction('play_pause')" title="Putar / Jeda">
                   <svg id="iconMediaPlay" viewBox="0 0 24 24">
-                    <polygon points="6 4 20 12 6 20 6 4"></polygon>
+                    <polygon points="6 4 20 12 6 20 6 4" fill="#051016"></polygon>
                   </svg>
                   <svg id="iconMediaPause" viewBox="0 0 24 24" style="display: none;">
-                    <rect x="6" y="4" width="4" height="16" rx="1"></rect>
-                    <rect x="14" y="4" width="4" height="16" rx="1"></rect>
+                    <rect x="6" y="4" width="4" height="16" rx="1" fill="#051016"></rect>
+                    <rect x="14" y="4" width="4" height="16" rx="1" fill="#051016"></rect>
                   </svg>
                 </button>
-                <button type="button" class="btn-media-round" onclick="mediaControlAction('next')" title="Lagu Berikutnya (2x Tap Kepala)">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <polygon points="5 4 15 12 5 20 5 4" fill="currentColor"></polygon>
+                <button type="button" class="btn-media-round" onclick="mediaControlAction('next')" title="Lagu Berikutnya">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2.5">
+                    <polygon points="5 4 15 12 5 20 5 4" fill="#00F0FF"></polygon>
                     <line x1="19" y1="5" x2="19" y2="19"></line>
                   </svg>
                 </button>
-              </div>
-
-              <!-- Petunjuk Sentuhan Kepala Robot -->
-              <div class="spotify-touch-guide">
-                <div class="touch-guide-header">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2" style="width: 16px; height: 16px;">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="16" x2="12" y2="12"></line>
-                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                  </svg>
-                  <span>KONTROL SENTUH FISIK KEPALA ROBOT</span>
-                </div>
-                <div class="touch-guide-grid">
-                  <div class="touch-guide-item">
-                    <span class="touch-guide-badge">1x Ketuk Cepat</span>
-                    <span class="touch-guide-desc">Play / Pause Lagu</span>
-                  </div>
-                  <div class="touch-guide-item">
-                    <span class="touch-guide-badge">2x Ketuk Cepat</span>
-                    <span class="touch-guide-desc">Lagu Berikutnya</span>
-                  </div>
-                  <div class="touch-guide-item">
-                    <span class="touch-guide-badge">3x Ketuk Cepat</span>
-                    <span class="touch-guide-desc">Lagu Sebelumnya</span>
-                  </div>
-                  <div class="touch-guide-item">
-                    <span class="touch-guide-badge">Tahan 2 Detik</span>
-                    <span class="touch-guide-desc">Masuk ke Menu Game</span>
-                  </div>
-                </div>
               </div>
             </div>
           </div>

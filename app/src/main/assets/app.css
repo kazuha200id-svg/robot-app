@@ -3010,9 +3010,10 @@ input[type="range"]::-webkit-slider-thumb {
 
 .oled-sp-progress-fill {
   height: 100%;
-  background: #1DB954;
+  background: var(--neon-cyan);
+  box-shadow: 0 0 8px var(--neon-cyan-glow);
   border-radius: 3px;
-  transition: width 0.3s ease;
+  transition: width 0.2s ease;
 }
 
 .oled-sp-time {
@@ -3026,31 +3027,63 @@ input[type="range"]::-webkit-slider-thumb {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  gap: 5px;
-  height: 38px;
-  margin: 4px auto;
+  gap: 6px;
+  height: 52px;
+  margin: 10px auto;
 }
 
 .oled-sp-eq-bar {
-  width: 4px;
-  height: 12px;
-  background: #00F0FF;
+  width: 5px;
+  height: 14px;
+  background: var(--neon-cyan);
+  box-shadow: 0 0 6px var(--neon-cyan-glow);
   border-radius: 2px;
-  transition: height 0.18s ease;
+  transition: height 0.15s ease;
 }
 
 /* Equalizer Bars Animation */
-@keyframes eqBounce1 { 0%, 100% { height: 6px; } 50% { height: 28px; } }
-@keyframes eqBounce2 { 0%, 100% { height: 22px; } 50% { height: 8px; } }
-@keyframes eqBounce3 { 0%, 100% { height: 12px; } 50% { height: 32px; } }
-@keyframes eqBounce4 { 0%, 100% { height: 30px; } 50% { height: 14px; } }
-@keyframes eqBounce5 { 0%, 100% { height: 8px; } 50% { height: 24px; } }
+@keyframes eqBounce1 { 0%, 100% { height: 8px; } 50% { height: 38px; } }
+@keyframes eqBounce2 { 0%, 100% { height: 30px; } 50% { height: 10px; } }
+@keyframes eqBounce3 { 0%, 100% { height: 16px; } 50% { height: 44px; } }
+@keyframes eqBounce4 { 0%, 100% { height: 40px; } 50% { height: 18px; } }
+@keyframes eqBounce5 { 0%, 100% { height: 10px; } 50% { height: 32px; } }
+@keyframes eqBounce6 { 0%, 100% { height: 36px; } 50% { height: 12px; } }
+@keyframes eqBounce7 { 0%, 100% { height: 14px; } 50% { height: 38px; } }
 
 .oled-sp-eq-bar:nth-child(1) { animation: eqBounce1 0.65s infinite ease-in-out; }
 .oled-sp-eq-bar:nth-child(2) { animation: eqBounce2 0.75s infinite ease-in-out; }
 .oled-sp-eq-bar:nth-child(3) { animation: eqBounce3 0.55s infinite ease-in-out; }
 .oled-sp-eq-bar:nth-child(4) { animation: eqBounce4 0.8s infinite ease-in-out; }
 .oled-sp-eq-bar:nth-child(5) { animation: eqBounce5 0.7s infinite ease-in-out; }
+.oled-sp-eq-bar:nth-child(6) { animation: eqBounce6 0.6s infinite ease-in-out; }
+.oled-sp-eq-bar:nth-child(7) { animation: eqBounce7 0.72s infinite ease-in-out; }
+
+/* Expanded Lyrics Stage (Tanpa Status Bar, Tanpa Judul) */
+.oled-stage-spotify-clean {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 8px 6px;
+  box-sizing: border-box;
+}
+
+.oled-sp-lyrics-expanded {
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  text-align: center;
+}
+
+.oled-sp-lyrics-expanded .oled-sp-lyric-line {
+  font-size: 12.5px;
+  color: #FFFFFF;
+  text-shadow: 0 0 6px rgba(0, 240, 255, 0.4);
+  line-height: 1.4;
+  font-family: var(--font-mono);
+}
 
 /* Spotify Detail Feature Panel & Controllers */
 .spotify-ctrl-card {
@@ -3080,7 +3113,7 @@ input[type="range"]::-webkit-slider-thumb {
 .spotify-badge-icon svg {
   width: 28px;
   height: 28px;
-  color: #1DB954;
+  color: var(--neon-cyan);
 }
 
 .spotify-track-details {
@@ -3110,17 +3143,17 @@ input[type="range"]::-webkit-slider-thumb {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 22px;
+  gap: 24px;
   margin: 18px 0;
 }
 
 .btn-media-round {
-  width: 48px;
-  height: 48px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   background: rgba(0, 240, 255, 0.08);
   border: 1px solid var(--neon-cyan-border);
-  color: #00F0FF;
+  color: var(--neon-cyan);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3130,24 +3163,24 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .btn-media-round svg {
-  width: 22px;
-  height: 22px;
-  stroke: currentColor;
+  width: 24px;
+  height: 24px;
+  stroke: var(--neon-cyan);
 }
 
 .btn-media-round.btn-play-pause {
-  width: 60px;
-  height: 60px;
-  background: #1DB954;
-  border-color: #1ED760;
+  width: 64px;
+  height: 64px;
+  background: var(--neon-cyan);
+  border-color: #55F8FF;
   color: #051016;
-  box-shadow: 0 0 18px rgba(29, 185, 84, 0.5);
+  box-shadow: 0 0 20px var(--neon-cyan-glow);
 }
 
 .btn-media-round.btn-play-pause svg {
-  width: 26px;
-  height: 26px;
-  fill: currentColor;
+  width: 28px;
+  height: 28px;
+  fill: #051016;
   stroke: none;
 }
 
@@ -3157,83 +3190,7 @@ input[type="range"]::-webkit-slider-thumb {
 
 .btn-media-round.btn-play-pause:active {
   transform: scale(0.92);
-  box-shadow: 0 0 8px rgba(29, 185, 84, 0.8);
-}
-
-.spotify-perm-banner {
-  background: rgba(255, 170, 0, 0.12);
-  border: 1px solid rgba(255, 170, 0, 0.4);
-  border-radius: 10px;
-  padding: 12px 14px;
-  margin-bottom: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  font-size: 11.5px;
-  color: #FFE699;
-}
-
-.btn-grant-perm {
-  background: #FFAA00;
-  color: #1B1100;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 14px;
-  font-weight: 700;
-  font-size: 11px;
-  cursor: pointer;
-  align-self: flex-start;
-  transition: background 0.2s ease;
-}
-
-.btn-grant-perm:active {
-  background: #FF8800;
-}
-
-.spotify-touch-guide {
-  background: rgba(12, 22, 38, 0.7);
-  border: 1px solid var(--neon-cyan-border);
-  border-radius: 12px;
-  padding: 12px;
-  margin-top: 14px;
-}
-
-.touch-guide-header {
-  font-size: 12px;
-  font-weight: 700;
-  color: #00F0FF;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-
-.touch-guide-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-}
-
-.touch-guide-item {
-  background: rgba(0, 240, 255, 0.05);
-  border: 1px solid rgba(0, 240, 255, 0.12);
-  border-radius: 8px;
-  padding: 8px 6px;
-  font-size: 11px;
-  text-align: center;
-}
-
-.touch-guide-badge {
-  color: #00F0FF;
-  font-weight: 700;
-  margin-bottom: 3px;
-  display: block;
-  font-size: 11px;
-}
-
-.touch-guide-desc {
-  color: #8EA9C7;
-  font-size: 10px;
+  box-shadow: 0 0 10px var(--neon-cyan);
 }
 
 /* Spotify Preview Card inside OLED Screen Grid */
@@ -3249,16 +3206,16 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .oled-sp-mini-icon {
-  width: 18px;
-  height: 18px;
-  color: #1DB954;
-  margin-bottom: 2px;
+  width: 20px;
+  height: 20px;
+  color: var(--neon-cyan);
+  margin-bottom: 3px;
 }
 
 .oled-sp-mini-title {
   font-size: 9px;
   font-family: var(--font-mono);
-  color: #00F0FF;
+  color: var(--neon-cyan);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
