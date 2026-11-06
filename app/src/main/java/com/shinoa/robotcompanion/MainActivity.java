@@ -562,13 +562,14 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
                 conn.setReadTimeout(8000);
                 conn.setRequestProperty("User-Agent", "RobotCompanionApp/1.0");
                 int responseCode = conn.getResponseCode();
-                if (responseCode == 200) {
-                    java.io.BufferedReader reader = new java.io.BufferedReader(
-                            new java.io.InputStreamReader(conn.getInputStream(), java.nio.charset.StandardCharsets.UTF_8));
+                if (responseCode >= 200 && responseCode < 300) {
+                    java.io.InputStream is = conn.getInputStream();
+                    java.io.InputStreamReader reader = new java.io.InputStreamReader(is, java.nio.charset.StandardCharsets.UTF_8);
                     StringBuilder sb = new StringBuilder();
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        sb.append(line);
+                    char[] buf = new char[4096];
+                    int len;
+                    while ((len = reader.read(buf, 0, buf.length)) != -1) {
+                        sb.append(buf, 0, len);
                     }
                     reader.close();
                     return sb.toString();

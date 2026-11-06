@@ -2597,115 +2597,110 @@ function parseLrcLyrics(lrcText) {
   return result;
 }
 
+let currentLyricFetchId = 0;
+
+function executeHttpGet(url, callback) {
+  if (window.AndroidBLE && typeof window.AndroidBLE.httpGet === 'function') {
+    setTimeout(() => {
+      try {
+        const resp = window.AndroidBLE.httpGet(url);
+        callback(resp);
+      } catch (e) {
+        callback(null);
+      }
+    }, 0);
+  } else {
+    fetch(url)
+      .then(r => r.ok ? r.text() : null)
+      .then(callback)
+      .catch(() => callback(null));
+  }
+}
+
 function fetchLrclibLyrics(title, artist, durationSec) {
   if (!title || title.trim().length === 0) return;
-  const trackKey = (title + '::' + artist).toLowerCase();
+  const cleanTitle = title.replace(/\(.*?\)|\[.*?\]/g, '').trim();
+  const cleanArtist = artist.replace(/\(.*?\)|\[.*?\]/g, '').trim();
+  const trackKey = (cleanTitle + '::' + cleanArtist).toLowerCase();
 
   // 1. Cek cache memori instan (0 ms latency)
   if (lyricsMemoryCache[trackKey] && lyricsMemoryCache[trackKey].length > 0) {
     currentLyricsTrackKey = trackKey;
     currentLyricsLines = lyricsMemoryCache[trackKey];
-    isFetchingLyrics = false;
     updateSpotifyDetailUI();
     dispatchRealtimeLyricSync(true);
     return;
   }
 
-  if (isFetchingLyrics) return;
-
-  isFetchingLyrics = true;
+  const thisRequestId = ++currentLyricFetchId;
   currentLyricsTrackKey = trackKey;
   currentLyricsLines = [];
 
-  const cleanTitle = title.replace(/\(.*?\)|\[.*?\]/g, '').trim();
-  const cleanArtist = artist.replace(/\(.*?\)|\[.*?\]/g, '').trim();
+  const roundDur = Math.round(durationSec || 0);
+  const searchUrl = `https://lrclib.net/api/search?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(cleanArtist)}`;
 
-  const getUrl = `https://lrclib.net/api/get?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(cleanArtist)}&duration=${Math.round(durationSec || 0)}`;
+  const applyLyrics = (lrcString, isPlain = false) => {
+    if (thisRequestId !== currentLyricFetchId) return;
+    if (!lrcString || lrcString.trim().length === 0) return;
 
-  const handleResponseText = (responseText) => {
-    isFetchingLyrics = false;
-    if (!responseText) {
-      searchLrclibFallback(cleanTitle, cleanArtist);
-      return;
+    if (isPlain) {
+      const rawLines = lrcString.split('\n').filter(l => l.trim().length > 0);
+      currentLyricsLines = rawLines.map((l, idx) => ({ timeSec: idx * 4, text: l.trim() }));
+    } else {
+      currentLyricsLines = parseLrcLyrics(lrcString);
     }
-    try {
-      const json = JSON.parse(responseText);
-      if (json.syncedLyrics && json.syncedLyrics.length > 0) {
-        currentLyricsLines = parseLrcLyrics(json.syncedLyrics);
-        lyricsMemoryCache[trackKey] = currentLyricsLines;
-        updateSpotifyDetailUI();
-        // Langsung kirim baris lirik detik ini ke ESP32 tanpa menunggu timer!
-        dispatchRealtimeLyricSync(true);
-      } else if (json.plainLyrics && json.plainLyrics.length > 0) {
-        const rawLines = json.plainLyrics.split('\n').filter(l => l.trim().length > 0);
-        currentLyricsLines = rawLines.map((l, idx) => ({
-          timeSec: idx * 4,
-          text: l.trim()
-        }));
-        lyricsMemoryCache[trackKey] = currentLyricsLines;
-        updateSpotifyDetailUI();
-        dispatchRealtimeLyricSync(true);
-      } else {
-        searchLrclibFallback(cleanTitle, cleanArtist);
-      }
-    } catch (e) {
-      searchLrclibFallback(cleanTitle, cleanArtist);
+
+    if (currentLyricsLines.length > 0) {
+      lyricsMemoryCache[trackKey] = currentLyricsLines;
+      updateSpotifyDetailUI();
+      dispatchRealtimeLyricSync(true);
     }
   };
 
-  if (window.AndroidBLE && typeof window.AndroidBLE.httpGet === 'function') {
-    setTimeout(() => {
+  const executeSearch = () => {
+    executeHttpGet(searchUrl, (searchResp) => {
+      if (thisRequestId !== currentLyricFetchId) return;
+      if (!searchResp) return;
       try {
-        const resp = window.AndroidBLE.httpGet(getUrl);
-        handleResponseText(resp);
-      } catch (err) {
-        isFetchingLyrics = false;
-      }
-    }, 5);
-  } else {
-    fetch(getUrl)
-      .then(res => res.ok ? res.text() : null)
-      .then(handleResponseText)
-      .catch(() => {
-        isFetchingLyrics = false;
-      });
-  }
-}
-
-function searchLrclibFallback(title, artist) {
-  const searchUrl = `https://lrclib.net/api/search?track_name=${encodeURIComponent(title)}&artist_name=${encodeURIComponent(artist)}`;
-  const trackKey = (title + '::' + artist).toLowerCase();
-
-  const handleSearchResults = (responseText) => {
-    if (!responseText) return;
-    try {
-      const results = JSON.parse(responseText);
-      if (Array.isArray(results) && results.length > 0) {
-        for (let i = 0; i < results.length; i++) {
-          if (results[i].syncedLyrics && results[i].syncedLyrics.length > 0) {
-            currentLyricsLines = parseLrcLyrics(results[i].syncedLyrics);
-            lyricsMemoryCache[trackKey] = currentLyricsLines;
-            updateSpotifyDetailUI();
-            dispatchRealtimeLyricSync(true);
-            return;
+        const results = JSON.parse(searchResp);
+        if (Array.isArray(results) && results.length > 0) {
+          for (let i = 0; i < results.length; i++) {
+            if (results[i].syncedLyrics && results[i].syncedLyrics.trim().length > 0) {
+              applyLyrics(results[i].syncedLyrics, false);
+              return;
+            }
+          }
+          for (let i = 0; i < results.length; i++) {
+            if (results[i].plainLyrics && results[i].plainLyrics.trim().length > 0) {
+              applyLyrics(results[i].plainLyrics, true);
+              return;
+            }
           }
         }
-      }
-    } catch (ignored) {}
+      } catch (e) {}
+    });
   };
 
-  if (window.AndroidBLE && typeof window.AndroidBLE.httpGet === 'function') {
-    setTimeout(() => {
-      try {
-        const resp = window.AndroidBLE.httpGet(searchUrl);
-        handleSearchResults(resp);
-      } catch (ignored) {}
-    }, 5);
+  if (roundDur > 10) {
+    const getUrl = `https://lrclib.net/api/get?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(cleanArtist)}&duration=${roundDur}`;
+    executeHttpGet(getUrl, (getResp) => {
+      if (thisRequestId !== currentLyricFetchId) return;
+      if (getResp) {
+        try {
+          const json = JSON.parse(getResp);
+          if (json.syncedLyrics && json.syncedLyrics.trim().length > 0) {
+            applyLyrics(json.syncedLyrics, false);
+            return;
+          } else if (json.plainLyrics && json.plainLyrics.trim().length > 0) {
+            applyLyrics(json.plainLyrics, true);
+            return;
+          }
+        } catch (e) {}
+      }
+      executeSearch();
+    });
   } else {
-    fetch(searchUrl)
-      .then(res => res.ok ? res.text() : null)
-      .then(handleSearchResults)
-      .catch(() => {});
+    executeSearch();
   }
 }
 
@@ -3001,7 +2996,7 @@ window.onMusicStateChanged = function(data) {
     currentSpotifyState.positionSec = pos;
     currentSpotifyState.isPlaying = isPlaying;
     currentSpotifyState.lastUpdateTimestamp = Date.now();
-    lastSentLyricLine = '';
+    lastSentLyricLine = '__RESET__';
     lastSentSpotifyPos = -1;
     fetchLrclibLyrics(title, artist, dur);
   } else {
