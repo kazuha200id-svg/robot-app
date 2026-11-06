@@ -904,6 +904,16 @@ function openRobotFeatureDetail(featureKey) {
         window._gameDetailSyncTimer = null;
       }
     }, 1500);
+  } else if (featureKey === 'spotify') {
+    const panel = document.getElementById('detailViewSpotify');
+    if (panel) panel.style.display = 'block';
+    updateSpotifyPermissionUI();
+    updateSpotifyDetailUI();
+    currentRobotMode = 17;
+    sendCommand({ c: 'm', v: 17 });
+    if (window.AndroidBLE && typeof window.AndroidBLE.requestMusicSync === 'function') {
+      window.AndroidBLE.requestMusicSync();
+    }
   }
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1385,7 +1395,8 @@ function selectRobotMenuFeature(featureKey, btnEl) {
     'subtitle': 3,
     'game': 4,
     'stopwatch': 7,
-    'alarm': 8
+    'alarm': 8,
+    'spotify': 17
   };
 
   const targetMode = modeMap[featureKey];
@@ -1393,6 +1404,10 @@ function selectRobotMenuFeature(featureKey, btnEl) {
     currentRobotMode = targetMode;
     if (featureKey === 'clock') {
       syncClockQuiet();
+    } else if (featureKey === 'spotify') {
+      if (window.AndroidBLE && typeof window.AndroidBLE.requestMusicSync === 'function') {
+        window.AndroidBLE.requestMusicSync();
+      }
     }
     sendCommand({ c: 'm', v: targetMode });
   }
@@ -2509,6 +2524,7 @@ window.addEventListener('DOMContentLoaded', () => {
   updateOledClockTick();
   updateOledWeatherPreview();
   syncClockQuiet();
+  initSpotifyFeature();
 
   // Cek status daya Bluetooth HP & sambungkan kembali ke robot tersimpan
   if (window.AndroidBLE && typeof window.AndroidBLE.isBluetoothEnabled === 'function') {
@@ -2529,3 +2545,395 @@ window.addEventListener('DOMContentLoaded', () => {
     updateSetupGateView(true);
   }
 });
+
+// =========================================================================
+// SPOTIFY MUSIK & LIRIK REALTIME (LRCLIB + ANDROID MEDIASESSION)
+// =========================================================================
+
+let currentSpotifyState = {
+  title: '',
+  artist: '',
+  positionSec: 0,
+  durationSec: 0,
+  isPlaying: false,
+  lastUpdateTimestamp: 0
+};
+
+let currentLyricsLines = []; // Array of { timeSec: number, text: string }
+let currentLyricsTrackKey = '';
+let lastSentLyricLine = '';
+let lastSentSpotifyPos = -1;
+let spotifySyncLoopTimer = null;
+let isFetchingLyrics = false;
+
+function formatAudioTime(totalSeconds) {
+  if (isNaN(totalSeconds) || totalSeconds < 0) totalSeconds = 0;
+  const m = Math.floor(totalSeconds / 60);
+  const s = Math.floor(totalSeconds % 60);
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+function parseLrcLyrics(lrcText) {
+  if (!lrcText || typeof lrcText !== 'string') return [];
+  const lines = lrcText.split('\n');
+  const result = [];
+  const regex = /\[(\d{2}):(\d{2}(?:\.\d{1,3})?)\](.*)/;
+
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    const match = regex.exec(trimmed);
+    if (match) {
+      const min = parseInt(match[1], 10);
+      const sec = parseFloat(match[2]);
+      const timeSec = min * 60 + sec;
+      const text = match[3].trim();
+      if (text.length > 0) {
+        result.push({ timeSec, text });
+      }
+    }
+  }
+
+  result.sort((a, b) => a.timeSec - b.timeSec);
+  return result;
+}
+
+function fetchLrclibLyrics(title, artist, durationSec) {
+  if (!title || title.trim().length === 0) return;
+  const trackKey = (title + '::' + artist).toLowerCase();
+  if (trackKey === currentLyricsTrackKey && currentLyricsLines.length > 0) return;
+  if (isFetchingLyrics) return;
+
+  isFetchingLyrics = true;
+  currentLyricsTrackKey = trackKey;
+  currentLyricsLines = [];
+
+  const cleanTitle = title.replace(/\(.*?\)|\[.*?\]/g, '').trim();
+  const cleanArtist = artist.replace(/\(.*?\)|\[.*?\]/g, '').trim();
+
+  // Buat URL LRCLIB API gratis
+  const getUrl = `https://lrclib.net/api/get?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(cleanArtist)}&duration=${Math.round(durationSec || 0)}`;
+
+  const handleResponseText = (responseText) => {
+    isFetchingLyrics = false;
+    if (!responseText) {
+      searchLrclibFallback(cleanTitle, cleanArtist);
+      return;
+    }
+    try {
+      const json = JSON.parse(responseText);
+      if (json.syncedLyrics && json.syncedLyrics.length > 0) {
+        currentLyricsLines = parseLrcLyrics(json.syncedLyrics);
+        updateSpotifyDetailUI();
+      } else if (json.plainLyrics && json.plainLyrics.length > 0) {
+        const rawLines = json.plainLyrics.split('\n').filter(l => l.trim().length > 0);
+        currentLyricsLines = rawLines.map((l, idx) => ({
+          timeSec: idx * 4,
+          text: l.trim()
+        }));
+        updateSpotifyDetailUI();
+      } else {
+        searchLrclibFallback(cleanTitle, cleanArtist);
+      }
+    } catch (e) {
+      searchLrclibFallback(cleanTitle, cleanArtist);
+    }
+  };
+
+  if (window.AndroidBLE && typeof window.AndroidBLE.httpGet === 'function') {
+    setTimeout(() => {
+      try {
+        const resp = window.AndroidBLE.httpGet(getUrl);
+        handleResponseText(resp);
+      } catch (err) {
+        isFetchingLyrics = false;
+      }
+    }, 10);
+  } else {
+    fetch(getUrl)
+      .then(res => res.ok ? res.text() : null)
+      .then(handleResponseText)
+      .catch(() => {
+        isFetchingLyrics = false;
+      });
+  }
+}
+
+function searchLrclibFallback(title, artist) {
+  const searchUrl = `https://lrclib.net/api/search?track_name=${encodeURIComponent(title)}&artist_name=${encodeURIComponent(artist)}`;
+  const handleSearchResults = (responseText) => {
+    if (!responseText) return;
+    try {
+      const results = JSON.parse(responseText);
+      if (Array.isArray(results) && results.length > 0) {
+        for (let i = 0; i < results.length; i++) {
+          if (results[i].syncedLyrics && results[i].syncedLyrics.length > 0) {
+            currentLyricsLines = parseLrcLyrics(results[i].syncedLyrics);
+            updateSpotifyDetailUI();
+            return;
+          }
+        }
+      }
+    } catch (ignored) {}
+  };
+
+  if (window.AndroidBLE && typeof window.AndroidBLE.httpGet === 'function') {
+    setTimeout(() => {
+      try {
+        const resp = window.AndroidBLE.httpGet(searchUrl);
+        handleSearchResults(resp);
+      } catch (ignored) {}
+    }, 10);
+  } else {
+    fetch(searchUrl)
+      .then(res => res.ok ? res.text() : null)
+      .then(handleSearchResults)
+      .catch(() => {});
+  }
+}
+
+function getActiveLyricAtTime(sec) {
+  if (!currentLyricsLines || currentLyricsLines.length === 0) return '';
+  let activeText = '';
+  for (let i = 0; i < currentLyricsLines.length; i++) {
+    if (currentLyricsLines[i].timeSec <= sec) {
+      activeText = currentLyricsLines[i].text;
+    } else {
+      break;
+    }
+  }
+  return activeText;
+}
+
+function updateSpotifyPermissionUI() {
+  const banner = document.getElementById('spotifyPermBanner');
+  if (!banner) return;
+  if (window.AndroidBLE && typeof window.AndroidBLE.isMusicNotificationGranted === 'function') {
+    const granted = window.AndroidBLE.isMusicNotificationGranted();
+    banner.style.display = granted ? 'none' : 'flex';
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+function openSpotifyPermissionSettings() {
+  triggerHaptic(30);
+  if (window.AndroidBLE && typeof window.AndroidBLE.openMusicNotificationSettings === 'function') {
+    window.AndroidBLE.openMusicNotificationSettings();
+  } else {
+    showNeonToast('Buka Pengaturan HP > Akses Notifikasi');
+  }
+}
+
+function mediaControlAction(action) {
+  triggerHaptic(35);
+  if (window.AndroidBLE) {
+    if (action === 'play_pause' && typeof window.AndroidBLE.mediaPlayPause === 'function') {
+      window.AndroidBLE.mediaPlayPause();
+      currentSpotifyState.isPlaying = !currentSpotifyState.isPlaying;
+      updateSpotifyPlayPauseIcon(currentSpotifyState.isPlaying);
+    } else if (action === 'next' && typeof window.AndroidBLE.mediaNext === 'function') {
+      window.AndroidBLE.mediaNext();
+      showNeonToast('Lagu Berikutnya');
+    } else if (action === 'prev' && typeof window.AndroidBLE.mediaPrev === 'function') {
+      window.AndroidBLE.mediaPrev();
+      showNeonToast('Lagu Sebelumnya');
+    }
+  } else {
+    showNeonToast('Perintah Media: ' + action);
+  }
+}
+
+function updateSpotifyPlayPauseIcon(isPlaying) {
+  const iconPlay = document.getElementById('iconMediaPlay');
+  const iconPause = document.getElementById('iconMediaPause');
+  if (iconPlay && iconPause) {
+    if (isPlaying) {
+      iconPlay.style.display = 'none';
+      iconPause.style.display = 'block';
+    } else {
+      iconPlay.style.display = 'block';
+      iconPause.style.display = 'none';
+    }
+  }
+}
+
+function updateSpotifyDetailUI() {
+  const trackName = currentSpotifyState.title || 'Belum Ada Musik';
+  const artistName = currentSpotifyState.artist || 'Buka Spotify di HP';
+  const isPlaying = currentSpotifyState.isPlaying;
+
+  // 1. OLED Stage Track Info
+  const trackEl = document.getElementById('stageSpotifyTrack');
+  if (trackEl) {
+    trackEl.textContent = currentSpotifyState.title ? `${currentSpotifyState.title} - ${artistName}` : 'Spotify Standby';
+  }
+
+  // 2. Info Box Control
+  const infoTrack = document.getElementById('spInfoTrack');
+  const infoArtist = document.getElementById('spInfoArtist');
+  if (infoTrack) infoTrack.textContent = trackName;
+  if (infoArtist) infoArtist.textContent = artistName;
+
+  // 3. Play / Pause Button
+  updateSpotifyPlayPauseIcon(isPlaying);
+
+  // 4. Progress & Time
+  const now = Date.now();
+  const elapsed = (isPlaying && currentSpotifyState.lastUpdateTimestamp > 0)
+    ? (now - currentSpotifyState.lastUpdateTimestamp) / 1000
+    : 0;
+  const curPos = Math.min(currentSpotifyState.positionSec + elapsed, currentSpotifyState.durationSec || 9999);
+  const durSec = currentSpotifyState.durationSec;
+
+  const curTimeEl = document.getElementById('stageSpotifyCurrentTime');
+  const totTimeEl = document.getElementById('stageSpotifyTotalTime');
+  const progFill = document.getElementById('stageSpotifyProgressFill');
+
+  if (curTimeEl) curTimeEl.textContent = formatAudioTime(curPos);
+  if (totTimeEl) totTimeEl.textContent = formatAudioTime(durSec);
+  if (progFill) {
+    const pct = (durSec > 0) ? Math.min(100, Math.max(0, (curPos / durSec) * 100)) : 0;
+    progFill.style.width = pct + '%';
+  }
+
+  // 5. Lyrics / Equalizer display
+  const lyricsWrap = document.getElementById('stageSpotifyLyricsWrap');
+  const eqWrap = document.getElementById('stageSpotifyEqWrap');
+  const lyric1 = document.getElementById('stageSpotifyLyric1');
+  const lyric2 = document.getElementById('stageSpotifyLyric2');
+
+  const activeLyric = getActiveLyricAtTime(curPos);
+
+  if (activeLyric && activeLyric.length > 0) {
+    if (lyricsWrap) lyricsWrap.style.display = 'flex';
+    if (eqWrap) eqWrap.style.display = 'none';
+
+    if (activeLyric.includes('\n')) {
+      const parts = activeLyric.split('\n');
+      if (lyric1) lyric1.textContent = parts[0] || '';
+      if (lyric2) lyric2.textContent = parts[1] || '';
+    } else if (activeLyric.length > 20) {
+      let splitIdx = 20;
+      while (splitIdx > 8 && activeLyric[splitIdx] !== ' ') {
+        splitIdx--;
+      }
+      if (activeLyric[splitIdx] !== ' ') splitIdx = 20;
+      if (lyric1) lyric1.textContent = activeLyric.substring(0, splitIdx);
+      if (lyric2) lyric2.textContent = activeLyric.substring(splitIdx).trim();
+    } else {
+      if (lyric1) lyric1.textContent = activeLyric;
+      if (lyric2) lyric2.textContent = '';
+    }
+  } else {
+    if (isPlaying) {
+      if (lyricsWrap) lyricsWrap.style.display = 'none';
+      if (eqWrap) eqWrap.style.display = 'flex';
+    } else {
+      if (lyricsWrap) lyricsWrap.style.display = 'flex';
+      if (eqWrap) eqWrap.style.display = 'none';
+      if (lyric1) lyric1.textContent = currentSpotifyState.title ? 'Musik Dijeda' : 'Buka Spotify di HP';
+      if (lyric2) lyric2.textContent = currentSpotifyState.title ? '' : 'Lirik akan sinkron otomatis';
+    }
+  }
+
+  updateSpotifyPreviewCard(curPos);
+}
+
+function updateSpotifyPreviewCard(curPos) {
+  const pTitle = document.getElementById('oledSpPreviewTitle');
+  const pLyric = document.getElementById('oledSpPreviewLyric');
+  if (pTitle) {
+    pTitle.textContent = currentSpotifyState.title || 'SPOTIFY';
+  }
+  if (pLyric) {
+    const activeLyric = getActiveLyricAtTime(curPos || currentSpotifyState.positionSec);
+    pLyric.textContent = activeLyric || (currentSpotifyState.artist || 'Sentuh utk buka');
+  }
+}
+
+function startSpotifySyncLoop() {
+  if (spotifySyncLoopTimer) clearInterval(spotifySyncLoopTimer);
+  spotifySyncLoopTimer = setInterval(() => {
+    const isPlaying = currentSpotifyState.isPlaying;
+    const now = Date.now();
+    const elapsed = (isPlaying && currentSpotifyState.lastUpdateTimestamp > 0)
+      ? (now - currentSpotifyState.lastUpdateTimestamp) / 1000
+      : 0;
+    const curPos = Math.min(currentSpotifyState.positionSec + elapsed, currentSpotifyState.durationSec || 9999);
+    const intPos = Math.floor(curPos);
+
+    if (currentOpenDetailFeature === 'spotify') {
+      updateSpotifyDetailUI();
+    } else {
+      updateSpotifyPreviewCard(curPos);
+    }
+
+    if (isBleConnected && currentRobotMode === 17 && currentSpotifyState.title) {
+      const activeLyric = getActiveLyricAtTime(curPos);
+      if (intPos !== lastSentSpotifyPos || activeLyric !== lastSentLyricLine) {
+        sendCommand({
+          c: 'spotify',
+          t: currentSpotifyState.title,
+          a: currentSpotifyState.artist,
+          l: activeLyric,
+          p: intPos,
+          d: Math.floor(currentSpotifyState.durationSec),
+          play: isPlaying
+        });
+        lastSentSpotifyPos = intPos;
+        lastSentLyricLine = activeLyric;
+      }
+    }
+  }, 500);
+}
+
+window.onMusicStateChanged = function(data) {
+  if (!data) return;
+
+  const title = (data.title || '').trim();
+  const artist = (data.artist || '').trim();
+  const pos = typeof data.pos === 'number' ? data.pos : 0;
+  const dur = typeof data.dur === 'number' ? data.dur : 0;
+  const isPlaying = !!data.play;
+
+  const trackChanged = (title !== currentSpotifyState.title || artist !== currentSpotifyState.artist);
+
+  currentSpotifyState.title = title;
+  currentSpotifyState.artist = artist;
+  currentSpotifyState.positionSec = pos;
+  currentSpotifyState.durationSec = dur;
+  currentSpotifyState.isPlaying = isPlaying;
+  currentSpotifyState.lastUpdateTimestamp = Date.now();
+
+  if (trackChanged && title.length > 0) {
+    lastSentLyricLine = '';
+    lastSentSpotifyPos = -1;
+    fetchLrclibLyrics(title, artist, dur);
+  }
+
+  updateSpotifyDetailUI();
+
+  if (isBleConnected && currentRobotMode === 17 && title.length > 0) {
+    const activeLyric = getActiveLyricAtTime(pos);
+    sendCommand({
+      c: 'spotify',
+      t: title,
+      a: artist,
+      l: activeLyric,
+      p: Math.floor(pos),
+      d: Math.floor(dur),
+      play: isPlaying
+    });
+    lastSentSpotifyPos = Math.floor(pos);
+    lastSentLyricLine = activeLyric;
+  }
+};
+
+function initSpotifyFeature() {
+  updateSpotifyPermissionUI();
+  updateSpotifyDetailUI();
+  startSpotifySyncLoop();
+  if (window.AndroidBLE && typeof window.AndroidBLE.requestMusicSync === 'function') {
+    window.AndroidBLE.requestMusicSync();
+  }
+}

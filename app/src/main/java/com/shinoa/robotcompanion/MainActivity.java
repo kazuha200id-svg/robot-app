@@ -133,6 +133,23 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
     @Override
     protected void onResume() {
         super.onResume();
+        if (MusicNotificationListener.getInstance() != null) {
+            MusicNotificationListener.getInstance().setStateListener((title, artist, posSec, durSec, isPlaying) -> {
+                runOnUiThread(() -> {
+                    if (webView != null) {
+                        try {
+                            org.json.JSONObject obj = new org.json.JSONObject();
+                            obj.put("title", title);
+                            obj.put("artist", artist);
+                            obj.put("pos", posSec);
+                            obj.put("dur", durSec);
+                            obj.put("play", isPlaying);
+                            webView.evaluateJavascript("if (window.onMusicStateChanged) window.onMusicStateChanged(" + obj.toString() + ");", null);
+                        } catch (Exception ignored) {}
+                    }
+                });
+            });
+        }
         checkPermissionsAndProceed();
     }
 
@@ -554,6 +571,38 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
             }
             return null;
         }
+
+        @JavascriptInterface
+        public boolean isMusicNotificationGranted() {
+            return MusicNotificationListener.isNotificationAccessGranted(MainActivity.this);
+        }
+
+        @JavascriptInterface
+        public void openMusicNotificationSettings() {
+            MusicNotificationListener.openNotificationAccessSettings(MainActivity.this);
+        }
+
+        @JavascriptInterface
+        public void mediaPlayPause() {
+            MusicNotificationListener.playPause();
+        }
+
+        @JavascriptInterface
+        public void mediaNext() {
+            MusicNotificationListener.skipNext();
+        }
+
+        @JavascriptInterface
+        public void mediaPrev() {
+            MusicNotificationListener.skipPrev();
+        }
+
+        @JavascriptInterface
+        public void requestMusicSync() {
+            if (MusicNotificationListener.getInstance() != null) {
+                MusicNotificationListener.getInstance().dispatchCurrentMusicState();
+            }
+        }
     }
 
     @Override
@@ -593,6 +642,15 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
 
     @Override
     public void onDataReceived(String json) {
+        if (json != null && json.contains("\"media_ctrl\"")) {
+            if (json.contains("\"play_pause\"")) {
+                MusicNotificationListener.playPause();
+            } else if (json.contains("\"next\"")) {
+                MusicNotificationListener.skipNext();
+            } else if (json.contains("\"prev\"")) {
+                MusicNotificationListener.skipPrev();
+            }
+        }
         runOnUiThread(() -> {
             String safeJson = json.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "").replace("\r", "");
             webView.evaluateJavascript("if (window.onBLEReceived) window.onBLEReceived('" + safeJson + "');", null);
