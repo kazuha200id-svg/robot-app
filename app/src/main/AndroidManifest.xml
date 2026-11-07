@@ -32,9 +32,11 @@
 
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="true" />
 
-    <!-- Queries for Spotify Application -->
+    <!-- Queries for Spotify, Chronos, and Google Maps Applications -->
     <queries>
         <package android:name="com.spotify.music" />
+        <package android:name="com.fbiego.chronos" />
+        <package android:name="com.google.android.apps.maps" />
     </queries>
 
     <application
@@ -53,13 +55,6 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-
-            <!-- Menerima Bagikan Lokasi / Rute dari Google Maps -->
-            <intent-filter>
-                <action android:name="android.intent.action.SEND" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
 

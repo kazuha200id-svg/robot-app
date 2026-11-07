@@ -676,6 +676,14 @@ window.onBLEReceived = function(jsonStr) {
       if (sleepEl) sleepEl.textContent = data.asleep ? 'Robot Tidur' : 'Robot Aktif (Bangun)';
     }
 
+    // Pembaruan navigasi real-time dari robot ESP32
+    if (data.nav) {
+      const n = data.nav;
+      if (typeof updateOledNavLiveDisplay === 'function') {
+        updateOledNavLiveDisplay(n.act, n.dist, n.inst, n.street, n.rem, n.time, n.spd);
+      }
+    }
+
     // Time sync ACK from robot
     if (data.action === 'time' || data.action === 't' || (data.status === 'ok' && typeof data.epoch === 'number')) {
       clockSyncAckReceived = true;
@@ -946,9 +954,6 @@ function closeRobotFeatureDetail() {
   triggerHaptic(20);
 
   if (currentOpenDetailFeature === 'navigation') {
-    if (typeof stopLiveNavigation === 'function' && isNavActive) {
-      stopLiveNavigation();
-    }
     if (window.AndroidBLE && typeof window.AndroidBLE.setNavFeatureActive === 'function') {
       window.AndroidBLE.setNavFeatureActive(false);
     }
@@ -3089,20 +3094,11 @@ window.onBackgroundTick = function() {
 };
 
 // ========================================================
-// NAVIGASI (GPS TURN-BY-TURN ENGINE & LIVE OLED MIRROR)
+// NAVIGASI (INTEGRASI CHRONOS & REALTIME OLED MIRROR)
 // ========================================================
 
-let isNavActive = false;
-let navWatchPositionId = null;
-let currentNavRouteSteps = [];
-let currentNavStepIndex = 0;
-let currentNavDestination = null;
-let currentNavTotalDist = '0 km';
-let currentNavTotalDur = '0m';
-
-// DIPANGGIL OLEH ANDROID JAVA KETIKA SEMUA IZIN LOKASI & GPS TELAH DIBERIKAN
+// DIPANGGIL KETIKA PENGGUNA MEMBUKA HALAMAN NAVIGASI DI ROBOT DESK
 window.onNavPermissionsGranted = function() {
-  // Pastikan tab aktif berpindah ke tab Robot (pageRobot) agar layar tidak tertahan di tab menu
   currentMainTab = 'pageRobot';
   document.querySelectorAll('.page').forEach(page => {
     page.classList.toggle('active', page.id === 'pageRobot');
@@ -3122,439 +3118,46 @@ window.onNavPermissionsGranted = function() {
   const panel = document.getElementById('detailViewNavigation');
   if (panel) panel.style.display = 'block';
 
-  // Hanya kirim mode 18 jika robot belum berada di mode navigasi
+  // Kirim perintah mode 18 (Navigasi) & minta status navigasi terkini dari ESP32
   if (currentRobotMode !== 18) {
     currentRobotMode = 18;
     sendCommand({ c: 'm', v: 18 });
   }
+  sendCommand({ c: 'nav_req' });
   window.scrollTo({ top: 0, behavior: 'smooth' });
-
-  // Cek apakah ada tujuan navigasi yang tertunda
-  if (window._pendingNavDestination) {
-    const pendingDest = window._pendingNavDestination;
-    window._pendingNavDestination = null;
-    window.handleIncomingMapsShare(pendingDest);
-    return;
-  }
-
-  // Cek apakah ada data bagikan dari Google Maps yang tertunda saat aplikasi dibuka
-  if (window.AndroidBLE && typeof window.AndroidBLE.getPendingShareText === 'function') {
-    const pending = window.AndroidBLE.getPendingShareText();
-    if (pending && pending.length > 0) {
-      window.AndroidBLE.clearPendingShareText();
-      window.handleIncomingMapsShare(pending);
-    }
-  }
 };
 
-// MENERIMA TEKS / LINK BAGIKAN DARI GOOGLE MAPS
-window.handleIncomingMapsShare = async function(sharedText) {
-  if (!sharedText || typeof sharedText !== 'string') return;
-  const rawText = sharedText.trim();
-  if (rawText.length === 0) return;
-
-  // Pastikan tab aktif berpindah ke tab Robot (pageRobot) agar tidak stuck di tab menu
-  currentMainTab = 'pageRobot';
-  document.querySelectorAll('.page').forEach(page => {
-    page.classList.toggle('active', page.id === 'pageRobot');
-  });
-  document.querySelectorAll('.nav-tab').forEach(tab => {
-    tab.classList.toggle('active', tab.getAttribute('data-page') === 'pageRobot');
-  });
-
-  // Jika halaman Navigasi belum terbuka atau menunggu izin GPS, simpan tujuan dan buka navigasi
-  if (currentOpenDetailFeature !== 'navigation') {
-    window._pendingNavDestination = rawText;
-    openRobotFeatureDetail('navigation');
-    return;
-  }
-
-  const inputEl = document.getElementById('navManualInput');
-  if (inputEl) inputEl.value = rawText;
-
-  // Tampilkan kartu status proses pencarian di UI
-  const statusBox = document.getElementById('navLiveStatusBox');
-  const statusBadge = document.getElementById('navLiveStatusBadge');
-  const destTitleEl = document.getElementById('navLiveDestTitle');
-  const nextStepEl = document.getElementById('navLiveNextStep');
-  const distEl = document.getElementById('navLiveDistText');
-  const durEl = document.getElementById('navLiveDurationText');
-  const stopBtn = document.getElementById('btnStopNavActive');
-
-  if (statusBox) statusBox.style.display = 'block';
-  if (statusBadge) statusBadge.textContent = 'MENGANALISIS TUJUAN...';
-  if (destTitleEl) destTitleEl.textContent = 'Mencari rute tujuan...';
-  if (nextStepEl) nextStepEl.textContent = 'Menghubungkan ke satelit GPS & server rute';
-  if (distEl) distEl.textContent = 'Sisa: Menghitung...';
-  if (durEl) durEl.textContent = 'Waktu: Menghitung...';
-  if (stopBtn) stopBtn.style.display = 'block';
-
-  try {
-    let resolved = null;
-    // 1. Resolve via Native Android Bridge
-    if (window.AndroidBLE && typeof window.AndroidBLE.resolveDestination === 'function') {
-      const resJson = window.AndroidBLE.resolveDestination(rawText);
-      if (resJson) {
-        try {
-          resolved = JSON.parse(resJson);
-        } catch (e) {
-          console.warn('Parse resolveDestination JSON error:', e);
-        }
-      }
-    }
-
-    let destLat = resolved && resolved.success ? resolved.lat : null;
-    let destLng = resolved && resolved.success ? resolved.lng : null;
-    let destTitle = resolved && resolved.success ? resolved.title : 'Lokasi Tujuan';
-
-    // 2. Fallback pencarian koordinat langsung di JS
-    if (destLat === null || destLng === null) {
-      let coordMatch = rawText.match(/@?(-?\d+\.\d{3,})\s*,\s*(-?\d+\.\d{3,})/);
-      if (!coordMatch) {
-        coordMatch = rawText.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
-      }
-      if (coordMatch) {
-        destLat = parseFloat(coordMatch[1]);
-        destLng = parseFloat(coordMatch[2]);
-        destTitle = 'Titik Koordinat';
-      } else {
-        function cleanQueryString(raw) {
-          if (!raw) return '';
-          let s = String(raw).trim();
-          s = s.replace(/https?:\/\/\S+/gi, ' ').trim();
-          s = s.replace(/^(?:lihat|cek|buka|kunjungi|bagikan|petunjuk\s+arah\s+ke|rute\s+ke|arah\s+ke|tujuan\s+ke)\s+/i, '');
-          s = s.replace(/^(?:check\s+out|explore|open|view|directions\s+to|route\s+to)\s+/i, '');
-          s = s.replace(/\s+(?:di|pada|in|on)?\s*google\s*maps.*$/i, '');
-          s = s.replace(/["':;,.]/g, ' ');
-          return s.replace(/\s+/g, ' ').trim();
-        }
-        const cleanedRaw = cleanQueryString(rawText);
-        const searchCandidate = (cleanedRaw.length >= 2) ? cleanedRaw : (resolved && resolved.title ? cleanQueryString(resolved.title) : '');
-        if (searchCandidate.length >= 2) {
-          try {
-            const geoUrl = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=id&q=${encodeURIComponent(searchCandidate)}`;
-            const res = await fetch(geoUrl, { headers: { 'User-Agent': 'RobotDeskApp/1.0' } });
-            const data = await res.json();
-            if (data && data.length > 0) {
-              destLat = parseFloat(data[0].lat);
-              destLng = parseFloat(data[0].lon);
-              destTitle = data[0].display_name.split(',')[0].trim();
-            }
-          } catch (e) {
-            console.warn('Nominatim fallback error:', e);
-          }
-        }
-      }
-    }
-
-    if (destLat === null || destLng === null || isNaN(destLat) || isNaN(destLng)) {
-      if (statusBadge) statusBadge.textContent = 'LOKASI TIDAK DITEMUKAN';
-      if (destTitleEl) destTitleEl.textContent = 'Gagal menemukan lokasi';
-      if (nextStepEl) nextStepEl.textContent = 'Coba ketik nama tempat yang lebih jelas atau tempel link Maps yang valid.';
-      return;
-    }
-
-    if (destTitleEl) destTitleEl.textContent = destTitle;
-    startNavigationToCoordinates(destLat, destLng, destTitle);
-  } catch (err) {
-    console.error('Error handling Maps destination:', err);
-    if (statusBadge) statusBadge.textContent = 'GAGAL MEMPROSES';
-    if (nextStepEl) nextStepEl.textContent = 'Terjadi kesalahan saat memproses link tujuan.';
-  }
-};
-
-// PENCARIAN MANUAL DARI INPUT
-function startManualNavSearch() {
-  const inputEl = document.getElementById('navManualInput');
-  if (!inputEl) return;
-  const val = inputEl.value.trim();
-  if (val.length === 0) return;
-  window.handleIncomingMapsShare(val);
-}
-
-// MULAI NAVIGASI KE KOORDINAT TUJUAN
-function startNavigationToCoordinates(destLat, destLng, destTitle) {
-  const statusBadge = document.getElementById('navLiveStatusBadge');
-  const nextStepEl = document.getElementById('navLiveNextStep');
-  if (statusBadge) statusBadge.textContent = 'MENGAMBIL POSISI GPS...';
-  if (nextStepEl) nextStepEl.textContent = 'Membaca posisi kendaraan saat ini...';
-
-  let startLat = null;
-  let startLng = null;
-
-  // Dapatkan lokasi awal HP dari Native Android Java
-  if (window.AndroidBLE && typeof window.AndroidBLE.getNativeLocation === 'function') {
-    try {
-      const locObj = JSON.parse(window.AndroidBLE.getNativeLocation());
-      if (locObj && locObj.success) {
-        startLat = locObj.lat;
-        startLng = locObj.lng;
-      }
-    } catch (e) {}
-  }
-
-  if (startLat !== null && startLng !== null) {
-    calculateAndDispatchRoute(startLat, startLng, destLat, destLng, destTitle);
-  } else if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        calculateAndDispatchRoute(pos.coords.latitude, pos.coords.longitude, destLat, destLng, destTitle);
-      },
-      (err) => {
-        // Jika belum mendapat GPS fix instan, mulai GPS tracking native yang akan memicu rute begitu koordinat masuk
-        if (window.AndroidBLE && typeof window.AndroidBLE.startGpsTracking === 'function') {
-          window._pendingInitialRoute = { destLat, destLng, destTitle };
-          window.AndroidBLE.startGpsTracking();
-          if (statusBadge) statusBadge.textContent = 'MENUNGGU SINYAL GPS...';
-          if (nextStepEl) nextStepEl.textContent = 'Mencari sinyal GPS HP di luar ruangan...';
-        } else {
-          if (statusBadge) statusBadge.textContent = 'GPS TIDAK TERSEDIA';
-          if (nextStepEl) nextStepEl.textContent = 'Harap aktifkan GPS HP Anda.';
-        }
-      },
-      { enableHighAccuracy: true, timeout: 6000 }
-    );
+// BUKA APLIKASI CHRONOS RESMI
+function openExternalChronosApp() {
+  triggerHaptic(25);
+  if (window.AndroidBLE && typeof window.AndroidBLE.openChronosApp === 'function') {
+    window.AndroidBLE.openChronosApp();
   } else {
-    if (statusBadge) statusBadge.textContent = 'GPS TIDAK TERSEDIA';
+    showNeonToast('Membuka aplikasi Chronos...');
   }
 }
 
-// MENGHITUNG RUTE OSRM & MENGIRIM BELOKAN PERTAMA
-async function calculateAndDispatchRoute(startLat, startLng, destLat, destLng, destTitle) {
-  const statusBox = document.getElementById('navLiveStatusBox');
-  const statusBadge = document.getElementById('navLiveStatusBadge');
-  const titleEl = document.getElementById('navLiveDestTitle');
-  const nextStepEl = document.getElementById('navLiveNextStep');
-  const distText = document.getElementById('navLiveDistText');
-  const durText = document.getElementById('navLiveDurationText');
-  const stopBtn = document.getElementById('btnStopNavActive');
-
-  if (statusBadge) statusBadge.textContent = 'MENGHITUNG RUTE JALAN...';
-
-  try {
-    let data = null;
-    // 1. Coba ambil rute via Native Android Java
-    if (window.AndroidBLE && typeof window.AndroidBLE.fetchDrivingRoute === 'function') {
-      const jsonStr = window.AndroidBLE.fetchDrivingRoute(startLat, startLng, destLat, destLng);
-      if (jsonStr && jsonStr.length > 10) {
-        try { data = JSON.parse(jsonStr); } catch (e) {}
-      }
-    }
-
-    // 2. Fallback fetch via web jika Java belum merespons
-    if (!data) {
-      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${destLng},${destLat}?overview=full&geometries=geojson&steps=true`;
-      const res = await fetch(osrmUrl, { headers: { 'User-Agent': 'RobotDeskApp/1.0' } });
-      data = await res.json();
-    }
-
-    if (!data || !data.routes || data.routes.length === 0) {
-      if (statusBadge) statusBadge.textContent = 'RUTE TIDAK DITEMUKAN';
-      if (nextStepEl) nextStepEl.textContent = 'Tidak ditemukan jalur jalan berkendara ke tujuan.';
-      return;
-    }
-
-    const route = data.routes[0];
-    const distKm = (route.distance / 1000).toFixed(1) + ' km';
-    const durMin = Math.round(route.duration / 60) + 'm';
-    const durStr = route.duration >= 3600
-      ? Math.floor(route.duration / 3600) + 'j ' + Math.round((route.duration % 3600) / 60) + 'm'
-      : durMin;
-
-    currentNavRouteSteps = route.legs[0].steps;
-    currentNavStepIndex = 0;
-    currentNavTotalDist = distKm;
-    currentNavTotalDur = durStr;
-    currentNavDestination = { lat: destLat, lng: destLng, title: destTitle };
-    isNavActive = true;
-
-    if (statusBox) statusBox.style.display = 'block';
-    if (statusBadge) statusBadge.textContent = 'NAVIGASI AKTIF';
-    if (titleEl) titleEl.textContent = destTitle;
-    if (distText) distText.textContent = 'Sisa: ' + distKm;
-    if (durText) durText.textContent = 'Waktu: ' + durStr;
-    if (stopBtn) stopBtn.style.display = 'block';
-
-    // Pastikan robot beralih ke mode navigasi 18
-    if (isBleConnected && currentRobotMode !== 18) {
-      currentRobotMode = 18;
-      sendCommand({ c: 'm', v: 18 });
-    }
-
-    // Kirim langkah belokan pertama ke ESP32 & update panggung OLED
-    if (currentNavRouteSteps.length > 0) {
-      processAndSendNavStep(currentNavRouteSteps[0], distKm, durStr, '0 km/h');
-    }
-
-    // Mulai pemantauan GPS kendaraan secara realtime
-    startLiveGpsTracking();
-  } catch (e) {
-    console.error('OSRM route error:', e);
-    if (statusBadge) statusBadge.textContent = 'GAGAL MENGHITUNG RUTE';
-    if (nextStepEl) nextStepEl.textContent = 'Server rute tidak merespons, coba periksa internet HP Anda.';
+// BUKA APLIKASI GOOGLE MAPS RESMI
+function openExternalGoogleMaps() {
+  triggerHaptic(25);
+  if (window.AndroidBLE && typeof window.AndroidBLE.openGoogleMaps === 'function') {
+    window.AndroidBLE.openGoogleMaps();
+  } else {
+    showNeonToast('Membuka Google Maps...');
   }
 }
 
-// PEMANTAUAN LOKASI GPS & SPEEDOMETER KENDARAAN REALTIME
-function startLiveGpsTracking() {
-  if (window.AndroidBLE && typeof window.AndroidBLE.startGpsTracking === 'function') {
-    window.AndroidBLE.startGpsTracking();
-  } else if (navigator.geolocation) {
-    if (navWatchPositionId !== null) {
-      navigator.geolocation.clearWatch(navWatchPositionId);
-    }
-    navWatchPositionId = navigator.geolocation.watchPosition(
-      (pos) => {
-        const spdKmh = pos.coords.speed ? Math.round(pos.coords.speed * 3.6) : 0;
-        window.onNativeGpsUpdate(pos.coords.latitude, pos.coords.longitude, spdKmh);
-      },
-      (err) => console.warn('GPS watch error:', err),
-      { enableHighAccuracy: true, maximumAge: 1000 }
-    );
-  }
-}
-
-// DIPANGGIL OLEH NATIVE ANDROID SETIAP KALI CHIP GPS HP MENDETEKSI PERGERAKAN
-window.onNativeGpsUpdate = function(lat, lng, speedKmh) {
-  // Jika rute masih tertunda karena menunggu sinyal GPS pertama
-  if (window._pendingInitialRoute) {
-    const p = window._pendingInitialRoute;
-    window._pendingInitialRoute = null;
-    calculateAndDispatchRoute(lat, lng, p.destLat, p.destLng, p.destTitle);
-    return;
-  }
-
-  if (!isNavActive || !currentNavRouteSteps || currentNavRouteSteps.length === 0) return;
-
-  const spdVal = typeof speedKmh === 'number' ? Math.round(speedKmh) : 0;
-  const spdStr = spdVal + ' km/h';
-
-  const speedBadge = document.getElementById('navLiveSpeedBadge');
-  if (speedBadge) speedBadge.textContent = spdStr;
-
-  // Hitung jarak ke titik maneuver langkah saat ini
-  const currentStep = currentNavRouteSteps[currentNavStepIndex] || currentNavRouteSteps[0];
-  const stepManeuverLoc = currentStep.maneuver ? currentStep.maneuver.location : null;
-
-  if (stepManeuverLoc) {
-    // OSRM coordinates format: [lng, lat]
-    const d = calculateHaversineDistance(lat, lng, stepManeuverLoc[1], stepManeuverLoc[0]);
-    // Jika kendaraan sudah mendekati belokan (< 25 meter), pindah ke langkah berikutnya
-    if (d < 25 && currentNavStepIndex < currentNavRouteSteps.length - 1) {
-      currentNavStepIndex++;
-    }
-  }
-
-  const activeStep = currentNavRouteSteps[currentNavStepIndex] || currentNavRouteSteps[currentNavRouteSteps.length - 1];
-  processAndSendNavStep(activeStep, currentNavTotalDist, currentNavTotalDur, spdStr);
-};
-
-// HITUNG JARAK HAVERSINE DUA TITIK KOORDINAT (DALAM METER)
-function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371e3; // radius bumi dalam meter
-  const phi1 = lat1 * Math.PI / 180;
-  const phi2 = lat2 * Math.PI / 180;
-  const deltaPhi = (lat2 - lat1) * Math.PI / 180;
-  const deltaLambda = (lon2 - lon1) * Math.PI / 180;
-
-  const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
-            Math.cos(phi1) * Math.cos(phi2) *
-            Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
-
-// PROSES LANGKAH BELOKAN & TRANSMISI BLE KE ROBOT
-function processAndSendNavStep(step, totalDist, totalDur, currentSpeed) {
-  if (!step) return;
-
-  const m = step.maneuver || {};
-  let distStr = Math.round(step.distance) + ' m';
-  if (step.distance >= 1000) distStr = (step.distance / 1000).toFixed(1) + ' km';
-
-  let instStr = 'Lurus Terus';
-  let actStr = 'straight';
-
-  if (m.type === 'turn') {
-    if (m.modifier && m.modifier.includes('right')) {
-      instStr = m.modifier.includes('slight') ? 'Serong Kanan' : 'Belok Kanan';
-      actStr = m.modifier.includes('slight') ? 'slight_right' : 'right';
-    } else if (m.modifier && m.modifier.includes('left')) {
-      instStr = m.modifier.includes('slight') ? 'Serong Kiri' : 'Belok Kiri';
-      actStr = m.modifier.includes('slight') ? 'slight_left' : 'left';
-    } else if (m.modifier && m.modifier.includes('uturn')) {
-      instStr = 'Putar Balik';
-      actStr = 'uturn';
-    }
-  } else if (m.type === 'roundabout') {
-    instStr = 'Bundaran';
-    actStr = 'roundabout';
-  } else if (m.type === 'arrive') {
-    instStr = 'Tiba di Tujuan';
-    actStr = 'arrive';
-  }
-
-  const streetStr = step.name || 'Jalan Utama';
-
-  // Update status card di UI aplikasi HP
-  const nextStepEl = document.getElementById('navLiveNextStep');
-  if (nextStepEl) {
-    nextStepEl.textContent = distStr + ' - ' + instStr + ' (' + streetStr + ')';
-  }
-
-  // Kirim paket navigasi realtime ke robot ESP32 via BLE
-  if (isBleConnected) {
-    sendCommand({
-      c: 'nav',
-      act: actStr,
-      dist: distStr,
-      inst: instStr,
-      street: streetStr,
-      rem: totalDist,
-      time: totalDur,
-      spd: currentSpeed
-    });
-  }
-
-  // Perbarui panggung OLED live di aplikasi HP
-  updateOledNavLiveDisplay(actStr, distStr, instStr, streetStr, totalDist, totalDur);
-}
-
-// HENTIKAN NAVIGASI AKTIF
-function stopLiveNavigation() {
-  triggerHaptic(30);
-  isNavActive = false;
-  window._pendingInitialRoute = null;
-
-  if (window.AndroidBLE && typeof window.AndroidBLE.stopGpsTracking === 'function') {
-    window.AndroidBLE.stopGpsTracking();
-  }
-  if (navWatchPositionId !== null) {
-    navigator.geolocation.clearWatch(navWatchPositionId);
-    navWatchPositionId = null;
-  }
-
-  currentNavRouteSteps = [];
-  currentNavStepIndex = 0;
-  currentNavDestination = null;
-
-  const statusBox = document.getElementById('navLiveStatusBox');
-  const stopBtn = document.getElementById('btnStopNavActive');
-  const inputEl = document.getElementById('navManualInput');
-
-  if (statusBox) statusBox.style.display = 'none';
-  if (stopBtn) stopBtn.style.display = 'none';
-  if (inputEl) inputEl.value = '';
-
-  // Kirim perintah standby ke ESP32
+// RESET LAYAR OLED KE STANDBY
+function requestNavOledStandby() {
+  triggerHaptic(25);
   if (isBleConnected) {
     sendCommand({ c: 'nav', act: 'standby' });
   }
-
   updateOledNavLiveDisplay('standby');
+  showNeonToast('Layar OLED disetel ke mode standby');
 }
 
-// UPDATE TAMPILAN PANGGUNG OLED (STANDBY vs AKTIF)
+// UPDATE TAMPILAN PANGGUNG OLED (STANDBY vs AKTIF) - REALTIME
 function updateOledNavLiveDisplay(actStr, distStr, instStr, streetStr, remStr, timeStr) {
   const stageActive = document.getElementById('stageNavActive');
   const stageStandby = document.getElementById('stageNavStandby');
@@ -3598,5 +3201,4 @@ function updateOledNavLiveDisplay(actStr, distStr, instStr, streetStr, remStr, t
     if (stageStandby) stageStandby.style.display = 'flex';
   }
 }
-
 

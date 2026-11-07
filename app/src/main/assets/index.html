@@ -862,42 +862,31 @@
               </div>
             </div>
 
-            <!-- PANEL NAVIGASI GOOGLE MAPS TEMA CYBER NEON -->
+            <!-- PANEL INTEGRASI NAVIGASI CHRONOS TEMA CYBER NEON -->
             <div class="feature-ctrl-panel" style="margin-top: 14px;">
-              <span class="status-card-label">SINKRONISASI GOOGLE MAPS</span>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span class="status-card-label" style="margin-bottom: 0;">NAVIGASI GOOGLE MAPS</span>
+                <span style="font-size: 0.65rem; font-weight: 800; color: #00F0FF; background: rgba(0,240,255,0.12); border: 1px solid #00F0FF; padding: 2px 8px; border-radius: 10px; letter-spacing: 0.05em;">CHRONOS SYNC</span>
+              </div>
 
               <!-- Petunjuk Singkat -->
-              <div style="font-size: 0.72rem; color: #00F0FF; line-height: 1.4; margin-bottom: 8px;">
-                Buka <strong>Google Maps</strong> &rarr; Tekan <strong>Bagikan</strong> &rarr; Pilih <strong>Robot Desk</strong>. Atau ketik tujuan / tempel link di bawah:
+              <div style="font-size: 0.74rem; color: #00F0FF; line-height: 1.5; margin-bottom: 12px;">
+                Navigasi terintegrasi langsung dengan <strong>Google Maps</strong> melalui <strong>Chronos</strong>. Layar OLED di atas menampilkan petunjuk belokan, meteran jarak, nama jalan, dan estimasi waktu secara real-time.
               </div>
 
-              <!-- Input Tujuan / Tempel Link Maps -->
-              <div style="display: flex; gap: 6px; width: 100%;">
-                <input type="text" id="navManualInput" placeholder="Ketik tujuan / tempel link Maps..." 
-                       style="flex: 1; background: rgba(10, 18, 32, 0.95); border: 1px solid var(--neon-cyan-border); color: #00F0FF; padding: 10px 12px; border-radius: var(--radius-sm); font-size: 0.76rem; font-family: var(--font-mono); outline: none;"
-                       onkeydown="if(event.key==='Enter') startManualNavSearch();">
-                <button type="button" id="btnStartNavAction" class="neon-btn-action" style="flex: 0 0 75px; font-weight: 800; color: #00F0FF; border-color: #00F0FF; background: var(--neon-cyan-dim);" onclick="startManualNavSearch()">MULAI</button>
+              <!-- Tombol Buka Chronos & Google Maps -->
+              <div style="display: flex; gap: 8px; width: 100%; margin-bottom: 8px;">
+                <button type="button" class="neon-btn-action" style="flex: 1; font-weight: 800; color: #00F0FF; border-color: #00F0FF; background: var(--neon-cyan-dim); font-size: 0.74rem; padding: 11px 8px;" onclick="openExternalChronosApp()">
+                  BUKA CHRONOS
+                </button>
+                <button type="button" class="neon-btn-action" style="flex: 1; font-weight: 800; color: #00F0FF; border-color: #00F0FF; background: var(--neon-cyan-dim); font-size: 0.74rem; padding: 11px 8px;" onclick="openExternalGoogleMaps()">
+                  BUKA GOOGLE MAPS
+                </button>
               </div>
 
-              <!-- Status Rute Aktif (Muncul saat proses pencarian & navigasi aktif) -->
-              <div id="navLiveStatusBox" style="display: none; margin-top: 10px; background: rgba(0,240,255,0.06); border: 1px solid rgba(0,240,255,0.3); border-radius: var(--radius-sm); padding: 10px 12px;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <span style="font-size: 0.70rem; font-weight: 800; color: #00F0FF; letter-spacing: 0.05em;" id="navLiveStatusBadge">NAVIGASI AKTIF</span>
-                  <span style="font-size: 0.68rem; color: #00F0FF;" id="navLiveSpeedBadge">0 km/h</span>
-                </div>
-                <div style="font-size: 0.82rem; font-weight: 800; color: #00F0FF; margin-top: 4px;" id="navLiveDestTitle">Menuju Lokasi Tujuan</div>
-                <div style="font-size: 0.74rem; font-weight: 700; color: #00F0FF; margin-top: 2px;" id="navLiveNextStep">Lurus Terus</div>
-                <div style="display: flex; justify-content: space-between; margin-top: 6px; font-size: 0.70rem; color: #00F0FF; border-top: 1px solid rgba(0,240,255,0.15); padding-top: 6px;">
-                  <span id="navLiveDistText">Sisa: -</span>
-                  <span id="navLiveDurationText">Waktu: -</span>
-                </div>
-              </div>
-
-              <!-- Tombol Hentikan Navigasi -->
-              <button type="button" id="btnStopNavActive" class="neon-btn-action full" 
-                      style="display: none; margin-top: 10px; background: rgba(0,240,255,0.12); border: 1px solid #00F0FF; color: #00F0FF; font-weight: 800; text-shadow: 0 0 8px rgba(0,240,255,0.5);" 
-                      onclick="stopLiveNavigation()">
-                HENTIKAN NAVIGASI
+              <!-- Tombol Reset OLED Standby -->
+              <button type="button" class="neon-btn-action full" style="font-weight: 800; color: #00F0FF; border-color: rgba(0,240,255,0.4); background: rgba(0,240,255,0.06); font-size: 0.72rem; padding: 9px;" onclick="requestNavOledStandby()">
+                RESET OLED KE STANDBY
               </button>
             </div>
           </div>

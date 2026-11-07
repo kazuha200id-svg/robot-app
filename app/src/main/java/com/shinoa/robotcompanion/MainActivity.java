@@ -49,7 +49,6 @@ import org.json.JSONObject;
 public class MainActivity extends AppCompatActivity implements BleManager.BleListener {
     private static final int REQ_NEARBY = 101;
     private static final int REQ_LOCATION = 102;
-    private static final int REQ_NAV_LOCATION = 103;
 
     private WebView webView;
     private BleManager bleManager;
@@ -168,30 +167,6 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
 
         // Jalankan Foreground Service resmi untuk menjaga koneksi BLE & Spotify di latar belakang
         RobotCompanionService.start(this);
-
-        // Periksa apakah aplikasi dibuka dari "Bagikan" Google Maps
-        handleIncomingShareIntent(getIntent());
-    }
-
-    @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
-        setIntent(intent);
-        handleIncomingShareIntent(intent);
-    }
-
-    private void handleIncomingShareIntent(Intent intent) {
-        if (intent != null && Intent.ACTION_SEND.equals(intent.getAction()) && "text/plain".equals(intent.getType())) {
-            String sharedText = intent.getStringExtra(Intent.EXTRA_TEXT);
-            if (sharedText != null && !sharedText.trim().isEmpty()) {
-                pendingShareText = sharedText.trim();
-                runOnUiThread(() -> {
-                    if (webView != null) {
-                        webView.evaluateJavascript("if (window.handleIncomingMapsShare) window.handleIncomingMapsShare('" + escapeJs(pendingShareText) + "');", null);
-                    }
-                });
-            }
-        }
     }
 
     @Override
@@ -450,76 +425,10 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
 
     public void checkAndOpenNavigationFeature() {
         if (isFinishing() || isDestroyed()) return;
-
-        // Cek Izin Lokasi Presisi Tinggi (GPS)
-        boolean hasFineLoc = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-        if (!hasFineLoc) {
-            isWaitingNavPermissions = true;
-            showCustomCyberPopup(
-                "Izin Lokasi & GPS Kendaraan",
-                "Aplikasi memerlukan akses GPS presisi tinggi untuk menghitung rute navigasi dan speedometer kecepatan laju kendaraan secara akurat di layar robot.",
-                "IZINKAN",
-                () -> {
-                    isWaitingNativePermission = true;
-                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQ_NAV_LOCATION);
-                },
-                this::cancelNavAndReturnToRobot
-            );
-            return;
-        }
-
-        // Cek Status Layanan GPS HP
-        LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        boolean isGpsEnabled = false;
-        try {
-            isGpsEnabled = lm != null && (lm.isProviderEnabled(LocationManager.GPS_PROVIDER) || lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER));
-        } catch (Exception ignored) {}
-
-        if (!isGpsEnabled) {
-            isWaitingNavPermissions = true;
-            showCustomCyberPopup(
-                "Aktifkan GPS HP",
-                "Layanan lokasi/GPS di HP Anda sedang mati. Harap aktifkan GPS agar robot dapat membaca arah rute dan kecepatan kendaraan.",
-                "IZINKAN",
-                () -> {
-                    try {
-                        isWaitingGpsSettings = true;
-                        isWaitingNavPermissions = false;
-                        Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                        startActivity(intent);
-                    } catch (Exception e) {
-                        Toast.makeText(MainActivity.this, "Buka Pengaturan > Lokasi secara manual", Toast.LENGTH_LONG).show();
-                    }
-                },
-                this::cancelNavAndReturnToRobot
-            );
-            return;
-        }
-
-        // Semua izin aktif & GPS menyala!
-        isWaitingNavPermissions = false;
-        isWaitingGpsSettings = false;
         isNavFeatureActive = true;
-
         runOnUiThread(() -> {
             if (webView != null) {
                 webView.evaluateJavascript("if (window.onNavPermissionsGranted) window.onNavPermissionsGranted();", null);
-                if (pendingShareText != null) {
-                    webView.evaluateJavascript("if (window.handleIncomingMapsShare) window.handleIncomingMapsShare('" + escapeJs(pendingShareText) + "');", null);
-                    pendingShareText = null;
-                }
-            }
-        });
-    }
-
-    private void cancelNavAndReturnToRobot() {
-        isWaitingNavPermissions = false;
-        isWaitingGpsSettings = false;
-        isNavFeatureActive = false;
-        pendingShareText = null;
-        runOnUiThread(() -> {
-            if (webView != null) {
-                webView.evaluateJavascript("if (window.closeRobotFeatureDetail) window.closeRobotFeatureDetail();", null);
             }
         });
     }
@@ -565,12 +474,6 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
                     "Aplikasi memerlukan izin lokasi untuk memindai sinyal Robot Desk di sekitar Anda.",
                     this::reRequestLocationPermissions
                 );
-            }
-        } else if (requestCode == REQ_NAV_LOCATION) {
-            if (allGranted) {
-                checkAndOpenNavigationFeature();
-            } else {
-                cancelNavAndReturnToRobot();
             }
         }
     }
@@ -791,466 +694,54 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
         }
 
         @JavascriptInterface
-        public String getNativeLocation() {
-            JSONObject res = new JSONObject();
-            try {
-                LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-                if (lm != null && ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                    Location loc = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                    if (loc == null) {
-                        loc = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-                    }
-                    if (loc == null) {
-                        loc = lm.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
-                    }
-                    if (loc != null) {
-                        res.put("success", true);
-                        res.put("lat", loc.getLatitude());
-                        res.put("lng", loc.getLongitude());
-                        res.put("speed", loc.hasSpeed() ? loc.getSpeed() * 3.6f : 0f);
-                        return res.toString();
-                    }
-                }
-                res.put("success", false);
-                res.put("msg", "Menunggu sinyal GPS HP...");
-            } catch (Exception e) {
-                try {
-                    res.put("success", false);
-                    res.put("msg", e.getMessage());
-                } catch (Exception ignored) {}
-            }
-            return res.toString();
-        }
-
-        @JavascriptInterface
-        public void startGpsTracking() {
+        public void openChronosApp() {
             runOnUiThread(() -> {
                 try {
-                    LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-                    if (lm != null && ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                        if (gpsLocationListener == null) {
-                            gpsLocationListener = new LocationListener() {
-                                @Override
-                                public void onLocationChanged(@NonNull Location location) {
-                                    float speedKmh = location.hasSpeed() ? location.getSpeed() * 3.6f : 0f;
-                                    runOnUiThread(() -> {
-                                        if (webView != null) {
-                                            webView.evaluateJavascript(
-                                                String.format(java.util.Locale.US, "if (window.onNativeGpsUpdate) window.onNativeGpsUpdate(%.7f, %.7f, %.1f);",
-                                                    location.getLatitude(), location.getLongitude(), speedKmh),
-                                                null
-                                            );
-                                        }
-                                    });
-                                }
-                                @Override public void onStatusChanged(String provider, int status, Bundle extras) {}
-                                @Override public void onProviderEnabled(@NonNull String provider) {}
-                                @Override public void onProviderDisabled(@NonNull String provider) {}
-                            };
-                        }
-                        if (lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                            lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000L, 1.0f, gpsLocationListener, Looper.getMainLooper());
-                        }
-                        if (lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-                            lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 2000L, 2.0f, gpsLocationListener, Looper.getMainLooper());
-                        }
+                    Intent intent = getPackageManager().getLaunchIntentForPackage("com.fbiego.chronos");
+                    if (intent != null) {
+                        startActivity(intent);
+                    } else {
+                        Intent market = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.fbiego.chronos"));
+                        startActivity(market);
                     }
                 } catch (Exception e) {
-                    android.util.Log.e("MainActivity", "startGpsTracking error: " + e.getMessage());
+                    android.util.Log.e("MainActivity", "openChronosApp error: " + e.getMessage());
                 }
             });
         }
 
         @JavascriptInterface
-        public void stopGpsTracking() {
+        public void openGoogleMaps() {
             runOnUiThread(() -> {
                 try {
-                    LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-                    if (lm != null && gpsLocationListener != null) {
-                        lm.removeUpdates(gpsLocationListener);
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q="));
+                    intent.setPackage("com.google.android.apps.maps");
+                    if (intent.resolveActivity(getPackageManager()) != null) {
+                        startActivity(intent);
+                    } else {
+                        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://maps.google.com")));
                     }
                 } catch (Exception e) {
-                    android.util.Log.e("MainActivity", "stopGpsTracking error: " + e.getMessage());
+                    android.util.Log.e("MainActivity", "openGoogleMaps error: " + e.getMessage());
                 }
             });
         }
 
-        private static String cleanSearchText(String input) {
-            if (input == null) return "";
-            String s = input.trim();
-            s = s.replaceAll("https?://\\S+", " ").trim();
-            s = s.replaceAll("(?i)^(?:lihat|cek|buka|kunjungi|bagikan|petunjuk\\s+arah\\s+ke|rute\\s+ke|arah\\s+ke|tujuan\\s+ke)\\s+", "");
-            s = s.replaceAll("(?i)^(?:check\\s+out|explore|open|view|directions\\s+to|route\\s+to)\\s+", "");
-            s = s.replaceAll("(?i)\\s+(?:di|pada|in|on)?\\s*google\\s*maps.*$", "");
-            s = s.replaceAll("[\"':;,.]", " ");
-            s = s.replaceAll("\\s+", " ").trim();
-            return s;
-        }
+
 
         @JavascriptInterface
         public String resolveDestination(String rawInput) {
-            JSONObject result = new JSONObject();
-            if (rawInput == null || rawInput.trim().isEmpty()) {
-                try {
-                    result.put("success", false);
-                    result.put("msg", "Teks tujuan kosong");
-                } catch (Exception ignored) {}
-                return result.toString();
-            }
-
-            String text = rawInput.trim();
-            double destLat = Double.NaN;
-            double destLng = Double.NaN;
-            String destTitle = "Tujuan Navigasi";
-
-            // 1. Pola koordinat lat/lng langsung:
-            // a. Format "@-6.2088,106.8456" atau "-6.2088, 106.8456"
-            java.util.regex.Pattern coordPattern = java.util.regex.Pattern.compile("@?(-?\\d+\\.\\d{3,})\\s*,\\s*(-?\\d+\\.\\d{3,})");
-            // b. Format Google Maps place data: "!3d-6.2088!4d106.8456"
-            java.util.regex.Pattern gmapsDataPattern = java.util.regex.Pattern.compile("!3d(-?\\d+\\.\\d+)!4d(-?\\d+\\.\\d+)");
-            // c. Parameter query URL: "q=-6.2088,106.8456" / "destination=..." / "center=..." / "ll=..."
-            java.util.regex.Pattern paramPattern = java.util.regex.Pattern.compile("(?:q|destination|daddr|center|ll)=(-?\\d+\\.\\d+)(?:%2C|,)(-?\\d+\\.\\d+)");
-
-            // Tes langsung pada teks input
-            java.util.regex.Matcher m = coordPattern.matcher(text);
-            if (m.find()) {
-                try {
-                    destLat = Double.parseDouble(m.group(1));
-                    destLng = Double.parseDouble(m.group(2));
-                    destTitle = "Titik Koordinat";
-                } catch (Exception ignored) {}
-            }
-            if (Double.isNaN(destLat)) {
-                java.util.regex.Matcher gm = gmapsDataPattern.matcher(text);
-                if (gm.find()) {
-                    try {
-                        destLat = Double.parseDouble(gm.group(1));
-                        destLng = Double.parseDouble(gm.group(2));
-                        destTitle = "Titik Peta";
-                    } catch (Exception ignored) {}
-                }
-            }
-            if (Double.isNaN(destLat)) {
-                java.util.regex.Matcher pm = paramPattern.matcher(text);
-                if (pm.find()) {
-                    try {
-                        destLat = Double.parseDouble(pm.group(1));
-                        destLng = Double.parseDouble(pm.group(2));
-                        destTitle = "Titik Peta";
-                    } catch (Exception ignored) {}
-                }
-            }
-
-            // 2. Deteksi URL dalam teks
-            java.util.regex.Pattern urlPattern = java.util.regex.Pattern.compile("https?://[^\\s]+");
-            java.util.regex.Matcher um = urlPattern.matcher(text);
-            String foundUrl = um.find() ? um.group(0) : null;
-
-            String extractedPlaceName = null;
-            if (foundUrl != null) {
-                String cleanCand = cleanSearchText(text.replace(foundUrl, ""));
-                if (cleanCand.length() >= 2) {
-                    destTitle = cleanCand;
-                    extractedPlaceName = cleanCand;
-                }
-            } else {
-                String cleanDirect = cleanSearchText(text);
-                if (cleanDirect.length() >= 2) {
-                    destTitle = cleanDirect;
-                    extractedPlaceName = cleanDirect;
-                }
-            }
-
-            // 3. Jika ada URL dan koordinat belum ditemukan, telusuri URL
-            if (foundUrl != null && Double.isNaN(destLat)) {
-                String currentUrl = foundUrl;
-                java.util.regex.Pattern placePathPat = java.util.regex.Pattern.compile("/place/([^/@?]+)");
-                java.util.regex.Pattern qPat = java.util.regex.Pattern.compile("[?&](?:q|query|destination|daddr)=([^&#]+)");
-                String mobileUserAgent = "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
-
-                for (int hop = 0; hop < 7; hop++) {
-                    // Cek koordinat pada URL saat ini
-                    java.util.regex.Matcher rm = coordPattern.matcher(currentUrl);
-                    if (rm.find()) {
-                        destLat = Double.parseDouble(rm.group(1));
-                        destLng = Double.parseDouble(rm.group(2));
-                        break;
-                    }
-                    java.util.regex.Matcher rgm = gmapsDataPattern.matcher(currentUrl);
-                    if (rgm.find()) {
-                        destLat = Double.parseDouble(rgm.group(1));
-                        destLng = Double.parseDouble(rgm.group(2));
-                        break;
-                    }
-                    java.util.regex.Matcher rpm = paramPattern.matcher(currentUrl);
-                    if (rpm.find()) {
-                        destLat = Double.parseDouble(rpm.group(1));
-                        destLng = Double.parseDouble(rpm.group(2));
-                        break;
-                    }
-
-                    // Ekstrak nama tempat dari URL jika belum ada
-                    if (extractedPlaceName == null || extractedPlaceName.isEmpty()) {
-                        java.util.regex.Matcher ppm = placePathPat.matcher(currentUrl);
-                        if (ppm.find()) {
-                            try {
-                                String decoded = java.net.URLDecoder.decode(ppm.group(1).replace("+", " "), "UTF-8");
-                                String cleaned = cleanSearchText(decoded);
-                                if (cleaned.length() >= 2) {
-                                    extractedPlaceName = cleaned;
-                                    destTitle = cleaned;
-                                }
-                            } catch (Exception ignored) {}
-                        }
-                    }
-                    if (extractedPlaceName == null || extractedPlaceName.isEmpty()) {
-                        java.util.regex.Matcher qm = qPat.matcher(currentUrl);
-                        if (qm.find()) {
-                            try {
-                                String decodedQ = java.net.URLDecoder.decode(qm.group(1).replace("+", " "), "UTF-8");
-                                String cleanedQ = cleanSearchText(decodedQ);
-                                if (!cleanedQ.matches("-?\\d+\\.\\d+.*") && cleanedQ.length() >= 2) {
-                                    extractedPlaceName = cleanedQ;
-                                    destTitle = cleanedQ;
-                                }
-                            } catch (Exception ignored) {}
-                        }
-                    }
-
-                    java.net.HttpURLConnection conn = null;
-                    try {
-                        java.net.URL url = new java.net.URL(currentUrl);
-                        conn = (java.net.HttpURLConnection) url.openConnection();
-                        conn.setInstanceFollowRedirects(false);
-                        conn.setConnectTimeout(8000);
-                        conn.setReadTimeout(8000);
-                        conn.setRequestProperty("User-Agent", mobileUserAgent);
-                        conn.setRequestProperty("Accept-Language", "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7");
-                        conn.connect();
-
-                        int code = conn.getResponseCode();
-                        if (code >= 300 && code < 400) {
-                            String redirect = conn.getHeaderField("Location");
-                            if (redirect != null && !redirect.isEmpty()) {
-                                if (redirect.startsWith("http")) {
-                                    currentUrl = redirect;
-                                } else if (redirect.startsWith("/")) {
-                                    currentUrl = url.getProtocol() + "://" + url.getHost() + redirect;
-                                }
-                                continue;
-                            }
-                        }
-
-                        if (code == 200) {
-                            java.io.InputStream in = conn.getInputStream();
-                            byte[] buf = new byte[65536];
-                            int totalRead = 0;
-                            int read;
-                            while (totalRead < buf.length && (read = in.read(buf, totalRead, buf.length - totalRead)) != -1) {
-                                totalRead += read;
-                            }
-                            in.close();
-                            if (totalRead > 0) {
-                                String html = new String(buf, 0, totalRead, java.nio.charset.StandardCharsets.UTF_8);
-                                java.util.regex.Matcher hgm = gmapsDataPattern.matcher(html);
-                                if (hgm.find()) {
-                                    destLat = Double.parseDouble(hgm.group(1));
-                                    destLng = Double.parseDouble(hgm.group(2));
-                                }
-                                if (Double.isNaN(destLat)) {
-                                    java.util.regex.Matcher hcm = coordPattern.matcher(html);
-                                    if (hcm.find()) {
-                                        destLat = Double.parseDouble(hcm.group(1));
-                                        destLng = Double.parseDouble(hcm.group(2));
-                                    }
-                                }
-                                if (Double.isNaN(destLat)) {
-                                    java.util.regex.Pattern smPat = java.util.regex.Pattern.compile("center=(-?\\d+\\.\\d+)(?:%2C|,)(-?\\d+\\.\\d+)");
-                                    java.util.regex.Matcher smm = smPat.matcher(html);
-                                    if (smm.find()) {
-                                        destLat = Double.parseDouble(smm.group(1));
-                                        destLng = Double.parseDouble(smm.group(2));
-                                    }
-                                }
-
-                                if (extractedPlaceName == null || extractedPlaceName.isEmpty()) {
-                                    java.util.regex.Pattern ogTitlePat = java.util.regex.Pattern.compile("<meta\\s+property=[\"']og:title[\"']\\s+content=[\"']([^\"']+)[\"']", java.util.regex.Pattern.CASE_INSENSITIVE);
-                                    java.util.regex.Matcher ogm = ogTitlePat.matcher(html);
-                                    if (ogm.find()) {
-                                        String cleanedOg = cleanSearchText(ogm.group(1));
-                                        if (cleanedOg.length() >= 2) {
-                                            destTitle = cleanedOg;
-                                            extractedPlaceName = cleanedOg;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        break;
-                    } catch (Exception e) {
-                        android.util.Log.w("MainActivity", "Resolve URL hop " + hop + " error: " + e.getMessage());
-                        break;
-                    } finally {
-                        if (conn != null) conn.disconnect();
-                    }
-                }
-            }
-
-            // 4. Geocoding OpenStreetMap (Nominatim & Photon Fallback) jika koordinat belum diperoleh
-            if (Double.isNaN(destLat)) {
-                String searchQuery = cleanSearchText(extractedPlaceName != null ? extractedPlaceName : text);
-                if (searchQuery.length() >= 2) {
-                    // A. Nominatim dengan filter Indonesia
-                    try {
-                        String geoUrl = "https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=id&q=" + java.net.URLEncoder.encode(searchQuery, "UTF-8");
-                        java.net.URL url = new java.net.URL(geoUrl);
-                        java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
-                        conn.setConnectTimeout(7000);
-                        conn.setReadTimeout(7000);
-                        conn.setRequestProperty("User-Agent", "RobotDeskApp/1.0 (contact: info@robotdesk.local)");
-                        conn.connect();
-                        if (conn.getResponseCode() == 200) {
-                            java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(conn.getInputStream()));
-                            StringBuilder sb = new StringBuilder();
-                            String line;
-                            while ((line = reader.readLine()) != null) sb.append(line);
-                            reader.close();
-
-                            JSONArray arr = new JSONArray(sb.toString());
-                            if (arr.length() > 0) {
-                                JSONObject obj = arr.getJSONObject(0);
-                                destLat = obj.getDouble("lat");
-                                destLng = obj.getDouble("lon");
-                                String dName = obj.optString("display_name", searchQuery);
-                                destTitle = dName.split(",")[0].trim();
-                            }
-                        }
-                        conn.disconnect();
-                    } catch (Exception e) {
-                        android.util.Log.w("MainActivity", "Nominatim ID geocoding error: " + e.getMessage());
-                    }
-
-                    // B. Fallback Nominatim Global (tanpa batas negara)
-                    if (Double.isNaN(destLat)) {
-                        try {
-                            String geoUrl = "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + java.net.URLEncoder.encode(searchQuery, "UTF-8");
-                            java.net.URL url = new java.net.URL(geoUrl);
-                            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
-                            conn.setConnectTimeout(7000);
-                            conn.setReadTimeout(7000);
-                            conn.setRequestProperty("User-Agent", "RobotDeskApp/1.0 (contact: info@robotdesk.local)");
-                            conn.connect();
-                            if (conn.getResponseCode() == 200) {
-                                java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(conn.getInputStream()));
-                                StringBuilder sb = new StringBuilder();
-                                String line;
-                                while ((line = reader.readLine()) != null) sb.append(line);
-                                reader.close();
-
-                                JSONArray arr = new JSONArray(sb.toString());
-                                if (arr.length() > 0) {
-                                    JSONObject obj = arr.getJSONObject(0);
-                                    destLat = obj.getDouble("lat");
-                                    destLng = obj.getDouble("lon");
-                                    String dName = obj.optString("display_name", searchQuery);
-                                    destTitle = dName.split(",")[0].trim();
-                                }
-                            }
-                            conn.disconnect();
-                        } catch (Exception e) {
-                            android.util.Log.w("MainActivity", "Nominatim global geocoding error: " + e.getMessage());
-                        }
-                    }
-
-                    // C. Fallback Photon Komoot API
-                    if (Double.isNaN(destLat)) {
-                        try {
-                            String photonUrl = "https://photon.komoot.io/api/?limit=1&q=" + java.net.URLEncoder.encode(searchQuery, "UTF-8");
-                            java.net.URL url = new java.net.URL(photonUrl);
-                            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
-                            conn.setConnectTimeout(7000);
-                            conn.setReadTimeout(7000);
-                            conn.setRequestProperty("User-Agent", "RobotDeskApp/1.0");
-                            conn.connect();
-                            if (conn.getResponseCode() == 200) {
-                                java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(conn.getInputStream()));
-                                StringBuilder sb = new StringBuilder();
-                                String line;
-                                while ((line = reader.readLine()) != null) sb.append(line);
-                                reader.close();
-
-                                JSONObject pObj = new JSONObject(sb.toString());
-                                JSONArray features = pObj.optJSONArray("features");
-                                if (features != null && features.length() > 0) {
-                                    JSONObject f = features.getJSONObject(0);
-                                    JSONArray coords = f.getJSONObject("geometry").getJSONArray("coordinates");
-                                    destLng = coords.getDouble(0);
-                                    destLat = coords.getDouble(1);
-                                    JSONObject props = f.optJSONObject("properties");
-                                    if (props != null && props.has("name")) {
-                                        destTitle = props.getString("name");
-                                    }
-                                }
-                            }
-                            conn.disconnect();
-                        } catch (Exception e) {
-                            android.util.Log.w("MainActivity", "Photon geocoding error: " + e.getMessage());
-                        }
-                    }
-                }
-            }
-
-            try {
-                if (!Double.isNaN(destLat) && !Double.isNaN(destLng)) {
-                    result.put("success", true);
-                    result.put("lat", destLat);
-                    result.put("lng", destLng);
-                    result.put("title", destTitle);
-                } else {
-                    result.put("success", false);
-                    result.put("msg", "Lokasi tidak ditemukan. Coba ketik nama tempat yang jelas.");
-                }
-            } catch (Exception ignored) {}
-
-            return result.toString();
+            return "{\"success\":false}";
         }
 
+
         @JavascriptInterface
-        public String fetchDrivingRoute(double startLat, double startLng, double destLat, double destLng) {
-            try {
-                String osrmUrl = String.format(java.util.Locale.US,
-                    "https://router.project-osrm.org/route/v1/driving/%.7f,%.7f;%.7f,%.7f?overview=full&geometries=geojson&steps=true",
-                    startLng, startLat, destLng, destLat);
-                java.net.URL url = new java.net.URL(osrmUrl);
-                java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
-                conn.setConnectTimeout(10000);
-                conn.setReadTimeout(10000);
-                conn.setRequestProperty("User-Agent", "RobotDeskApp/1.0");
-                conn.connect();
-                if (conn.getResponseCode() == 200) {
-                    java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(conn.getInputStream()));
-                    StringBuilder sb = new StringBuilder();
-                    String line;
-                    while ((line = reader.readLine()) != null) sb.append(line);
-                    reader.close();
-                    conn.disconnect();
-                    return sb.toString();
-                }
-                conn.disconnect();
-            } catch (Exception e) {
-                android.util.Log.w("MainActivity", "OSRM fetch error: " + e.getMessage());
-            }
+        public String getPendingShareText() {
             return "";
         }
 
         @JavascriptInterface
-        public String getPendingShareText() {
-            return pendingShareText != null ? pendingShareText : "";
-        }
-
-        @JavascriptInterface
         public void clearPendingShareText() {
-            pendingShareText = null;
         }
     }
 
