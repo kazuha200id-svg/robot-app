@@ -684,6 +684,15 @@ window.onBLEReceived = function(jsonStr) {
       }
     }
 
+    // Event kembali ke menu dari robot (tahan 2 detik)
+    if (data.action === 'nav_exit') {
+      if (currentOpenDetailFeature === 'navigation') {
+        closeRobotFeatureDetail();
+        switchMainTab('pageMenu', document.getElementById('tabBtnMenu'));
+        showNeonToast('Kembali ke Menu Aplikasi');
+      }
+    }
+
     // Time sync ACK from robot
     if (data.action === 'time' || data.action === 't' || (data.status === 'ok' && typeof data.epoch === 'number')) {
       clockSyncAckReceived = true;
@@ -3127,35 +3136,34 @@ window.onNavPermissionsGranted = function() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-// BUKA APLIKASI CHRONOS RESMI
-function openExternalChronosApp() {
-  triggerHaptic(25);
-  if (window.AndroidBLE && typeof window.AndroidBLE.openChronosApp === 'function') {
-    window.AndroidBLE.openChronosApp();
-  } else {
-    showNeonToast('Membuka aplikasi Chronos...');
-  }
-}
+// HANDLER TAHAN 2 DETIK DI LAYAR NAVIGASI UNTUK KEMBALI KE MENU APLIKASI
+(function initNavHoldToMenu() {
+  let holdTimer = null;
 
-// BUKA APLIKASI GOOGLE MAPS RESMI
-function openExternalGoogleMaps() {
-  triggerHaptic(25);
-  if (window.AndroidBLE && typeof window.AndroidBLE.openGoogleMaps === 'function') {
-    window.AndroidBLE.openGoogleMaps();
-  } else {
-    showNeonToast('Membuka Google Maps...');
+  function onHoldStart(e) {
+    clearTimeout(holdTimer);
+    holdTimer = setTimeout(() => {
+      triggerHaptic(50);
+      closeRobotFeatureDetail();
+      switchMainTab('pageMenu', document.getElementById('tabBtnMenu'));
+      showNeonToast('Kembali ke Menu Aplikasi');
+    }, 2000);
   }
-}
 
-// RESET LAYAR OLED KE STANDBY
-function requestNavOledStandby() {
-  triggerHaptic(25);
-  if (isBleConnected) {
-    sendCommand({ c: 'nav', act: 'standby' });
+  function onHoldEnd(e) {
+    clearTimeout(holdTimer);
   }
-  updateOledNavLiveDisplay('standby');
-  showNeonToast('Layar OLED disetel ke mode standby');
-}
+
+  const navView = document.getElementById('detailViewNavigation');
+  if (navView) {
+    navView.addEventListener('touchstart', onHoldStart, { passive: true });
+    navView.addEventListener('touchend', onHoldEnd, { passive: true });
+    navView.addEventListener('touchcancel', onHoldEnd, { passive: true });
+    navView.addEventListener('mousedown', onHoldStart);
+    navView.addEventListener('mouseup', onHoldEnd);
+    navView.addEventListener('mouseleave', onHoldEnd);
+  }
+})();
 
 // UPDATE TAMPILAN PANGGUNG OLED (STANDBY vs AKTIF) - REALTIME
 function updateOledNavLiveDisplay(actStr, distStr, instStr, streetStr, remStr, timeStr) {
