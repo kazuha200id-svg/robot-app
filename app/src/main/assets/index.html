@@ -874,20 +874,20 @@
               <!-- Input Tujuan / Tempel Link Maps -->
               <div style="display: flex; gap: 6px; width: 100%;">
                 <input type="text" id="navManualInput" placeholder="Ketik tujuan / tempel link Maps..." 
-                       style="flex: 1; background: #02060c; border: 1px solid var(--neon-cyan-border); color: #FFF; padding: 10px; border-radius: var(--radius-sm); font-size: 0.76rem;"
+                       style="flex: 1; background: rgba(10, 18, 32, 0.95); border: 1px solid var(--neon-cyan-border); color: var(--neon-cyan); padding: 10px 12px; border-radius: var(--radius-sm); font-size: 0.76rem; font-family: var(--font-mono); outline: none;"
                        onkeydown="if(event.key==='Enter') startManualNavSearch();">
-                <button type="button" id="btnStartNavAction" class="neon-btn-action" style="flex: 0 0 65px;" onclick="startManualNavSearch()">MULAI</button>
+                <button type="button" id="btnStartNavAction" class="neon-btn-action" style="flex: 0 0 75px; font-weight: 800; color: var(--neon-cyan); border-color: var(--neon-cyan); background: var(--neon-cyan-dim);" onclick="startManualNavSearch()">MULAI</button>
               </div>
 
               <!-- Status Rute Aktif (Muncul saat proses pencarian & navigasi aktif) -->
               <div id="navLiveStatusBox" style="display: none; margin-top: 10px; background: rgba(0,240,255,0.06); border: 1px solid rgba(0,240,255,0.3); border-radius: var(--radius-sm); padding: 10px 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <span style="font-size: 0.70rem; font-weight: 800; color: #00F0FF; letter-spacing: 0.05em;" id="navLiveStatusBadge">NAVIGASI AKTIF</span>
-                  <span style="font-size: 0.68rem; color: #8EA9C7;" id="navLiveSpeedBadge">0 km/h</span>
+                  <span style="font-size: 0.70rem; font-weight: 800; color: var(--neon-cyan); letter-spacing: 0.05em;" id="navLiveStatusBadge">NAVIGASI AKTIF</span>
+                  <span style="font-size: 0.68rem; color: var(--text-secondary);" id="navLiveSpeedBadge">0 km/h</span>
                 </div>
-                <div style="font-size: 0.82rem; font-weight: 800; color: #FFF; margin-top: 4px;" id="navLiveDestTitle">Menuju Lokasi Tujuan</div>
-                <div style="font-size: 0.74rem; font-weight: 700; color: #00F0FF; margin-top: 2px;" id="navLiveNextStep">Lurus Terus</div>
-                <div style="display: flex; justify-content: space-between; margin-top: 6px; font-size: 0.70rem; color: #8EA9C7; border-top: 1px solid rgba(0,240,255,0.15); padding-top: 6px;">
+                <div style="font-size: 0.82rem; font-weight: 800; color: var(--text-primary); margin-top: 4px;" id="navLiveDestTitle">Menuju Lokasi Tujuan</div>
+                <div style="font-size: 0.74rem; font-weight: 700; color: var(--neon-cyan); margin-top: 2px;" id="navLiveNextStep">Lurus Terus</div>
+                <div style="display: flex; justify-content: space-between; margin-top: 6px; font-size: 0.70rem; color: var(--text-secondary); border-top: 1px solid rgba(0,240,255,0.15); padding-top: 6px;">
                   <span id="navLiveDistText">Sisa: -</span>
                   <span id="navLiveDurationText">Waktu: -</span>
                 </div>
@@ -895,7 +895,7 @@
 
               <!-- Tombol Hentikan Navigasi -->
               <button type="button" id="btnStopNavActive" class="neon-btn-action full" 
-                      style="display: none; margin-top: 10px; background: rgba(255,71,87,0.18); border-color: #ff4757; color: #ff4757; font-weight: 800;" 
+                      style="display: none; margin-top: 10px; background: var(--neon-red-dim); border: 1px solid var(--neon-red-border); color: var(--neon-red); font-weight: 800; text-shadow: 0 0 8px var(--neon-red-dim);" 
                       onclick="stopLiveNavigation()">
                 HENTIKAN NAVIGASI
               </button>

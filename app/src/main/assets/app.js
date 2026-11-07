@@ -836,6 +836,15 @@ function selectFaceFromDetail(index, elem) {
 function openRobotFeatureDetail(featureKey) {
   triggerHaptic(25);
 
+  // Pastikan tab aktif berpindah ke tab Robot (pageRobot) agar layar tidak tertahan di tab menu
+  currentMainTab = 'pageRobot';
+  document.querySelectorAll('.page').forEach(page => {
+    page.classList.toggle('active', page.id === 'pageRobot');
+  });
+  document.querySelectorAll('.nav-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.getAttribute('data-page') === 'pageRobot');
+  });
+
   // Jika membuka fitur Navigasi, periksa izin Lokasi & GPS terlebih dahulu
   if (featureKey === 'navigation') {
     if (window.AndroidBLE && typeof window.AndroidBLE.requestOpenNavigation === 'function') {
@@ -3100,6 +3109,15 @@ let currentNavTotalDur = '0m';
 
 // DIPANGGIL OLEH ANDROID JAVA KETIKA SEMUA IZIN LOKASI & GPS TELAH DIBERIKAN
 window.onNavPermissionsGranted = function() {
+  // Pastikan tab aktif berpindah ke tab Robot (pageRobot) agar layar tidak tertahan di tab menu
+  currentMainTab = 'pageRobot';
+  document.querySelectorAll('.page').forEach(page => {
+    page.classList.toggle('active', page.id === 'pageRobot');
+  });
+  document.querySelectorAll('.nav-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.getAttribute('data-page') === 'pageRobot');
+  });
+
   currentOpenDetailFeature = 'navigation';
   const overview = document.getElementById('robotMainOverview');
   const detailView = document.getElementById('robotFeatureDetailView');
@@ -3141,6 +3159,15 @@ window.handleIncomingMapsShare = async function(sharedText) {
   if (!sharedText || typeof sharedText !== 'string') return;
   const rawText = sharedText.trim();
   if (rawText.length === 0) return;
+
+  // Pastikan tab aktif berpindah ke tab Robot (pageRobot) agar tidak stuck di tab menu
+  currentMainTab = 'pageRobot';
+  document.querySelectorAll('.page').forEach(page => {
+    page.classList.toggle('active', page.id === 'pageRobot');
+  });
+  document.querySelectorAll('.nav-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.getAttribute('data-page') === 'pageRobot');
+  });
 
   // Jika halaman Navigasi belum terbuka atau menunggu izin GPS, simpan tujuan dan buka navigasi
   if (currentOpenDetailFeature !== 'navigation') {
@@ -3189,16 +3216,20 @@ window.handleIncomingMapsShare = async function(sharedText) {
 
     // 2. Fallback pencarian koordinat langsung di JS
     if (destLat === null || destLng === null) {
-      let coordMatch = rawText.match(/@?(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+      let coordMatch = rawText.match(/@?(-?\d+\.\d{3,})\s*,\s*(-?\\d+\\.\\d{3,})/);
+      if (!coordMatch) {
+        coordMatch = rawText.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+      }
       if (coordMatch) {
         destLat = parseFloat(coordMatch[1]);
         destLng = parseFloat(coordMatch[2]);
         destTitle = 'Titik Koordinat';
       } else {
         const cleanQuery = rawText.replace(/https?:\/\/[^\s]+/gi, '').trim();
-        if (cleanQuery.length >= 2) {
+        const searchCandidate = (cleanQuery.length >= 2) ? cleanQuery : (resolved && resolved.title ? resolved.title : '');
+        if (searchCandidate.length >= 2) {
           try {
-            const geoUrl = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=id&q=${encodeURIComponent(cleanQuery)}`;
+            const geoUrl = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=id&q=${encodeURIComponent(searchCandidate)}`;
             const res = await fetch(geoUrl, { headers: { 'User-Agent': 'RobotDeskApp/1.0' } });
             const data = await res.json();
             if (data && data.length > 0) {
