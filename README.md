@@ -1,4 +1,4 @@
-# Robot Companion Controller App
+# Robot Desk Controller App
 
 Aplikasi Android resmi untuk **Robot Desk**.
 
@@ -17,4 +17,4 @@ Aplikasi Android resmi untuk **Robot Desk**.
 6. **Kontrol Sistem**: Tes buzzer, tes getar haptic, dan restart perangkat.
 
 ## 🚀 Build Otomatis via GitHub Actions
-Setiap push ke repositori ini akan memicu server GitHub untuk meng-compile file **`RobotCompanion.apk`** secara otomatis dan menyediakannya di tab **Releases** / **Actions Artifacts**.
+Setiap push ke repositori ini akan memicu server GitHub untuk meng-compile file **`RobotDesk.apk`** secara otomatis dan menyediakannya di tab **Releases** / **Actions Artifacts**.

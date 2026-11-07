@@ -3110,8 +3110,12 @@ window.onNavPermissionsGranted = function() {
   document.querySelectorAll('.detail-feature-panel').forEach(p => p.style.display = 'none');
   const panel = document.getElementById('detailViewNavigation');
   if (panel) panel.style.display = 'block';
-  currentRobotMode = 18;
-  sendCommand({ c: 'm', v: 18 });
+
+  // Hanya kirim mode 18 jika robot belum berada di mode navigasi
+  if (currentRobotMode !== 18) {
+    currentRobotMode = 18;
+    sendCommand({ c: 'm', v: 18 });
+  }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
   // Cek apakah ada tujuan navigasi yang tertunda
@@ -3148,77 +3152,80 @@ window.handleIncomingMapsShare = async function(sharedText) {
   const inputEl = document.getElementById('navManualInput');
   if (inputEl) inputEl.value = rawText;
 
-  showNeonToast('Menganalisis tujuan Google Maps...');
+  // Tampilkan kartu status proses pencarian di UI
+  const statusBox = document.getElementById('navLiveStatusBox');
+  const statusBadge = document.getElementById('navLiveStatusBadge');
+  const destTitleEl = document.getElementById('navLiveDestTitle');
+  const nextStepEl = document.getElementById('navLiveNextStep');
+  const distEl = document.getElementById('navLiveDistText');
+  const durEl = document.getElementById('navLiveDurationText');
+  const stopBtn = document.getElementById('btnStopNavActive');
+
+  if (statusBox) statusBox.style.display = 'block';
+  if (statusBadge) statusBadge.textContent = 'MENGANALISIS TUJUAN...';
+  if (destTitleEl) destTitleEl.textContent = 'Mencari rute tujuan...';
+  if (nextStepEl) nextStepEl.textContent = 'Menghubungkan ke satelit GPS & server rute';
+  if (distEl) distEl.textContent = 'Sisa: Menghitung...';
+  if (durEl) durEl.textContent = 'Waktu: Menghitung...';
+  if (stopBtn) stopBtn.style.display = 'block';
 
   try {
-    let resolvedText = rawText;
-
-    // 1. Ekstrak URL jika teks berisi link (contoh: https://maps.app.goo.gl/xxx atau https://goo.gl/maps/xxx)
-    const urlMatch = rawText.match(/https?:\/\/[^\s]+/i);
-    if (urlMatch) {
-      const url = urlMatch[0];
-      // Jika link pendek maps.app.goo.gl, minta Java resolve redirect ke URL asli
-      if (url.includes('goo.gl') && window.AndroidBLE && typeof window.AndroidBLE.resolveMapsUrl === 'function') {
-        resolvedText = window.AndroidBLE.resolveMapsUrl(url);
-      } else {
-        resolvedText = url;
-      }
-    }
-
-    // 2. Ekstrak Koordinat Latitude & Longitude dari teks / URL Maps
-    let destLat = null;
-    let destLng = null;
-    let destTitle = 'Tujuan Google Maps';
-
-    // Format URL Maps: @-6.2088,106.8456
-    let coordMatch = resolvedText.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
-    if (coordMatch) {
-      destLat = parseFloat(coordMatch[1]);
-      destLng = parseFloat(coordMatch[2]);
-    } else {
-      // Format parameter: q=-6.2088,106.8456 atau destination=-6.2088,106.8456
-      coordMatch = resolvedText.match(/(?:q|destination|daddr)=(-?\d+\.\d+),(-?\d+\.\d+)/);
-      if (coordMatch) {
-        destLat = parseFloat(coordMatch[1]);
-        destLng = parseFloat(coordMatch[2]);
-      } else {
-        // Format angka koordinat mentah: -6.2088, 106.8456
-        coordMatch = rawText.match(/^(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
-        if (coordMatch) {
-          destLat = parseFloat(coordMatch[1]);
-          destLng = parseFloat(coordMatch[2]);
+    let resolved = null;
+    // 1. Resolve via Native Android Bridge
+    if (window.AndroidBLE && typeof window.AndroidBLE.resolveDestination === 'function') {
+      const resJson = window.AndroidBLE.resolveDestination(rawText);
+      if (resJson) {
+        try {
+          resolved = JSON.parse(resJson);
+        } catch (e) {
+          console.warn('Parse resolveDestination JSON error:', e);
         }
       }
     }
 
-    // Ekstrak nama tempat jika ada teks sebelum URL
-    if (urlMatch && rawText.indexOf(urlMatch[0]) > 0) {
-      const titleCandidate = rawText.substring(0, rawText.indexOf(urlMatch[0])).trim();
-      if (titleCandidate.length > 2) destTitle = titleCandidate;
-    }
+    let destLat = resolved && resolved.success ? resolved.lat : null;
+    let destLng = resolved && resolved.success ? resolved.lng : null;
+    let destTitle = resolved && resolved.success ? resolved.title : 'Lokasi Tujuan';
 
-    // 3. Jika koordinat belum ditemukan (misal pengguna mengetik nama tempat seperti "Monas" atau "Stasiun Bandung")
+    // 2. Fallback pencarian koordinat langsung di JS
     if (destLat === null || destLng === null) {
-      showNeonToast('Mencari koordinat lokasi...');
-      const cleanQuery = rawText.replace(/https?:\/\/[^\s]+/gi, '').trim();
-      const geoUrl = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(cleanQuery)}`;
-      const res = await fetch(geoUrl);
-      const data = await res.json();
-      if (data && data.length > 0) {
-        destLat = parseFloat(data[0].lat);
-        destLng = parseFloat(data[0].lon);
-        destTitle = data[0].display_name.split(',')[0] || cleanQuery;
+      let coordMatch = rawText.match(/@?(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+      if (coordMatch) {
+        destLat = parseFloat(coordMatch[1]);
+        destLng = parseFloat(coordMatch[2]);
+        destTitle = 'Titik Koordinat';
+      } else {
+        const cleanQuery = rawText.replace(/https?:\/\/[^\s]+/gi, '').trim();
+        if (cleanQuery.length >= 2) {
+          try {
+            const geoUrl = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=id&q=${encodeURIComponent(cleanQuery)}`;
+            const res = await fetch(geoUrl, { headers: { 'User-Agent': 'RobotDeskApp/1.0' } });
+            const data = await res.json();
+            if (data && data.length > 0) {
+              destLat = parseFloat(data[0].lat);
+              destLng = parseFloat(data[0].lon);
+              destTitle = data[0].display_name.split(',')[0].trim();
+            }
+          } catch (e) {
+            console.warn('Nominatim fallback error:', e);
+          }
+        }
       }
     }
 
-    if (destLat !== null && destLng !== null && !isNaN(destLat) && !isNaN(destLng)) {
-      startNavigationToCoordinates(destLat, destLng, destTitle);
-    } else {
-      showNeonToast('Lokasi tidak ditemukan. Coba ketik nama tempat yang jelas.');
+    if (destLat === null || destLng === null || isNaN(destLat) || isNaN(destLng)) {
+      if (statusBadge) statusBadge.textContent = 'LOKASI TIDAK DITEMUKAN';
+      if (destTitleEl) destTitleEl.textContent = 'Gagal menemukan lokasi';
+      if (nextStepEl) nextStepEl.textContent = 'Coba ketik nama tempat yang lebih jelas atau tempel link Maps yang valid.';
+      return;
     }
+
+    if (destTitleEl) destTitleEl.textContent = destTitle;
+    startNavigationToCoordinates(destLat, destLng, destTitle);
   } catch (err) {
-    console.error('Error parsing Maps share:', err);
-    showNeonToast('Gagal memproses tujuan Google Maps');
+    console.error('Error handling Maps destination:', err);
+    if (statusBadge) statusBadge.textContent = 'GAGAL MEMPROSES';
+    if (nextStepEl) nextStepEl.textContent = 'Terjadi kesalahan saat memproses link tujuan.';
   }
 };
 
@@ -3227,122 +3234,186 @@ function startManualNavSearch() {
   const inputEl = document.getElementById('navManualInput');
   if (!inputEl) return;
   const val = inputEl.value.trim();
-  if (val.length === 0) {
-    showNeonToast('Ketik tujuan atau tempel link Maps');
-    return;
-  }
+  if (val.length === 0) return;
   window.handleIncomingMapsShare(val);
 }
 
-// MULAI NAVIGASI KE KOORDINAT TUJUAN (MENGHITUNG RUTE OSRM & GPS TRACKING REALTIME)
+// MULAI NAVIGASI KE KOORDINAT TUJUAN
 function startNavigationToCoordinates(destLat, destLng, destTitle) {
-  if (!navigator.geolocation) {
-    showNeonToast('GPS HP tidak didukung');
-    return;
+  const statusBadge = document.getElementById('navLiveStatusBadge');
+  const nextStepEl = document.getElementById('navLiveNextStep');
+  if (statusBadge) statusBadge.textContent = 'MENGAMBIL POSISI GPS...';
+  if (nextStepEl) nextStepEl.textContent = 'Membaca posisi kendaraan saat ini...';
+
+  let startLat = null;
+  let startLng = null;
+
+  // Dapatkan lokasi awal HP dari Native Android Java
+  if (window.AndroidBLE && typeof window.AndroidBLE.getNativeLocation === 'function') {
+    try {
+      const locObj = JSON.parse(window.AndroidBLE.getNativeLocation());
+      if (locObj && locObj.success) {
+        startLat = locObj.lat;
+        startLng = locObj.lng;
+      }
+    } catch (e) {}
   }
 
-  showNeonToast('Menghitung rute navigasi...');
-  currentNavDestination = { lat: destLat, lng: destLng, title: destTitle };
-
-  navigator.geolocation.getCurrentPosition(
-    async (pos) => {
-      const startLat = pos.coords.latitude;
-      const startLng = pos.coords.longitude;
-
-      try {
-        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${destLng},${destLat}?overview=full&geometries=geojson&steps=true`;
-        const res = await fetch(osrmUrl);
-        const data = await res.json();
-
-        if (!data || !data.routes || data.routes.length === 0) {
-          showNeonToast('Rute jalan tidak ditemukan');
-          return;
+  if (startLat !== null && startLng !== null) {
+    calculateAndDispatchRoute(startLat, startLng, destLat, destLng, destTitle);
+  } else if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        calculateAndDispatchRoute(pos.coords.latitude, pos.coords.longitude, destLat, destLng, destTitle);
+      },
+      (err) => {
+        // Jika belum mendapat GPS fix instan, mulai GPS tracking native yang akan memicu rute begitu koordinat masuk
+        if (window.AndroidBLE && typeof window.AndroidBLE.startGpsTracking === 'function') {
+          window._pendingInitialRoute = { destLat, destLng, destTitle };
+          window.AndroidBLE.startGpsTracking();
+          if (statusBadge) statusBadge.textContent = 'MENUNGGU SINYAL GPS...';
+          if (nextStepEl) nextStepEl.textContent = 'Mencari sinyal GPS HP di luar ruangan...';
+        } else {
+          if (statusBadge) statusBadge.textContent = 'GPS TIDAK TERSEDIA';
+          if (nextStepEl) nextStepEl.textContent = 'Harap aktifkan GPS HP Anda.';
         }
+      },
+      { enableHighAccuracy: true, timeout: 6000 }
+    );
+  } else {
+    if (statusBadge) statusBadge.textContent = 'GPS TIDAK TERSEDIA';
+  }
+}
 
-        const route = data.routes[0];
-        const distKm = (route.distance / 1000).toFixed(1) + ' km';
-        const durMin = Math.round(route.duration / 60) + 'm';
-        const durStr = route.duration >= 3600
-          ? Math.floor(route.duration / 3600) + 'j ' + Math.round((route.duration % 3600) / 60) + 'm'
-          : durMin;
+// MENGHITUNG RUTE OSRM & MENGIRIM BELOKAN PERTAMA
+async function calculateAndDispatchRoute(startLat, startLng, destLat, destLng, destTitle) {
+  const statusBox = document.getElementById('navLiveStatusBox');
+  const statusBadge = document.getElementById('navLiveStatusBadge');
+  const titleEl = document.getElementById('navLiveDestTitle');
+  const nextStepEl = document.getElementById('navLiveNextStep');
+  const distText = document.getElementById('navLiveDistText');
+  const durText = document.getElementById('navLiveDurationText');
+  const stopBtn = document.getElementById('btnStopNavActive');
 
-        currentNavRouteSteps = route.legs[0].steps;
-        currentNavStepIndex = 0;
-        currentNavTotalDist = distKm;
-        currentNavTotalDur = durStr;
-        isNavActive = true;
+  if (statusBadge) statusBadge.textContent = 'MENGHITUNG RUTE JALAN...';
 
-        // Tampilkan info rute aktif di panel UI
-        const statusBox = document.getElementById('navLiveStatusBox');
-        const titleEl = document.getElementById('navLiveDestTitle');
-        const distText = document.getElementById('navLiveDistText');
-        const durText = document.getElementById('navLiveDurationText');
-        const stopBtn = document.getElementById('btnStopNavActive');
-
-        if (statusBox) statusBox.style.display = 'block';
-        if (titleEl) titleEl.textContent = destTitle;
-        if (distText) distText.textContent = 'Sisa: ' + distKm;
-        if (durText) durText.textContent = 'Waktu: ' + durStr;
-        if (stopBtn) stopBtn.style.display = 'block';
-
-        // Kirim belokan pertama ke ESP32 dan update panggung OLED
-        if (currentNavRouteSteps.length > 0) {
-          processAndSendNavStep(currentNavRouteSteps[0], distKm, durStr, '0 km/h');
-        }
-
-        // Mulai pemantauan GPS kendaraan secara realtime
-        startLiveGpsTracking();
-
-        showNeonToast('Navigasi Aktif ke Robot: ' + distKm + ' • ' + durStr);
-      } catch (e) {
-        console.error('OSRM route error:', e);
-        showNeonToast('Gagal menghitung rute navigasi');
+  try {
+    let data = null;
+    // 1. Coba ambil rute via Native Android Java
+    if (window.AndroidBLE && typeof window.AndroidBLE.fetchDrivingRoute === 'function') {
+      const jsonStr = window.AndroidBLE.fetchDrivingRoute(startLat, startLng, destLat, destLng);
+      if (jsonStr && jsonStr.length > 10) {
+        try { data = JSON.parse(jsonStr); } catch (e) {}
       }
-    },
-    (err) => {
-      console.warn('GPS Error:', err);
-      showNeonToast('Harap aktifkan GPS HP Anda');
-    },
-    { enableHighAccuracy: true, timeout: 10000 }
-  );
+    }
+
+    // 2. Fallback fetch via web jika Java belum merespons
+    if (!data) {
+      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${destLng},${destLat}?overview=full&geometries=geojson&steps=true`;
+      const res = await fetch(osrmUrl, { headers: { 'User-Agent': 'RobotDeskApp/1.0' } });
+      data = await res.json();
+    }
+
+    if (!data || !data.routes || data.routes.length === 0) {
+      if (statusBadge) statusBadge.textContent = 'RUTE TIDAK DITEMUKAN';
+      if (nextStepEl) nextStepEl.textContent = 'Tidak ditemukan jalur jalan berkendara ke tujuan.';
+      return;
+    }
+
+    const route = data.routes[0];
+    const distKm = (route.distance / 1000).toFixed(1) + ' km';
+    const durMin = Math.round(route.duration / 60) + 'm';
+    const durStr = route.duration >= 3600
+      ? Math.floor(route.duration / 3600) + 'j ' + Math.round((route.duration % 3600) / 60) + 'm'
+      : durMin;
+
+    currentNavRouteSteps = route.legs[0].steps;
+    currentNavStepIndex = 0;
+    currentNavTotalDist = distKm;
+    currentNavTotalDur = durStr;
+    currentNavDestination = { lat: destLat, lng: destLng, title: destTitle };
+    isNavActive = true;
+
+    if (statusBox) statusBox.style.display = 'block';
+    if (statusBadge) statusBadge.textContent = 'NAVIGASI AKTIF';
+    if (titleEl) titleEl.textContent = destTitle;
+    if (distText) distText.textContent = 'Sisa: ' + distKm;
+    if (durText) durText.textContent = 'Waktu: ' + durStr;
+    if (stopBtn) stopBtn.style.display = 'block';
+
+    // Pastikan robot beralih ke mode navigasi 18
+    if (isBleConnected && currentRobotMode !== 18) {
+      currentRobotMode = 18;
+      sendCommand({ c: 'm', v: 18 });
+    }
+
+    // Kirim langkah belokan pertama ke ESP32 & update panggung OLED
+    if (currentNavRouteSteps.length > 0) {
+      processAndSendNavStep(currentNavRouteSteps[0], distKm, durStr, '0 km/h');
+    }
+
+    // Mulai pemantauan GPS kendaraan secara realtime
+    startLiveGpsTracking();
+  } catch (e) {
+    console.error('OSRM route error:', e);
+    if (statusBadge) statusBadge.textContent = 'GAGAL MENGHITUNG RUTE';
+    if (nextStepEl) nextStepEl.textContent = 'Server rute tidak merespons, coba periksa internet HP Anda.';
+  }
 }
 
 // PEMANTAUAN LOKASI GPS & SPEEDOMETER KENDARAAN REALTIME
 function startLiveGpsTracking() {
-  if (navWatchPositionId !== null) {
-    navigator.geolocation.clearWatch(navWatchPositionId);
-    navWatchPositionId = null;
+  if (window.AndroidBLE && typeof window.AndroidBLE.startGpsTracking === 'function') {
+    window.AndroidBLE.startGpsTracking();
+  } else if (navigator.geolocation) {
+    if (navWatchPositionId !== null) {
+      navigator.geolocation.clearWatch(navWatchPositionId);
+    }
+    navWatchPositionId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const spdKmh = pos.coords.speed ? Math.round(pos.coords.speed * 3.6) : 0;
+        window.onNativeGpsUpdate(pos.coords.latitude, pos.coords.longitude, spdKmh);
+      },
+      (err) => console.warn('GPS watch error:', err),
+      { enableHighAccuracy: true, maximumAge: 1000 }
+    );
+  }
+}
+
+// DIPANGGIL OLEH NATIVE ANDROID SETIAP KALI CHIP GPS HP MENDETEKSI PERGERAKAN
+window.onNativeGpsUpdate = function(lat, lng, speedKmh) {
+  // Jika rute masih tertunda karena menunggu sinyal GPS pertama
+  if (window._pendingInitialRoute) {
+    const p = window._pendingInitialRoute;
+    window._pendingInitialRoute = null;
+    calculateAndDispatchRoute(lat, lng, p.destLat, p.destLng, p.destTitle);
+    return;
   }
 
-  if (!navigator.geolocation) return;
+  if (!isNavActive || !currentNavRouteSteps || currentNavRouteSteps.length === 0) return;
 
-  navWatchPositionId = navigator.geolocation.watchPosition(
-    (pos) => {
-      if (!isNavActive || !currentNavRouteSteps || currentNavRouteSteps.length === 0) return;
+  const spdVal = typeof speedKmh === 'number' ? Math.round(speedKmh) : 0;
+  const spdStr = spdVal + ' km/h';
 
-      const spdKmh = pos.coords.speed ? Math.round(pos.coords.speed * 3.6) + ' km/h' : '0 km/h';
+  const speedBadge = document.getElementById('navLiveSpeedBadge');
+  if (speedBadge) speedBadge.textContent = spdStr;
 
-      // Hitung jarak ke titik maneuver berikutnya
-      const currentStep = currentNavRouteSteps[currentNavStepIndex] || currentNavRouteSteps[0];
-      const stepManeuverLoc = currentStep.maneuver ? currentStep.maneuver.location : null;
+  // Hitung jarak ke titik maneuver langkah saat ini
+  const currentStep = currentNavRouteSteps[currentNavStepIndex] || currentNavRouteSteps[0];
+  const stepManeuverLoc = currentStep.maneuver ? currentStep.maneuver.location : null;
 
-      if (stepManeuverLoc) {
-        const d = calculateHaversineDistance(pos.coords.latitude, pos.coords.longitude, stepManeuverLoc[1], stepManeuverLoc[0]);
-        // Jika sudah mendekati titik belokan (< 30 meter), pindah ke langkah berikutnya
-        if (d < 30 && currentNavStepIndex < currentNavRouteSteps.length - 1) {
-          currentNavStepIndex++;
-        }
-      }
+  if (stepManeuverLoc) {
+    // OSRM coordinates format: [lng, lat]
+    const d = calculateHaversineDistance(lat, lng, stepManeuverLoc[1], stepManeuverLoc[0]);
+    // Jika kendaraan sudah mendekati belokan (< 25 meter), pindah ke langkah berikutnya
+    if (d < 25 && currentNavStepIndex < currentNavRouteSteps.length - 1) {
+      currentNavStepIndex++;
+    }
+  }
 
-      const activeStep = currentNavRouteSteps[currentNavStepIndex] || currentNavRouteSteps[currentNavRouteSteps.length - 1];
-      processAndSendNavStep(activeStep, currentNavTotalDist, currentNavTotalDur, spdKmh);
-    },
-    (err) => {
-      console.warn('GPS Watch error:', err);
-    },
-    { enableHighAccuracy: true, maximumAge: 1000 }
-  );
-}
+  const activeStep = currentNavRouteSteps[currentNavStepIndex] || currentNavRouteSteps[currentNavRouteSteps.length - 1];
+  processAndSendNavStep(activeStep, currentNavTotalDist, currentNavTotalDur, spdStr);
+};
 
 // HITUNG JARAK HAVERSINE DUA TITIK KOORDINAT (DALAM METER)
 function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
@@ -3391,6 +3462,12 @@ function processAndSendNavStep(step, totalDist, totalDur, currentSpeed) {
 
   const streetStr = step.name || 'Jalan Utama';
 
+  // Update status card di UI aplikasi HP
+  const nextStepEl = document.getElementById('navLiveNextStep');
+  if (nextStepEl) {
+    nextStepEl.textContent = distStr + ' - ' + instStr + ' (' + streetStr + ')';
+  }
+
   // Kirim paket navigasi realtime ke robot ESP32 via BLE
   if (isBleConnected) {
     sendCommand({
@@ -3413,7 +3490,11 @@ function processAndSendNavStep(step, totalDist, totalDur, currentSpeed) {
 function stopLiveNavigation() {
   triggerHaptic(30);
   isNavActive = false;
+  window._pendingInitialRoute = null;
 
+  if (window.AndroidBLE && typeof window.AndroidBLE.stopGpsTracking === 'function') {
+    window.AndroidBLE.stopGpsTracking();
+  }
   if (navWatchPositionId !== null) {
     navigator.geolocation.clearWatch(navWatchPositionId);
     navWatchPositionId = null;
@@ -3437,7 +3518,6 @@ function stopLiveNavigation() {
   }
 
   updateOledNavLiveDisplay('standby');
-  showNeonToast('Navigasi Dihentikan');
 }
 
 // UPDATE TAMPILAN PANGGUNG OLED (STANDBY vs AKTIF)
