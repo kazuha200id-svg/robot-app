@@ -42,6 +42,7 @@ import androidx.core.content.ContextCompat;
 public class MainActivity extends AppCompatActivity implements BleManager.BleListener {
     private static final int REQ_NEARBY = 101;
     private static final int REQ_LOCATION = 102;
+    private static final int REQ_NAV_LOCATION = 103;
 
     private WebView webView;
     private BleManager bleManager;
@@ -52,6 +53,10 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
     private boolean hasDeniedNearby = false;
     private boolean hasDeniedLocation = false;
     private Dialog activeDialog = null;
+
+    private boolean isNavFeatureActive = false;
+    private boolean isWaitingNavPermissions = false;
+    private String pendingShareText = null;
 
     private final android.os.Handler backgroundTicker = new android.os.Handler(android.os.Looper.getMainLooper());
     private final Runnable backgroundTickRunnable = new Runnable() {
@@ -127,6 +132,9 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 checkPermissionsAndProceed();
+                if (pendingShareText != null) {
+                    webView.evaluateJavascript("if (window.handleIncomingMapsShare) window.handleIncomingMapsShare('" + escapeJs(pendingShareText) + "');", null);
+                }
             }
         });
         settings.setGeolocationEnabled(true);
@@ -150,6 +158,30 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
 
         // Jalankan Foreground Service resmi untuk menjaga koneksi BLE & Spotify di latar belakang
         RobotCompanionService.start(this);
+
+        // Periksa apakah aplikasi dibuka dari "Bagikan" Google Maps
+        handleIncomingShareIntent(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleIncomingShareIntent(intent);
+    }
+
+    private void handleIncomingShareIntent(Intent intent) {
+        if (intent != null && Intent.ACTION_SEND.equals(intent.getAction()) && "text/plain".equals(intent.getType())) {
+            String sharedText = intent.getStringExtra(Intent.EXTRA_TEXT);
+            if (sharedText != null && !sharedText.trim().isEmpty()) {
+                pendingShareText = sharedText.trim();
+                runOnUiThread(() -> {
+                    if (webView != null) {
+                        webView.evaluateJavascript("if (window.handleIncomingMapsShare) window.handleIncomingMapsShare('" + escapeJs(pendingShareText) + "');", null);
+                    }
+                });
+            }
+        }
     }
 
     @Override
@@ -180,6 +212,10 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
             });
         });
         checkPermissionsAndProceed();
+
+        if (isNavFeatureActive || isWaitingNavPermissions) {
+            checkAndOpenNavigationFeature();
+        }
     }
 
     private void checkPermissionsAndProceed() {
@@ -292,9 +328,12 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
         return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, val, getResources().getDisplayMetrics());
     }
 
-    private void showPermissionPopup(String title, String message, Runnable onAllow) {
+    private void showCustomCyberPopup(String title, String message, String allowText, Runnable onAllow, Runnable onCancel) {
         if (isFinishing() || isDestroyed()) return;
-        if (activeDialog != null && activeDialog.isShowing()) return;
+        if (activeDialog != null && activeDialog.isShowing()) {
+            activeDialog.dismiss();
+            activeDialog = null;
+        }
 
         Dialog dialog = new Dialog(this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -352,13 +391,17 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
         btnClose.setOnClickListener(v -> {
             dialog.dismiss();
             activeDialog = null;
-            finishAffinity();
+            if (onCancel != null) {
+                onCancel.run();
+            } else {
+                finishAffinity();
+            }
         });
         btnRow.addView(btnClose, closeParams);
 
         // Tombol IZINKAN (Sisi Kanan)
         Button btnAllow = new Button(this);
-        btnAllow.setText("IZINKAN");
+        btnAllow.setText(allowText != null ? allowText : "IZINKAN");
         btnAllow.setTextColor(Color.parseColor("#050A14"));
         btnAllow.setTextSize(13);
         btnAllow.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
@@ -386,6 +429,87 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
         }
         activeDialog = dialog;
         dialog.show();
+    }
+
+    private void showPermissionPopup(String title, String message, Runnable onAllow) {
+        showCustomCyberPopup(title, message, "IZINKAN", onAllow, this::finishAffinity);
+    }
+
+    public void checkAndOpenNavigationFeature() {
+        if (isFinishing() || isDestroyed()) return;
+
+        // Cek Izin Lokasi Presisi Tinggi (GPS)
+        boolean hasFineLoc = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        if (!hasFineLoc) {
+            isWaitingNavPermissions = true;
+            showCustomCyberPopup(
+                "Izin Lokasi & GPS Kendaraan",
+                "Aplikasi memerlukan akses GPS presisi tinggi untuk menghitung rute navigasi dan speedometer kecepatan laju kendaraan secara akurat di layar robot.",
+                "IZINKAN",
+                () -> {
+                    isWaitingNativePermission = true;
+                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQ_NAV_LOCATION);
+                },
+                this::cancelNavAndReturnToRobot
+            );
+            return;
+        }
+
+        // Cek Status Layanan GPS HP
+        LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        boolean isGpsEnabled = false;
+        try {
+            isGpsEnabled = lm != null && (lm.isProviderEnabled(LocationManager.GPS_PROVIDER) || lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER));
+        } catch (Exception ignored) {}
+
+        if (!isGpsEnabled) {
+            isWaitingNavPermissions = true;
+            showCustomCyberPopup(
+                "Aktifkan GPS HP",
+                "Layanan lokasi/GPS di HP Anda sedang mati. Harap aktifkan GPS agar robot dapat membaca arah rute dan kecepatan kendaraan.",
+                "IZINKAN",
+                () -> {
+                    try {
+                        Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                        startActivity(intent);
+                    } catch (Exception e) {
+                        Toast.makeText(MainActivity.this, "Buka Pengaturan > Lokasi secara manual", Toast.LENGTH_LONG).show();
+                    }
+                },
+                this::cancelNavAndReturnToRobot
+            );
+            return;
+        }
+
+        // Semua izin aktif & GPS menyala!
+        isWaitingNavPermissions = false;
+        isNavFeatureActive = true;
+
+        runOnUiThread(() -> {
+            if (webView != null) {
+                webView.evaluateJavascript("if (window.onNavPermissionsGranted) window.onNavPermissionsGranted();", null);
+                if (pendingShareText != null) {
+                    webView.evaluateJavascript("if (window.handleIncomingMapsShare) window.handleIncomingMapsShare('" + escapeJs(pendingShareText) + "');", null);
+                    pendingShareText = null;
+                }
+            }
+        });
+    }
+
+    private void cancelNavAndReturnToRobot() {
+        isWaitingNavPermissions = false;
+        isNavFeatureActive = false;
+        pendingShareText = null;
+        runOnUiThread(() -> {
+            if (webView != null) {
+                webView.evaluateJavascript("if (window.closeRobotFeatureDetail) window.closeRobotFeatureDetail();", null);
+            }
+        });
+    }
+
+    private static String escapeJs(String text) {
+        if (text == null) return "";
+        return text.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ").replace("\r", "");
     }
 
     @Override
@@ -424,6 +548,12 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
                     "Aplikasi memerlukan izin lokasi untuk memindai sinyal Robot Desk di sekitar Anda.",
                     this::reRequestLocationPermissions
                 );
+            }
+        } else if (requestCode == REQ_NAV_LOCATION) {
+            if (allGranted) {
+                checkAndOpenNavigationFeature();
+            } else {
+                cancelNavAndReturnToRobot();
             }
         }
     }
@@ -627,6 +757,62 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
         @JavascriptInterface
         public void requestMusicSync() {
             SpotifyMediaManager.getInstance().dispatchState();
+        }
+
+        @JavascriptInterface
+        public void requestOpenNavigation() {
+            runOnUiThread(() -> checkAndOpenNavigationFeature());
+        }
+
+        @JavascriptInterface
+        public void setNavFeatureActive(boolean active) {
+            isNavFeatureActive = active;
+            if (!active) {
+                isWaitingNavPermissions = false;
+            }
+        }
+
+        @JavascriptInterface
+        public String resolveMapsUrl(String urlString) {
+            if (urlString == null || !urlString.contains("http")) return urlString;
+            String currentUrl = urlString;
+            for (int hop = 0; hop < 4; hop++) {
+                java.net.HttpURLConnection conn = null;
+                try {
+                    java.net.URL url = new java.net.URL(currentUrl);
+                    conn = (java.net.HttpURLConnection) url.openConnection();
+                    conn.setInstanceFollowRedirects(false);
+                    conn.setConnectTimeout(6000);
+                    conn.setReadTimeout(6000);
+                    conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 10)");
+                    conn.connect();
+                    int code = conn.getResponseCode();
+                    if (code >= 300 && code < 400) {
+                        String redirect = conn.getHeaderField("Location");
+                        if (redirect != null && !redirect.isEmpty()) {
+                            currentUrl = redirect;
+                            continue;
+                        }
+                    }
+                    break;
+                } catch (Exception e) {
+                    android.util.Log.w("MainActivity", "resolveMapsUrl error: " + e.getMessage());
+                    break;
+                } finally {
+                    if (conn != null) conn.disconnect();
+                }
+            }
+            return currentUrl;
+        }
+
+        @JavascriptInterface
+        public String getPendingShareText() {
+            return pendingShareText != null ? pendingShareText : "";
+        }
+
+        @JavascriptInterface
+        public void clearPendingShareText() {
+            pendingShareText = null;
         }
     }
 

@@ -861,6 +861,40 @@
                 </div>
               </div>
             </div>
+
+            <!-- PANEL NAVIGASI GOOGLE MAPS TEMA CYBER NEON -->
+            <div class="feature-ctrl-panel" style="margin-top: 14px;">
+              <span class="status-card-label">SINKRONISASI GOOGLE MAPS</span>
+
+              <!-- Petunjuk Singkat -->
+              <div style="font-size: 0.72rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 8px;">
+                Buka <strong>Google Maps</strong> &rarr; Tekan <strong>Bagikan</strong> &rarr; Pilih <strong>Robot Companion</strong>. Atau ketik tujuan di bawah:
+              </div>
+
+              <!-- Input Tujuan / Tempel Link Maps -->
+              <div style="display: flex; gap: 6px; width: 100%;">
+                <input type="text" id="navManualInput" placeholder="Ketik tujuan / tempel link Maps..." 
+                       style="flex: 1; background: #02060c; border: 1px solid var(--neon-cyan-border); color: #FFF; padding: 10px; border-radius: var(--radius-sm); font-size: 0.76rem;"
+                       onkeydown="if(event.key==='Enter') startManualNavSearch();">
+                <button type="button" class="neon-btn-action" style="flex: 0 0 65px;" onclick="startManualNavSearch()">MULAI</button>
+              </div>
+
+              <!-- Status Rute Aktif (Hanya muncul saat navigasi berjalan) -->
+              <div id="navLiveStatusBox" style="display: none; margin-top: 10px; background: rgba(0,240,255,0.06); border: 1px solid rgba(0,240,255,0.3); border-radius: var(--radius-sm); padding: 8px 10px;">
+                <div style="font-size: 0.74rem; font-weight: 800; color: #00F0FF;" id="navLiveDestTitle">Menuju Lokasi Tujuan</div>
+                <div style="display: flex; justify-content: space-between; margin-top: 4px; font-size: 0.70rem; color: #FFF; font-weight: 700;">
+                  <span id="navLiveDistText">Sisa: -</span>
+                  <span id="navLiveDurationText">Waktu: -</span>
+                </div>
+              </div>
+
+              <!-- Tombol Hentikan Navigasi -->
+              <button type="button" id="btnStopNavActive" class="neon-btn-action full" 
+                      style="display: none; margin-top: 10px; background: rgba(255,71,87,0.18); border-color: #ff4757; color: #ff4757; font-weight: 800;" 
+                      onclick="stopLiveNavigation()">
+                HENTIKAN NAVIGASI
+              </button>
+            </div>
           </div>
         </div>
       </section>
