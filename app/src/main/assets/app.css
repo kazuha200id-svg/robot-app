@@ -6,20 +6,20 @@
   --neon-cyan: #00F0FF;
   --neon-cyan-glow: rgba(0, 240, 255, 0.45);
   --neon-cyan-dim: rgba(0, 240, 255, 0.12);
-  --neon-cyan-border: rgba(0, 240, 255, 0.28);
+  --neon-cyan-border: rgba(0, 240, 255, 0.35);
   
   --bg-deep: #050811;
   --bg-surface: #0A111E;
-  --bg-card: rgba(10, 18, 32, 0.82);
-  --bg-card-hover: rgba(0, 240, 255, 0.08);
+  --bg-card: rgba(10, 18, 32, 0.85);
+  --bg-card-hover: rgba(0, 240, 255, 0.12);
 
-  --text-primary: #E0F7FA;
-  --text-secondary: #7AC7DC;
-  --text-muted: #426078;
+  --text-primary: #00F0FF;
+  --text-secondary: #00F0FF;
+  --text-muted: #00F0FF;
 
-  --neon-red: #FF3366;
-  --neon-red-dim: rgba(255, 51, 102, 0.15);
-  --neon-red-border: rgba(255, 51, 102, 0.4);
+  --neon-red: #00F0FF;
+  --neon-red-dim: rgba(0, 240, 255, 0.12);
+  --neon-red-border: rgba(0, 240, 255, 0.4);
 
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -44,8 +44,38 @@ html, body {
   height: 100dvh;
   overflow: hidden;
   background-color: var(--bg-deep);
-  color: var(--text-primary);
+  color: var(--neon-cyan) !important;
   font-family: var(--font-sans);
+}
+
+/* SEMUA TEKS DAN TOMBOL 100% MEMAKAI WARNA TEMA NEON CYAN (#00F0FF) TANPA TERKECUALI */
+p, span, label, h1, h2, h3, h4, h5, h6, div, a, input, button, select, textarea {
+  color: var(--neon-cyan);
+}
+
+button, .neon-btn-action, .neon-btn-compact, .neon-btn-subtle, .nav-tab, 
+.menu-action-card, .btn-clock-sync, .btn-fmt-pill, .stepper-btn, 
+.weather-action-btn, .connect-action-btn, .card-title, .status-txt, 
+.section-title-bar h2, .stage-screen-content div, .stage-screen-content span,
+.stage-screen-content, .brand-name, .oled-header-tiny span {
+  color: var(--neon-cyan) !important;
+}
+
+/* KETIKA DIKLIK / AKTIF, TEKS TETAP MENJAGA WARNA TEMA NEON CYAN */
+button:active, 
+.neon-btn-action:active, 
+.neon-btn-compact:active, 
+.connect-action-btn:active, 
+.neon-action-pad:active,
+.neon-btn-corner:active,
+.btn-fmt-pill.active, 
+.stepper-btn:active, 
+.game-nav-row .highlight,
+.btn-clock-sync:active {
+  color: var(--neon-cyan) !important;
+  background: rgba(0, 240, 255, 0.24) !important;
+  border-color: var(--neon-cyan) !important;
+  box-shadow: 0 0 14px var(--neon-cyan) !important;
 }
 
 /* APP SHELL (RESPONSIVE VIEWPORT) */

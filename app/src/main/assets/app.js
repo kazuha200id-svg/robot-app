@@ -1420,13 +1420,6 @@ function selectRobotMenuFeature(featureKey, btnEl) {
 
   triggerHaptic(30);
 
-  if (featureKey === 'navigation') {
-    if (window.AndroidBLE && typeof window.AndroidBLE.requestOpenNavigation === 'function') {
-      window.AndroidBLE.requestOpenNavigation();
-      return;
-    }
-  }
-
   const modeMap = {
     'face': 0,
     'clock': 1,
@@ -3216,7 +3209,7 @@ window.handleIncomingMapsShare = async function(sharedText) {
 
     // 2. Fallback pencarian koordinat langsung di JS
     if (destLat === null || destLng === null) {
-      let coordMatch = rawText.match(/@?(-?\d+\.\d{3,})\s*,\s*(-?\\d+\\.\\d{3,})/);
+      let coordMatch = rawText.match(/@?(-?\d+\.\d{3,})\s*,\s*(-?\d+\.\d{3,})/);
       if (!coordMatch) {
         coordMatch = rawText.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
       }
@@ -3225,8 +3218,18 @@ window.handleIncomingMapsShare = async function(sharedText) {
         destLng = parseFloat(coordMatch[2]);
         destTitle = 'Titik Koordinat';
       } else {
-        const cleanQuery = rawText.replace(/https?:\/\/[^\s]+/gi, '').trim();
-        const searchCandidate = (cleanQuery.length >= 2) ? cleanQuery : (resolved && resolved.title ? resolved.title : '');
+        function cleanQueryString(raw) {
+          if (!raw) return '';
+          let s = String(raw).trim();
+          s = s.replace(/https?:\/\/\S+/gi, ' ').trim();
+          s = s.replace(/^(?:lihat|cek|buka|kunjungi|bagikan|petunjuk\s+arah\s+ke|rute\s+ke|arah\s+ke|tujuan\s+ke)\s+/i, '');
+          s = s.replace(/^(?:check\s+out|explore|open|view|directions\s+to|route\s+to)\s+/i, '');
+          s = s.replace(/\s+(?:di|pada|in|on)?\s*google\s*maps.*$/i, '');
+          s = s.replace(/["':;,.]/g, ' ');
+          return s.replace(/\s+/g, ' ').trim();
+        }
+        const cleanedRaw = cleanQueryString(rawText);
+        const searchCandidate = (cleanedRaw.length >= 2) ? cleanedRaw : (resolved && resolved.title ? cleanQueryString(resolved.title) : '');
         if (searchCandidate.length >= 2) {
           try {
             const geoUrl = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=id&q=${encodeURIComponent(searchCandidate)}`;

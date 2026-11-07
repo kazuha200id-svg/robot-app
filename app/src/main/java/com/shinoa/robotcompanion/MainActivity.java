@@ -374,7 +374,7 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
         // Pesan dialog
         TextView msgView = new TextView(this);
         msgView.setText(message);
-        msgView.setTextColor(Color.parseColor("#8EA9C7"));
+        msgView.setTextColor(Color.parseColor("#00F0FF"));
         msgView.setTextSize(13.5f);
         msgView.setLineSpacing(dp(3), 1.0f);
         LinearLayout.LayoutParams msgParams = new LinearLayout.LayoutParams(
@@ -390,13 +390,13 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
         // Tombol TUTUP (Sisi Kiri)
         Button btnClose = new Button(this);
         btnClose.setText("TUTUP");
-        btnClose.setTextColor(Color.parseColor("#7AC7DC"));
+        btnClose.setTextColor(Color.parseColor("#00F0FF"));
         btnClose.setTextSize(13);
         btnClose.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
         GradientDrawable closeBg = new GradientDrawable();
-        closeBg.setColor(Color.parseColor("#0B1526"));
+        closeBg.setColor(Color.parseColor("#08182B"));
         closeBg.setCornerRadius(dp(8));
-        closeBg.setStroke(dp(1), Color.parseColor("#1F385C"));
+        closeBg.setStroke(dp(1.5f), Color.parseColor("#00F0FF"));
         btnClose.setBackground(closeBg);
         LinearLayout.LayoutParams closeParams = new LinearLayout.LayoutParams(0, dp(42), 1f);
         closeParams.rightMargin = dp(10);
@@ -875,6 +875,18 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
             });
         }
 
+        private static String cleanSearchText(String input) {
+            if (input == null) return "";
+            String s = input.trim();
+            s = s.replaceAll("https?://\\S+", " ").trim();
+            s = s.replaceAll("(?i)^(?:lihat|cek|buka|kunjungi|bagikan|petunjuk\\s+arah\\s+ke|rute\\s+ke|arah\\s+ke|tujuan\\s+ke)\\s+", "");
+            s = s.replaceAll("(?i)^(?:check\\s+out|explore|open|view|directions\\s+to|route\\s+to)\\s+", "");
+            s = s.replaceAll("(?i)\\s+(?:di|pada|in|on)?\\s*google\\s*maps.*$", "");
+            s = s.replaceAll("[\"':;,.]", " ");
+            s = s.replaceAll("\\s+", " ").trim();
+            return s;
+        }
+
         @JavascriptInterface
         public String resolveDestination(String rawInput) {
             JSONObject result = new JSONObject();
@@ -929,194 +941,172 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
                 }
             }
 
-            // 2. Deteksi URL dalam teks (misal link Google Maps: maps.app.goo.gl, goo.gl/maps, google.com/maps)
+            // 2. Deteksi URL dalam teks
             java.util.regex.Pattern urlPattern = java.util.regex.Pattern.compile("https?://[^\\s]+");
             java.util.regex.Matcher um = urlPattern.matcher(text);
             String foundUrl = um.find() ? um.group(0) : null;
 
             String extractedPlaceName = null;
-
             if (foundUrl != null) {
-                // Ekstrak teks lain di luar URL sebagai kandidat nama tempat
-                String cleanCandidate = text.replace(foundUrl, "").replace("\n", " ").trim();
-                if (cleanCandidate.length() >= 2) {
-                    destTitle = cleanCandidate.split(",")[0].trim();
-                    extractedPlaceName = cleanCandidate;
+                String cleanCand = cleanSearchText(text.replace(foundUrl, ""));
+                if (cleanCand.length() >= 2) {
+                    destTitle = cleanCand;
+                    extractedPlaceName = cleanCand;
                 }
+            } else {
+                String cleanDirect = cleanSearchText(text);
+                if (cleanDirect.length() >= 2) {
+                    destTitle = cleanDirect;
+                    extractedPlaceName = cleanDirect;
+                }
+            }
 
-                // Jika koordinat belum ditemukan dari teks langsung, resolve URL Google Maps
-                if (Double.isNaN(destLat)) {
-                    String currentUrl = foundUrl;
-                    String mobileUserAgent = "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
-                    for (int hop = 0; hop < 7; hop++) {
-                        java.net.HttpURLConnection conn = null;
-                        try {
-                            java.net.URL url = new java.net.URL(currentUrl);
-                            conn = (java.net.HttpURLConnection) url.openConnection();
-                            conn.setInstanceFollowRedirects(false);
-                            conn.setConnectTimeout(8000);
-                            conn.setReadTimeout(8000);
-                            conn.setRequestProperty("User-Agent", mobileUserAgent);
-                            conn.setRequestProperty("Accept-Language", "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7");
-                            conn.connect();
+            // 3. Jika ada URL dan koordinat belum ditemukan, telusuri URL
+            if (foundUrl != null && Double.isNaN(destLat)) {
+                String currentUrl = foundUrl;
+                java.util.regex.Pattern placePathPat = java.util.regex.Pattern.compile("/place/([^/@?]+)");
+                java.util.regex.Pattern qPat = java.util.regex.Pattern.compile("[?&](?:q|query|destination|daddr)=([^&#]+)");
+                String mobileUserAgent = "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
 
-                            int code = conn.getResponseCode();
-                            if (code >= 300 && code < 400) {
-                                String redirect = conn.getHeaderField("Location");
-                                if (redirect != null && !redirect.isEmpty()) {
-                                    if (redirect.startsWith("http")) {
-                                        currentUrl = redirect;
-                                    } else if (redirect.startsWith("/")) {
-                                        currentUrl = url.getProtocol() + "://" + url.getHost() + redirect;
-                                    }
+                for (int hop = 0; hop < 7; hop++) {
+                    // Cek koordinat pada URL saat ini
+                    java.util.regex.Matcher rm = coordPattern.matcher(currentUrl);
+                    if (rm.find()) {
+                        destLat = Double.parseDouble(rm.group(1));
+                        destLng = Double.parseDouble(rm.group(2));
+                        break;
+                    }
+                    java.util.regex.Matcher rgm = gmapsDataPattern.matcher(currentUrl);
+                    if (rgm.find()) {
+                        destLat = Double.parseDouble(rgm.group(1));
+                        destLng = Double.parseDouble(rgm.group(2));
+                        break;
+                    }
+                    java.util.regex.Matcher rpm = paramPattern.matcher(currentUrl);
+                    if (rpm.find()) {
+                        destLat = Double.parseDouble(rpm.group(1));
+                        destLng = Double.parseDouble(rpm.group(2));
+                        break;
+                    }
 
-                                    // Cek koordinat di redirected URL
-                                    java.util.regex.Matcher rm = coordPattern.matcher(currentUrl);
-                                    if (rm.find()) {
-                                        destLat = Double.parseDouble(rm.group(1));
-                                        destLng = Double.parseDouble(rm.group(2));
-                                    }
-                                    if (Double.isNaN(destLat)) {
-                                        java.util.regex.Matcher rgm = gmapsDataPattern.matcher(currentUrl);
-                                        if (rgm.find()) {
-                                            destLat = Double.parseDouble(rgm.group(1));
-                                            destLng = Double.parseDouble(rgm.group(2));
-                                        }
-                                    }
-                                    if (Double.isNaN(destLat)) {
-                                        java.util.regex.Matcher rpm = paramPattern.matcher(currentUrl);
-                                        if (rpm.find()) {
-                                            destLat = Double.parseDouble(rpm.group(1));
-                                            destLng = Double.parseDouble(rpm.group(2));
-                                        }
-                                    }
-
-                                    // Ekstrak nama tempat dari pola path URL: /place/Nama+Tempat/
-                                    java.util.regex.Pattern placePathPat = java.util.regex.Pattern.compile("/place/([^/@?]+)");
-                                    java.util.regex.Matcher ppm = placePathPat.matcher(currentUrl);
-                                    if (ppm.find()) {
-                                        try {
-                                            String decodedPlace = java.net.URLDecoder.decode(ppm.group(1).replace("+", " "), "UTF-8");
-                                            if (decodedPlace.length() >= 2) {
-                                                destTitle = decodedPlace;
-                                                extractedPlaceName = decodedPlace;
-                                            }
-                                        } catch (Exception ignored) {}
-                                    }
-
-                                    // Ekstrak nama tempat dari query q=...
-                                    java.util.regex.Pattern qPat = java.util.regex.Pattern.compile("[?&](?:q|query)=([^&#]+)");
-                                    java.util.regex.Matcher qm = qPat.matcher(currentUrl);
-                                    if (qm.find() && (extractedPlaceName == null || extractedPlaceName.isEmpty())) {
-                                        try {
-                                            String decodedQ = java.net.URLDecoder.decode(qm.group(1).replace("+", " "), "UTF-8");
-                                            if (!decodedQ.matches("-?\\d+\\.\\d+.*") && decodedQ.length() >= 2) {
-                                                destTitle = decodedQ;
-                                                extractedPlaceName = decodedQ;
-                                            }
-                                        } catch (Exception ignored) {}
-                                    }
-
-                                    if (!Double.isNaN(destLat)) {
-                                        break;
-                                    }
-                                    continue;
+                    // Ekstrak nama tempat dari URL jika belum ada
+                    if (extractedPlaceName == null || extractedPlaceName.isEmpty()) {
+                        java.util.regex.Matcher ppm = placePathPat.matcher(currentUrl);
+                        if (ppm.find()) {
+                            try {
+                                String decoded = java.net.URLDecoder.decode(ppm.group(1).replace("+", " "), "UTF-8");
+                                String cleaned = cleanSearchText(decoded);
+                                if (cleaned.length() >= 2) {
+                                    extractedPlaceName = cleaned;
+                                    destTitle = cleaned;
                                 }
+                            } catch (Exception ignored) {}
+                        }
+                    }
+                    if (extractedPlaceName == null || extractedPlaceName.isEmpty()) {
+                        java.util.regex.Matcher qm = qPat.matcher(currentUrl);
+                        if (qm.find()) {
+                            try {
+                                String decodedQ = java.net.URLDecoder.decode(qm.group(1).replace("+", " "), "UTF-8");
+                                String cleanedQ = cleanSearchText(decodedQ);
+                                if (!cleanedQ.matches("-?\\d+\\.\\d+.*") && cleanedQ.length() >= 2) {
+                                    extractedPlaceName = cleanedQ;
+                                    destTitle = cleanedQ;
+                                }
+                            } catch (Exception ignored) {}
+                        }
+                    }
+
+                    java.net.HttpURLConnection conn = null;
+                    try {
+                        java.net.URL url = new java.net.URL(currentUrl);
+                        conn = (java.net.HttpURLConnection) url.openConnection();
+                        conn.setInstanceFollowRedirects(false);
+                        conn.setConnectTimeout(8000);
+                        conn.setReadTimeout(8000);
+                        conn.setRequestProperty("User-Agent", mobileUserAgent);
+                        conn.setRequestProperty("Accept-Language", "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7");
+                        conn.connect();
+
+                        int code = conn.getResponseCode();
+                        if (code >= 300 && code < 400) {
+                            String redirect = conn.getHeaderField("Location");
+                            if (redirect != null && !redirect.isEmpty()) {
+                                if (redirect.startsWith("http")) {
+                                    currentUrl = redirect;
+                                } else if (redirect.startsWith("/")) {
+                                    currentUrl = url.getProtocol() + "://" + url.getHost() + redirect;
+                                }
+                                continue;
                             }
+                        }
 
-                            if (code == 200) {
-                                java.io.InputStream in = conn.getInputStream();
-                                byte[] buf = new byte[65536];
-                                int totalRead = 0;
-                                int read;
-                                while (totalRead < buf.length && (read = in.read(buf, totalRead, buf.length - totalRead)) != -1) {
-                                    totalRead += read;
+                        if (code == 200) {
+                            java.io.InputStream in = conn.getInputStream();
+                            byte[] buf = new byte[65536];
+                            int totalRead = 0;
+                            int read;
+                            while (totalRead < buf.length && (read = in.read(buf, totalRead, buf.length - totalRead)) != -1) {
+                                totalRead += read;
+                            }
+                            in.close();
+                            if (totalRead > 0) {
+                                String html = new String(buf, 0, totalRead, java.nio.charset.StandardCharsets.UTF_8);
+                                java.util.regex.Matcher hgm = gmapsDataPattern.matcher(html);
+                                if (hgm.find()) {
+                                    destLat = Double.parseDouble(hgm.group(1));
+                                    destLng = Double.parseDouble(hgm.group(2));
                                 }
-                                in.close();
-                                if (totalRead > 0) {
-                                    String html = new String(buf, 0, totalRead, java.nio.charset.StandardCharsets.UTF_8);
+                                if (Double.isNaN(destLat)) {
+                                    java.util.regex.Matcher hcm = coordPattern.matcher(html);
+                                    if (hcm.find()) {
+                                        destLat = Double.parseDouble(hcm.group(1));
+                                        destLng = Double.parseDouble(hcm.group(2));
+                                    }
+                                }
+                                if (Double.isNaN(destLat)) {
+                                    java.util.regex.Pattern smPat = java.util.regex.Pattern.compile("center=(-?\\d+\\.\\d+)(?:%2C|,)(-?\\d+\\.\\d+)");
+                                    java.util.regex.Matcher smm = smPat.matcher(html);
+                                    if (smm.find()) {
+                                        destLat = Double.parseDouble(smm.group(1));
+                                        destLng = Double.parseDouble(smm.group(2));
+                                    }
+                                }
 
-                                    // Cek koordinat di HTML
-                                    java.util.regex.Matcher hgm = gmapsDataPattern.matcher(html);
-                                    if (hgm.find()) {
-                                        destLat = Double.parseDouble(hgm.group(1));
-                                        destLng = Double.parseDouble(hgm.group(2));
-                                    }
-                                    if (Double.isNaN(destLat)) {
-                                        java.util.regex.Matcher hcm = coordPattern.matcher(html);
-                                        if (hcm.find()) {
-                                            destLat = Double.parseDouble(hcm.group(1));
-                                            destLng = Double.parseDouble(hcm.group(2));
-                                        }
-                                    }
-                                    if (Double.isNaN(destLat)) {
-                                        java.util.regex.Matcher hpm = paramPattern.matcher(html);
-                                        if (hpm.find()) {
-                                            destLat = Double.parseDouble(hpm.group(1));
-                                            destLng = Double.parseDouble(hpm.group(2));
-                                        }
-                                    }
-                                    if (Double.isNaN(destLat)) {
-                                        // Cek static map center
-                                        java.util.regex.Pattern smPat = java.util.regex.Pattern.compile("center=(-?\\d+\\.\\d+)(?:%2C|,)(-?\\d+\\.\\d+)");
-                                        java.util.regex.Matcher smm = smPat.matcher(html);
-                                        if (smm.find()) {
-                                            destLat = Double.parseDouble(smm.group(1));
-                                            destLng = Double.parseDouble(smm.group(2));
-                                        }
-                                    }
-
-                                    // Cek judul halaman / meta og:title untuk nama tempat
+                                if (extractedPlaceName == null || extractedPlaceName.isEmpty()) {
                                     java.util.regex.Pattern ogTitlePat = java.util.regex.Pattern.compile("<meta\\s+property=[\"']og:title[\"']\\s+content=[\"']([^\"']+)[\"']", java.util.regex.Pattern.CASE_INSENSITIVE);
                                     java.util.regex.Matcher ogm = ogTitlePat.matcher(html);
                                     if (ogm.find()) {
-                                        String ogTitle = ogm.group(1).replaceAll("(?i)\\s*-\\s*(?:Google Maps|Peta Google).*", "").trim();
-                                        if (ogTitle.length() >= 2) {
-                                            destTitle = ogTitle;
-                                            extractedPlaceName = ogTitle;
-                                        }
-                                    } else {
-                                        java.util.regex.Pattern titlePat = java.util.regex.Pattern.compile("<title>([^<]+)</title>", java.util.regex.Pattern.CASE_INSENSITIVE);
-                                        java.util.regex.Matcher tm = titlePat.matcher(html);
-                                        if (tm.find()) {
-                                            String pageTitle = tm.group(1).replaceAll("(?i)\\s*-\\s*(?:Google Maps|Peta Google).*", "").trim();
-                                            if (pageTitle.length() >= 2 && !pageTitle.toLowerCase().contains("google maps")) {
-                                                destTitle = pageTitle;
-                                                extractedPlaceName = pageTitle;
-                                            }
+                                        String cleanedOg = cleanSearchText(ogm.group(1));
+                                        if (cleanedOg.length() >= 2) {
+                                            destTitle = cleanedOg;
+                                            extractedPlaceName = cleanedOg;
                                         }
                                     }
                                 }
                             }
-                            break;
-                        } catch (Exception e) {
-                            android.util.Log.w("MainActivity", "Resolve URL hop " + hop + " error: " + e.getMessage());
-                            break;
-                        } finally {
-                            if (conn != null) conn.disconnect();
                         }
+                        break;
+                    } catch (Exception e) {
+                        android.util.Log.w("MainActivity", "Resolve URL hop " + hop + " error: " + e.getMessage());
+                        break;
+                    } finally {
+                        if (conn != null) conn.disconnect();
                     }
                 }
             }
 
-            // 3. Jika koordinat belum ditemukan, gunakan Geocoding OpenStreetMap (Nominatim)
+            // 4. Geocoding OpenStreetMap (Nominatim & Photon Fallback) jika koordinat belum diperoleh
             if (Double.isNaN(destLat)) {
-                String searchQuery = "";
-                if (extractedPlaceName != null && extractedPlaceName.trim().length() >= 2) {
-                    searchQuery = extractedPlaceName.trim();
-                } else if (foundUrl != null) {
-                    searchQuery = text.replace(foundUrl, "").trim();
-                } else {
-                    searchQuery = text;
-                }
-                searchQuery = searchQuery.replace("\n", " ").replaceAll("[^a-zA-Z0-9\\s]", " ").trim();
+                String searchQuery = cleanSearchText(extractedPlaceName != null ? extractedPlaceName : text);
                 if (searchQuery.length() >= 2) {
+                    // A. Nominatim dengan filter Indonesia
                     try {
                         String geoUrl = "https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=id&q=" + java.net.URLEncoder.encode(searchQuery, "UTF-8");
                         java.net.URL url = new java.net.URL(geoUrl);
                         java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
-                        conn.setConnectTimeout(8000);
-                        conn.setReadTimeout(8000);
+                        conn.setConnectTimeout(7000);
+                        conn.setReadTimeout(7000);
                         conn.setRequestProperty("User-Agent", "RobotDeskApp/1.0 (contact: info@robotdesk.local)");
                         conn.connect();
                         if (conn.getResponseCode() == 200) {
@@ -1137,7 +1127,75 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
                         }
                         conn.disconnect();
                     } catch (Exception e) {
-                        android.util.Log.w("MainActivity", "Nominatim geocoding error: " + e.getMessage());
+                        android.util.Log.w("MainActivity", "Nominatim ID geocoding error: " + e.getMessage());
+                    }
+
+                    // B. Fallback Nominatim Global (tanpa batas negara)
+                    if (Double.isNaN(destLat)) {
+                        try {
+                            String geoUrl = "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + java.net.URLEncoder.encode(searchQuery, "UTF-8");
+                            java.net.URL url = new java.net.URL(geoUrl);
+                            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+                            conn.setConnectTimeout(7000);
+                            conn.setReadTimeout(7000);
+                            conn.setRequestProperty("User-Agent", "RobotDeskApp/1.0 (contact: info@robotdesk.local)");
+                            conn.connect();
+                            if (conn.getResponseCode() == 200) {
+                                java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(conn.getInputStream()));
+                                StringBuilder sb = new StringBuilder();
+                                String line;
+                                while ((line = reader.readLine()) != null) sb.append(line);
+                                reader.close();
+
+                                JSONArray arr = new JSONArray(sb.toString());
+                                if (arr.length() > 0) {
+                                    JSONObject obj = arr.getJSONObject(0);
+                                    destLat = obj.getDouble("lat");
+                                    destLng = obj.getDouble("lon");
+                                    String dName = obj.optString("display_name", searchQuery);
+                                    destTitle = dName.split(",")[0].trim();
+                                }
+                            }
+                            conn.disconnect();
+                        } catch (Exception e) {
+                            android.util.Log.w("MainActivity", "Nominatim global geocoding error: " + e.getMessage());
+                        }
+                    }
+
+                    // C. Fallback Photon Komoot API
+                    if (Double.isNaN(destLat)) {
+                        try {
+                            String photonUrl = "https://photon.komoot.io/api/?limit=1&q=" + java.net.URLEncoder.encode(searchQuery, "UTF-8");
+                            java.net.URL url = new java.net.URL(photonUrl);
+                            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+                            conn.setConnectTimeout(7000);
+                            conn.setReadTimeout(7000);
+                            conn.setRequestProperty("User-Agent", "RobotDeskApp/1.0");
+                            conn.connect();
+                            if (conn.getResponseCode() == 200) {
+                                java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(conn.getInputStream()));
+                                StringBuilder sb = new StringBuilder();
+                                String line;
+                                while ((line = reader.readLine()) != null) sb.append(line);
+                                reader.close();
+
+                                JSONObject pObj = new JSONObject(sb.toString());
+                                JSONArray features = pObj.optJSONArray("features");
+                                if (features != null && features.length() > 0) {
+                                    JSONObject f = features.getJSONObject(0);
+                                    JSONArray coords = f.getJSONObject("geometry").getJSONArray("coordinates");
+                                    destLng = coords.getDouble(0);
+                                    destLat = coords.getDouble(1);
+                                    JSONObject props = f.optJSONObject("properties");
+                                    if (props != null && props.has("name")) {
+                                        destTitle = props.getString("name");
+                                    }
+                                }
+                            }
+                            conn.disconnect();
+                        } catch (Exception e) {
+                            android.util.Log.w("MainActivity", "Photon geocoding error: " + e.getMessage());
+                        }
                     }
                 }
             }
