@@ -32,9 +32,10 @@
 
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="true" />
 
-    <!-- Queries for Spotify Application -->
+    <!-- Queries for Spotify Application & Google Maps Navigation -->
     <queries>
         <package android:name="com.spotify.music" />
+        <package android:name="com.google.android.apps.maps" />
     </queries>
 
     <application
@@ -72,6 +73,17 @@
                 <action android:name="com.spotify.music.queuechanged" />
             </intent-filter>
         </receiver>
+
+        <!-- Layanan Latar Belakang Resmi untuk Menyadap Navigasi Google Maps Turn-by-Turn -->
+        <service
+            android:name=".GoogleMapsNotificationListenerService"
+            android:label="Robot Companion Navigasi"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
 
     </application>
 
