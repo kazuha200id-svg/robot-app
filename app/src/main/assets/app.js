@@ -684,15 +684,6 @@ window.onBLEReceived = function(jsonStr) {
       }
     }
 
-    // Event kembali ke menu dari robot (tahan 2 detik)
-    if (data.action === 'nav_exit') {
-      if (currentOpenDetailFeature === 'navigation') {
-        closeRobotFeatureDetail();
-        switchMainTab('pageMenu', document.getElementById('tabBtnMenu'));
-        showNeonToast('Kembali ke Menu Aplikasi');
-      }
-    }
-
     // Time sync ACK from robot
     if (data.action === 'time' || data.action === 't' || (data.status === 'ok' && typeof data.epoch === 'number')) {
       clockSyncAckReceived = true;
@@ -3135,35 +3126,6 @@ window.onNavPermissionsGranted = function() {
   sendCommand({ c: 'nav_req' });
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
-
-// HANDLER TAHAN 2 DETIK DI LAYAR NAVIGASI UNTUK KEMBALI KE MENU APLIKASI
-(function initNavHoldToMenu() {
-  let holdTimer = null;
-
-  function onHoldStart(e) {
-    clearTimeout(holdTimer);
-    holdTimer = setTimeout(() => {
-      triggerHaptic(50);
-      closeRobotFeatureDetail();
-      switchMainTab('pageMenu', document.getElementById('tabBtnMenu'));
-      showNeonToast('Kembali ke Menu Aplikasi');
-    }, 2000);
-  }
-
-  function onHoldEnd(e) {
-    clearTimeout(holdTimer);
-  }
-
-  const navView = document.getElementById('detailViewNavigation');
-  if (navView) {
-    navView.addEventListener('touchstart', onHoldStart, { passive: true });
-    navView.addEventListener('touchend', onHoldEnd, { passive: true });
-    navView.addEventListener('touchcancel', onHoldEnd, { passive: true });
-    navView.addEventListener('mousedown', onHoldStart);
-    navView.addEventListener('mouseup', onHoldEnd);
-    navView.addEventListener('mouseleave', onHoldEnd);
-  }
-})();
 
 // UPDATE TAMPILAN PANGGUNG OLED (STANDBY vs AKTIF) - REALTIME
 function updateOledNavLiveDisplay(actStr, distStr, instStr, streetStr, remStr, timeStr) {
