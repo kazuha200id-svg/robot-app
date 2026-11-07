@@ -913,6 +913,11 @@ function openRobotFeatureDetail(featureKey) {
     if (window.AndroidBLE && typeof window.AndroidBLE.requestMusicSync === 'function') {
       window.AndroidBLE.requestMusicSync();
     }
+  } else if (featureKey === 'navigation') {
+    const panel = document.getElementById('detailViewNavigation');
+    if (panel) panel.style.display = 'block';
+    currentRobotMode = 18;
+    sendCommand({ c: 'm', v: 18 });
   }
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1395,7 +1400,8 @@ function selectRobotMenuFeature(featureKey, btnEl) {
     'game': 4,
     'stopwatch': 7,
     'alarm': 8,
-    'spotify': 17
+    'spotify': 17,
+    'navigation': 18
   };
 
   const targetMode = modeMap[featureKey];
@@ -3053,3 +3059,311 @@ window.onBackgroundTick = function() {
     dispatchRealtimeLyricSync(false);
   }
 };
+
+// ========================================================
+// NAVIGASI & MAP (GPS & OSRM TURN-BY-TURN ENGINE)
+// ========================================================
+
+let currentNavVehicle = 'driving';
+let currentSelectedDestination = null;
+let navWatchPositionId = null;
+let currentNavRouteSteps = [];
+let currentNavStepIndex = 0;
+let isNavActive = false;
+
+function setNavVehicleProfile(profile) {
+  triggerHaptic(20);
+  currentNavVehicle = profile;
+  const btnMotor = document.getElementById('btnNavModeMotor');
+  const btnCar = document.getElementById('btnNavModeCar');
+  if (profile === 'driving') {
+    if (btnMotor) btnMotor.classList.add('active');
+    if (btnCar) btnCar.classList.remove('active');
+  } else {
+    if (btnMotor) btnMotor.classList.remove('active');
+    if (btnCar) btnCar.classList.add('active');
+  }
+  if (currentSelectedDestination) {
+    calculateAndDisplayRoute(currentSelectedDestination);
+  }
+}
+
+function switchNavPreviewStage(tab) {
+  triggerHaptic(20);
+  const btnStandby = document.getElementById('btnPreviewNavStandby');
+  const btnActive = document.getElementById('btnPreviewNavActive');
+  const stageStandby = document.getElementById('stageNavStandby');
+  const stageActive = document.getElementById('stageNavActive');
+
+  if (tab === 'standby') {
+    if (btnStandby) btnStandby.classList.add('active');
+    if (btnActive) btnActive.classList.remove('active');
+    if (stageStandby) stageStandby.style.display = 'flex';
+    if (stageActive) stageActive.style.display = 'none';
+  } else {
+    if (btnStandby) btnStandby.classList.remove('active');
+    if (btnActive) btnActive.classList.add('active');
+    if (stageStandby) stageStandby.style.display = 'none';
+    if (stageActive) stageActive.style.display = 'flex';
+  }
+}
+
+async function searchNavDestination() {
+  const input = document.getElementById('navSearchInput');
+  const query = input ? input.value.trim() : '';
+  if (!query) {
+    showNeonToast('Ketik nama tempat atau alamat');
+    return;
+  }
+
+  triggerHaptic(30);
+  showNeonToast('Mencari lokasi...');
+
+  const resultsList = document.getElementById('navSearchResultsList');
+  if (resultsList) {
+    resultsList.innerHTML = '<div style="font-size:0.72rem; color:rgba(0,240,255,0.7); padding:6px;">Mencari di peta...</div>';
+    resultsList.style.display = 'flex';
+  }
+
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&countrycodes=id`;
+    const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    const data = await resp.json();
+
+    if (!data || data.length === 0) {
+      if (resultsList) resultsList.innerHTML = '<div style="font-size:0.72rem; color:#ff4757; padding:6px;">Lokasi tidak ditemukan. Coba kata kunci lain.</div>';
+      return;
+    }
+
+    if (resultsList) {
+      resultsList.innerHTML = '';
+      data.forEach(item => {
+        const div = document.createElement('div');
+        div.style.cssText = 'padding:7px 8px; border-bottom:1px solid rgba(0,240,255,0.15); cursor:pointer; font-size:0.72rem; color:#FFF;';
+        div.innerHTML = `<strong style="color:#00F0FF;">${item.display_name.split(',')[0]}</strong><div style="font-size:0.62rem; color:rgba(255,255,255,0.65); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.display_name}</div>`;
+        div.onclick = () => selectNavDestination(item);
+        resultsList.appendChild(div);
+      });
+    }
+  } catch (err) {
+    console.error('Error searching address:', err);
+    if (resultsList) resultsList.innerHTML = '<div style="font-size:0.72rem; color:#ff4757; padding:6px;">Gagal memuat peta (Periksa internet).</div>';
+  }
+}
+
+function selectNavDestination(item) {
+  triggerHaptic(25);
+  currentSelectedDestination = {
+    lat: parseFloat(item.lat),
+    lng: parseFloat(item.lon),
+    title: item.display_name.split(',')[0],
+    address: item.display_name
+  };
+
+  const resultsList = document.getElementById('navSearchResultsList');
+  if (resultsList) resultsList.style.display = 'none';
+
+  const input = document.getElementById('navSearchInput');
+  if (input) input.value = currentSelectedDestination.title;
+
+  calculateAndDisplayRoute(currentSelectedDestination);
+}
+
+function calculateAndDisplayRoute(dest) {
+  if (!navigator.geolocation) {
+    showNeonToast('GPS HP tidak didukung');
+    return;
+  }
+
+  showNeonToast('Menghitung rute...');
+
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const startLat = pos.coords.latitude;
+      const startLng = pos.coords.longitude;
+
+      try {
+        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${dest.lng},${dest.lat}?overview=full&geometries=geojson&steps=true`;
+        const res = await fetch(osrmUrl);
+        const data = await res.json();
+
+        if (!data || !data.routes || data.routes.length === 0) {
+          showNeonToast('Rute jalan tidak ditemukan');
+          return;
+        }
+
+        const route = data.routes[0];
+        const distKm = (route.distance / 1000).toFixed(1) + ' km';
+        const durMin = Math.round(route.duration / 60) + 'm';
+        const durStr = route.duration >= 3600 
+          ? Math.floor(route.duration / 3600) + 'j ' + Math.round((route.duration % 3600) / 60) + 'm'
+          : durMin;
+
+        currentNavRouteSteps = route.legs[0].steps;
+        currentNavStepIndex = 0;
+
+        const summaryBox = document.getElementById('navRouteSummaryBox');
+        const destTitle = document.getElementById('navDestTitle');
+        const destAddress = document.getElementById('navDestAddress');
+        const routeDist = document.getElementById('navRouteDist');
+        const routeDuration = document.getElementById('navRouteDuration');
+
+        if (summaryBox) summaryBox.style.display = 'block';
+        if (destTitle) destTitle.textContent = dest.title;
+        if (destAddress) destAddress.textContent = dest.address;
+        if (routeDist) routeDist.textContent = 'Jarak: ' + distKm;
+        if (routeDuration) routeDuration.textContent = 'Waktu: ' + durStr;
+
+        updateOledNavActivePreview(currentNavRouteSteps[0], distKm, durStr);
+        showNeonToast('Rute Siap: ' + distKm + ' • ' + durStr);
+      } catch (e) {
+        console.error('OSRM route error:', e);
+        showNeonToast('Gagal menghitung rute');
+      }
+    },
+    (err) => {
+      console.warn('GPS Error:', err);
+      showNeonToast('Aktifkan GPS HP untuk rute');
+    },
+    { enableHighAccuracy: true, timeout: 8000 }
+  );
+}
+
+function updateOledNavActivePreview(step, totalDist, totalDur) {
+  if (!step) return null;
+  const stageActive = document.getElementById('stageNavActive');
+  const stageStandby = document.getElementById('stageNavStandby');
+  const btnActive = document.getElementById('btnPreviewNavActive');
+  const btnStandby = document.getElementById('btnPreviewNavStandby');
+
+  if (stageActive) stageActive.style.display = 'flex';
+  if (stageStandby) stageStandby.style.display = 'none';
+  if (btnActive) btnActive.classList.add('active');
+  if (btnStandby) btnStandby.classList.remove('active');
+
+  const m = step.maneuver || {};
+  let distStr = Math.round(step.distance) + ' m';
+  if (step.distance >= 1000) distStr = (step.distance / 1000).toFixed(1) + ' km';
+
+  let instStr = 'Lurus Terus';
+  let actStr = 'straight';
+
+  if (m.type === 'turn') {
+    if (m.modifier && m.modifier.includes('right')) {
+      instStr = 'Belok Kanan';
+      actStr = 'right';
+    } else if (m.modifier && m.modifier.includes('left')) {
+      instStr = 'Belok Kiri';
+      actStr = 'left';
+    }
+  } else if (m.type === 'roundabout') {
+    instStr = 'Bundaran';
+    actStr = 'roundabout';
+  } else if (m.type === 'arrive') {
+    instStr = 'Tiba di Tujuan';
+    actStr = 'arrive';
+  }
+
+  const streetStr = step.name || 'Jalan Utama';
+
+  const distEl = document.getElementById('stageNavDistance');
+  const instEl = document.getElementById('stageNavInstruction');
+  const streetEl = document.getElementById('stageNavStreet');
+  const remEl = document.getElementById('stageNavBottomRem');
+  const timeEl = document.getElementById('stageNavBottomTime');
+
+  if (distEl) distEl.textContent = distStr;
+  if (instEl) instEl.textContent = instStr;
+  if (streetEl) streetEl.textContent = streetStr;
+  if (remEl) remEl.textContent = totalDist;
+  if (timeEl) timeEl.textContent = totalDur;
+
+  return { act: actStr, dist: distStr, inst: instStr, street: streetStr, rem: totalDist, time: totalDur };
+}
+
+function startNavigationToRobot() {
+  if (!currentSelectedDestination) {
+    showNeonToast('Pilih tujuan terlebih dahulu');
+    return;
+  }
+
+  triggerHaptic(40);
+  isNavActive = true;
+
+  const btnStart = document.getElementById('btnStartNav');
+  const btnStop = document.getElementById('btnStopNav');
+  if (btnStart) btnStart.style.display = 'none';
+  if (btnStop) btnStop.style.display = 'block';
+
+  currentRobotMode = 18;
+  sendCommand({ c: 'm', v: 18 });
+
+  if (currentNavRouteSteps && currentNavRouteSteps.length > 0) {
+    const step = currentNavRouteSteps[0];
+    const info = updateOledNavActivePreview(step, '3.4 km', '15m');
+    if (info) {
+      sendCommand({
+        c: 'nav',
+        act: info.act,
+        dist: info.dist,
+        inst: info.inst,
+        street: info.street,
+        rem: info.rem,
+        time: info.time,
+        spd: '0 km/h'
+      });
+    }
+  }
+
+  if (navigator.geolocation) {
+    navWatchPositionId = navigator.geolocation.watchPosition(
+      (pos) => {
+        if (!isNavActive) return;
+        const spdKm = pos.coords.speed ? Math.round(pos.coords.speed * 3.6) + ' km/h' : '0 km/h';
+
+        if (currentNavRouteSteps && currentNavRouteSteps.length > 0) {
+          const step = currentNavRouteSteps[currentNavStepIndex] || currentNavRouteSteps[0];
+          const info = updateOledNavActivePreview(step, '3.4 km', '15m');
+          if (info) {
+            sendCommand({
+              c: 'nav',
+              act: info.act,
+              dist: info.dist,
+              inst: info.inst,
+              street: info.street,
+              rem: info.rem,
+              time: info.time,
+              spd: spdKm
+            });
+          }
+        }
+      },
+      (err) => {
+        console.warn('GPS Watch error:', err);
+      },
+      { enableHighAccuracy: true, maximumAge: 1000 }
+    );
+  }
+
+  showNeonToast('Navigasi Dikirim ke Layar Robot!');
+}
+
+function stopNavigationToRobot() {
+  triggerHaptic(30);
+  isNavActive = false;
+
+  if (navWatchPositionId !== null) {
+    navigator.geolocation.clearWatch(navWatchPositionId);
+    navWatchPositionId = null;
+  }
+
+  const btnStart = document.getElementById('btnStartNav');
+  const btnStop = document.getElementById('btnStopNav');
+  if (btnStart) btnStart.style.display = 'block';
+  if (btnStop) btnStop.style.display = 'none';
+
+  sendCommand({ c: 'nav', act: 'stop' });
+  switchNavPreviewStage('standby');
+  showNeonToast('Navigasi Dihentikan');
+}
+

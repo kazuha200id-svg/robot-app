@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.os.Vibrator;
 import android.provider.Settings;
 import android.view.View;
+import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -128,7 +129,13 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
                 checkPermissionsAndProceed();
             }
         });
-        webView.setWebChromeClient(new WebChromeClient());
+        settings.setGeolocationEnabled(true);
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
+                callback.invoke(origin, true, false);
+            }
+        });
         webView.setBackgroundColor(0xFF060B13);
 
         webView.addJavascriptInterface(new WebAppInterface(), "AndroidBLE");
