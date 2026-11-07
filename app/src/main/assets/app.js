@@ -835,15 +835,6 @@ function selectFaceFromDetail(index, elem) {
 // BUKA TAMPILAN DETAIL FITUR ROBOT (HALAMAN BARU - LAYAR OLED 100% PERSIS FISIK)
 function openRobotFeatureDetail(featureKey) {
   triggerHaptic(25);
-
-  // Jika membuka fitur Navigasi, periksa izin Akses Notifikasi Google Maps & GPS terlebih dahulu
-  if (featureKey === 'navigation') {
-    if (window.AndroidBLE && typeof window.AndroidBLE.requestOpenNavigation === 'function') {
-      window.AndroidBLE.requestOpenNavigation();
-      return;
-    }
-  }
-
   currentOpenDetailFeature = featureKey;
 
   const overview = document.getElementById('robotMainOverview');
@@ -935,13 +926,6 @@ function openRobotFeatureDetail(featureKey) {
 // TUTUP DETAIL FITUR & KEMBALI KE OVERVIEW LAYAR OLED ROBOT
 function closeRobotFeatureDetail() {
   triggerHaptic(20);
-
-  if (currentOpenDetailFeature === 'navigation') {
-    if (window.AndroidBLE && typeof window.AndroidBLE.stopNavigationSession === 'function') {
-      window.AndroidBLE.stopNavigationSession();
-    }
-  }
-
   currentOpenDetailFeature = null;
 
   if (window._gameDetailSyncTimer) {
@@ -1407,13 +1391,6 @@ function selectRobotMenuFeature(featureKey, btnEl) {
   }
 
   triggerHaptic(30);
-
-  if (featureKey === 'navigation') {
-    if (window.AndroidBLE && typeof window.AndroidBLE.requestOpenNavigation === 'function') {
-      window.AndroidBLE.requestOpenNavigation();
-      return;
-    }
-  }
 
   const modeMap = {
     'face': 0,
@@ -3089,23 +3066,6 @@ window.onBackgroundTick = function() {
 
 let isNavActive = false;
 
-// DIPANGGIL OLEH ANDROID JAVA KETIKA SEMUA IZIN NAVIGASI & GPS TELAH DIBERIKAN
-window.onNavPermissionsGranted = function() {
-  currentOpenDetailFeature = 'navigation';
-  const overview = document.getElementById('robotMainOverview');
-  const detailView = document.getElementById('robotFeatureDetailView');
-
-  if (overview) overview.style.display = 'none';
-  if (detailView) detailView.style.display = 'block';
-
-  document.querySelectorAll('.detail-feature-panel').forEach(p => p.style.display = 'none');
-  const panel = document.getElementById('detailViewNavigation');
-  if (panel) panel.style.display = 'block';
-  currentRobotMode = 18;
-  sendCommand({ c: 'm', v: 18 });
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-};
-
 function updateOledNavLiveDisplay(actStr, distStr, instStr, streetStr, remStr, timeStr) {
   const stageActive = document.getElementById('stageNavActive');
   const stageStandby = document.getElementById('stageNavStandby');
@@ -3119,31 +3079,12 @@ function updateOledNavLiveDisplay(actStr, distStr, instStr, streetStr, remStr, t
     const streetEl = document.getElementById('stageNavStreet');
     const remEl = document.getElementById('stageNavBottomRem');
     const timeEl = document.getElementById('stageNavBottomTime');
-    const arrowSvg = document.getElementById('stageNavArrowSvg');
 
     if (distEl) distEl.textContent = distStr || '180 m';
     if (instEl) instEl.textContent = instStr || 'Belok Kanan';
     if (streetEl) streetEl.textContent = streetStr || 'Jl. Diponegoro';
     if (remEl) remEl.textContent = remStr || '3.4 km';
     if (timeEl) timeEl.textContent = timeStr || '15m';
-
-    // Perbarui ikon panah SVG belokan di panggung OLED
-    if (arrowSvg) {
-      const a = (actStr || '').toLowerCase();
-      if (a.includes('left')) {
-        arrowSvg.innerHTML = '<polyline points="12 19 5 12 12 5"></polyline><line x1="5" y1="12" x2="19" y2="12"></line>';
-      } else if (a.includes('right')) {
-        arrowSvg.innerHTML = '<polyline points="12 5 19 12 12 19"></polyline><line x1="19" y1="12" x2="5" y2="12"></line>';
-      } else if (a.includes('uturn')) {
-        arrowSvg.innerHTML = '<path d="M9 14L4 9l5-5"></path><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v5.5"></path>';
-      } else if (a.includes('roundabout')) {
-        arrowSvg.innerHTML = '<circle cx="12" cy="12" r="6"></circle><polyline points="12 2 15 5 12 8"></polyline>';
-      } else if (a.includes('arrive')) {
-        arrowSvg.innerHTML = '<path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path>';
-      } else {
-        arrowSvg.innerHTML = '<line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline>';
-      }
-    }
   } else {
     if (stageActive) stageActive.style.display = 'none';
     if (stageStandby) stageStandby.style.display = 'flex';

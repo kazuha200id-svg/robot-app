@@ -8,8 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -44,7 +42,6 @@ import androidx.core.content.ContextCompat;
 public class MainActivity extends AppCompatActivity implements BleManager.BleListener {
     private static final int REQ_NEARBY = 101;
     private static final int REQ_LOCATION = 102;
-    private static final int REQ_NAV_LOCATION = 103;
 
     private WebView webView;
     private BleManager bleManager;
@@ -55,11 +52,6 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
     private boolean hasDeniedNearby = false;
     private boolean hasDeniedLocation = false;
     private Dialog activeDialog = null;
-
-    private boolean isNavFeatureActive = false;
-    private boolean isWaitingNavPermissions = false;
-    private static String currentGpsSpeed = "0 km/h";
-    private LocationListener navLocationListener = null;
 
     private final android.os.Handler backgroundTicker = new android.os.Handler(android.os.Looper.getMainLooper());
     private final Runnable backgroundTickRunnable = new Runnable() {
@@ -158,31 +150,6 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
 
         // Jalankan Foreground Service resmi untuk menjaga koneksi BLE & Spotify di latar belakang
         RobotCompanionService.start(this);
-
-        // Pasang listener notifikasi navigasi Google Maps
-        GoogleMapsNotificationListenerService.setNavUpdateListener(new GoogleMapsNotificationListenerService.NavUpdateListener() {
-            @Override
-            public void onNavUpdate(String act, String dist, String inst, String street, String rem, String timeStr) {
-                runOnUiThread(() -> {
-                    if (webView != null) {
-                        String js = String.format(
-                            "if (window.updateOledNavLiveDisplay) window.updateOledNavLiveDisplay('%s', '%s', '%s', '%s', '%s', '%s');",
-                            escapeJs(act), escapeJs(dist), escapeJs(inst), escapeJs(street), escapeJs(rem), escapeJs(timeStr)
-                        );
-                        webView.evaluateJavascript(js, null);
-                    }
-                });
-            }
-
-            @Override
-            public void onNavStopped() {
-                runOnUiThread(() -> {
-                    if (webView != null) {
-                        webView.evaluateJavascript("if (window.updateOledNavLiveDisplay) window.updateOledNavLiveDisplay('standby');", null);
-                    }
-                });
-            }
-        });
     }
 
     @Override
@@ -213,10 +180,6 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
             });
         });
         checkPermissionsAndProceed();
-
-        if (isNavFeatureActive || isWaitingNavPermissions) {
-            checkAndOpenNavigationFeature();
-        }
     }
 
     private void checkPermissionsAndProceed() {
@@ -329,12 +292,9 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
         return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, val, getResources().getDisplayMetrics());
     }
 
-    private void showCustomCyberPopup(String title, String message, String allowText, Runnable onAllow, Runnable onCancel) {
+    private void showPermissionPopup(String title, String message, Runnable onAllow) {
         if (isFinishing() || isDestroyed()) return;
-        if (activeDialog != null && activeDialog.isShowing()) {
-            activeDialog.dismiss();
-            activeDialog = null;
-        }
+        if (activeDialog != null && activeDialog.isShowing()) return;
 
         Dialog dialog = new Dialog(this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -392,17 +352,13 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
         btnClose.setOnClickListener(v -> {
             dialog.dismiss();
             activeDialog = null;
-            if (onCancel != null) {
-                onCancel.run();
-            } else {
-                finishAffinity();
-            }
+            finishAffinity();
         });
         btnRow.addView(btnClose, closeParams);
 
         // Tombol IZINKAN (Sisi Kanan)
         Button btnAllow = new Button(this);
-        btnAllow.setText(allowText != null ? allowText : "IZINKAN");
+        btnAllow.setText("IZINKAN");
         btnAllow.setTextColor(Color.parseColor("#050A14"));
         btnAllow.setTextSize(13);
         btnAllow.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
@@ -430,160 +386,6 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
         }
         activeDialog = dialog;
         dialog.show();
-    }
-
-    private void showPermissionPopup(String title, String message, Runnable onAllow) {
-        showCustomCyberPopup(title, message, "IZINKAN", onAllow, this::finishAffinity);
-    }
-
-    public void checkAndOpenNavigationFeature() {
-        if (isFinishing() || isDestroyed()) return;
-
-        // 1. Cek Izin Akses Notifikasi Google Maps
-        if (!GoogleMapsNotificationListenerService.isNotificationAccessGranted(this)) {
-            isWaitingNavPermissions = true;
-            showCustomCyberPopup(
-                "Izin Akses Navigasi Google Maps",
-                "Aplikasi memerlukan Akses Notifikasi untuk membaca arah belokan, hitungan meter, dan nama jalan dari Google Maps secara realtime agar dapat ditampilkan di layar robot.",
-                "IZINKAN",
-                () -> {
-                    try {
-                        Intent intent = new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS);
-                        startActivity(intent);
-                    } catch (Exception e) {
-                        Toast.makeText(MainActivity.this, "Buka Pengaturan > Akses Notifikasi secara manual", Toast.LENGTH_LONG).show();
-                    }
-                },
-                this::cancelNavAndReturnToRobot
-            );
-            return;
-        }
-
-        // 2. Cek Izin Lokasi Presisi Tinggi
-        boolean hasFineLoc = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-        if (!hasFineLoc) {
-            isWaitingNavPermissions = true;
-            showCustomCyberPopup(
-                "Izin Lokasi & GPS Kendaraan",
-                "Aplikasi memerlukan akses GPS presisi tinggi untuk menghitung speedometer kecepatan laju kendaraan secara akurat di layar robot.",
-                "IZINKAN",
-                () -> {
-                    isWaitingNativePermission = true;
-                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQ_NAV_LOCATION);
-                },
-                this::cancelNavAndReturnToRobot
-            );
-            return;
-        }
-
-        // 3. Cek Status GPS HP
-        LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        boolean isGpsEnabled = false;
-        try {
-            isGpsEnabled = lm != null && (lm.isProviderEnabled(LocationManager.GPS_PROVIDER) || lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER));
-        } catch (Exception ignored) {}
-
-        if (!isGpsEnabled) {
-            isWaitingNavPermissions = true;
-            showCustomCyberPopup(
-                "Aktifkan GPS HP",
-                "Layanan lokasi/GPS di HP Anda sedang mati. Harap aktifkan GPS agar robot dapat membaca kecepatan laju kendaraan.",
-                "IZINKAN",
-                () -> {
-                    try {
-                        Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                        startActivity(intent);
-                    } catch (Exception e) {
-                        Toast.makeText(MainActivity.this, "Buka Pengaturan > Lokasi secara manual", Toast.LENGTH_LONG).show();
-                    }
-                },
-                this::cancelNavAndReturnToRobot
-            );
-            return;
-        }
-
-        // Semua izin aktif & GPS menyala!
-        isWaitingNavPermissions = false;
-        isNavFeatureActive = true;
-        startGpsSpeedListener();
-
-        runOnUiThread(() -> {
-            if (webView != null) {
-                webView.evaluateJavascript("if (window.onNavPermissionsGranted) window.onNavPermissionsGranted();", null);
-            }
-        });
-    }
-
-    private void cancelNavAndReturnToRobot() {
-        isWaitingNavPermissions = false;
-        isNavFeatureActive = false;
-        stopGpsSpeedListener();
-        runOnUiThread(() -> {
-            if (webView != null) {
-                webView.evaluateJavascript("if (window.closeRobotFeatureDetail) window.closeRobotFeatureDetail();", null);
-            }
-        });
-    }
-
-    private void startGpsSpeedListener() {
-        if (navLocationListener != null) return;
-        LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        if (lm == null) return;
-
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-
-        navLocationListener = new LocationListener() {
-            @Override
-            public void onLocationChanged(Location location) {
-                if (location != null) {
-                    float spdMps = location.hasSpeed() ? location.getSpeed() : 0f;
-                    int spdKmh = Math.round(spdMps * 3.6f);
-                    currentGpsSpeed = spdKmh + " km/h";
-                    runOnUiThread(() -> {
-                        if (webView != null) {
-                            webView.evaluateJavascript("if (document.getElementById('stageNavStandbySpeed')) document.getElementById('stageNavStandbySpeed').textContent = '" + currentGpsSpeed + "';", null);
-                        }
-                    });
-                }
-            }
-
-            @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {}
-            @Override
-            public void onProviderEnabled(String provider) {}
-            @Override
-            public void onProviderDisabled(String provider) {}
-        };
-
-        try {
-            if (lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1.0f, navLocationListener);
-            } else if (lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-                lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000, 1.0f, navLocationListener);
-            }
-        } catch (SecurityException ignored) {}
-    }
-
-    private void stopGpsSpeedListener() {
-        if (navLocationListener != null) {
-            LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-            if (lm != null) {
-                lm.removeUpdates(navLocationListener);
-            }
-            navLocationListener = null;
-        }
-        currentGpsSpeed = "0 km/h";
-    }
-
-    public static String getCurrentGpsSpeed() {
-        return currentGpsSpeed;
-    }
-
-    private static String escapeJs(String text) {
-        if (text == null) return "";
-        return text.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ").replace("\r", "");
     }
 
     @Override
@@ -622,12 +424,6 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
                     "Aplikasi memerlukan izin lokasi untuk memindai sinyal Robot Desk di sekitar Anda.",
                     this::reRequestLocationPermissions
                 );
-            }
-        } else if (requestCode == REQ_NAV_LOCATION) {
-            if (allGranted) {
-                checkAndOpenNavigationFeature();
-            } else {
-                cancelNavAndReturnToRobot();
             }
         }
     }
@@ -831,19 +627,6 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
         @JavascriptInterface
         public void requestMusicSync() {
             SpotifyMediaManager.getInstance().dispatchState();
-        }
-
-        @JavascriptInterface
-        public void requestOpenNavigation() {
-            runOnUiThread(() -> checkAndOpenNavigationFeature());
-        }
-
-        @JavascriptInterface
-        public void stopNavigationSession() {
-            runOnUiThread(() -> {
-                isNavFeatureActive = false;
-                stopGpsSpeedListener();
-            });
         }
     }
 
