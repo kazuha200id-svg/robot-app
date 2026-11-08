@@ -34,8 +34,8 @@ function triggerHaptic(durationMs = 25) {
 function switchMainTab(pageId, btn) {
   currentMainTab = pageId;
 
-  // Tutup detail fitur jika meninggalkan tab Robot
-  if (pageId !== 'pageRobot') {
+  // Tutup detail fitur jika meninggalkan tab Robot saat detail terbuka
+  if (pageId !== 'pageRobot' && currentOpenDetailFeature !== null) {
     closeRobotFeatureDetail();
   }
 
@@ -991,9 +991,6 @@ function closeRobotFeatureDetail() {
   if (overview) overview.style.display = 'block';
 
   document.querySelectorAll('.detail-feature-panel').forEach(p => p.style.display = 'none');
-
-  // Kembalikan ke tab Menu utama
-  switchMainTab('pageMenu', document.getElementById('tabBtnMenu'));
 }
 
 // HANDLER TOMBOL KEMBALI NAVIGASI ANDROID (HARDWARE / GESTURE BACK)
@@ -1426,7 +1423,7 @@ function selectAndLaunchGame(idx) {
   render10GamesGrid();
 }
 
-// PILIH FITUR DI MENU LAYAR UTAMA (GANTI MODE DI ROBOT & BUKA TAMPILAN DETAIL FITUR DI APLIKASI)
+// PILIH FITUR DI MENU LAYAR UTAMA (MURNI REMOTE NAVIGASI LAYAR OLED FISIK ROBOT)
 function selectRobotMenuFeature(featureKey, btnEl) {
   if (btnEl && typeof btnEl.blur === 'function') {
     btnEl.blur();
@@ -1441,8 +1438,28 @@ function selectRobotMenuFeature(featureKey, btnEl) {
 
   triggerHaptic(30);
 
-  // Buka detail fitur di aplikasi dan kirim perintah mode ke ESP32
-  openRobotFeatureDetail(featureKey);
+  const modeMap = {
+    'face': 0,
+    'clock': 1,
+    'weather': 2,
+    'subtitle': 3,
+    'game': 4,
+    'stopwatch': 7,
+    'alarm': 8,
+    'spotify': 17,
+    'navigation': 18
+  };
+
+  const targetMode = modeMap[featureKey];
+  if (targetMode !== undefined) {
+    currentRobotMode = targetMode;
+    if (featureKey === 'spotify') {
+      if (window.AndroidBLE && typeof window.AndroidBLE.requestMusicSync === 'function') {
+        window.AndroidBLE.requestMusicSync();
+      }
+    }
+    sendCommand({ c: 'm', v: targetMode });
+  }
 }
 
 // ALIAS PENGIRIMAN WAJAH

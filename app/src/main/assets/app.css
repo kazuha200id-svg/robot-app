@@ -61,22 +61,70 @@ button, .neon-btn-action, .neon-btn-compact, .neon-btn-subtle, .nav-tab,
   color: var(--neon-cyan) !important;
 }
 
-/* EFEK PRESS-HOVER RESPON SENTUHAN (HANYA MUNCUL PAS DIPENCET, BUKAN SELECTED KOTAK) */
-button:active, 
-.neon-btn-action:active, 
-.neon-btn-compact:active, 
-.connect-action-btn:active, 
-.neon-action-pad:active,
+/* EFEK PRESS-HOVER RESPON SENTUHAN (SESUAI BENTUK MASING-MASING TOMBOL) */
+button {
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 1. Menu Action Cards (Sesuai Bentuk Kotak Melengkung Card) */
+.menu-action-card:active {
+  transform: scale(0.96) !important;
+  border-color: var(--neon-cyan) !important;
+  background: rgba(0, 240, 255, 0.16) !important;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.35) !important;
+  border-radius: var(--radius-md) !important;
+}
+
+/* 2. Bottom Nav Tabs (Animasi Icon & Teks Tanpa Blok Kotak Background) */
+.nav-tab:active {
+  transform: scale(0.92) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  filter: brightness(1.3) !important;
+}
+.nav-tab:active svg {
+  stroke: var(--neon-cyan) !important;
+  filter: drop-shadow(0 0 8px var(--neon-cyan)) !important;
+}
+
+/* 3. Tombol Aksi & Sambungkan (Sesuai Radius Tombol) */
+.neon-btn-action:active,
+.connect-action-btn:active,
+.btn-clock-sync:active {
+  transform: scale(0.96) !important;
+  background: rgba(0, 240, 255, 0.22) !important;
+  border-color: var(--neon-cyan) !important;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.35) !important;
+  border-radius: var(--radius-sm) !important;
+}
+
+/* 4. Stepper Buttons */
+.stepper-btn:active {
+  transform: scale(0.92) !important;
+  background: rgba(0, 240, 255, 0.25) !important;
+  border-color: var(--neon-cyan) !important;
+  border-radius: var(--radius-sm) !important;
+}
+
+/* 5. Pill Shape Buttons (Bentuk Lonjong Kapsul) */
+.neon-btn-compact:active,
 .neon-btn-corner:active,
-.stepper-btn:active, 
-.btn-clock-sync:active,
-.menu-action-card:active,
+.btn-fmt-pill:active {
+  transform: scale(0.94) !important;
+  background: rgba(0, 240, 255, 0.2) !important;
+  border-color: var(--neon-cyan) !important;
+  border-radius: var(--radius-pill) !important;
+}
+
+/* 6. Kartu Game & Layar OLED Mini */
 .game-select-card:active,
 .oled-screen-card:active {
-  transform: scale(0.96) !important;
-  filter: brightness(1.25) !important;
-  background: rgba(0, 240, 255, 0.12) !important;
-  transition: transform 0.08s ease, filter 0.08s ease;
+  transform: scale(0.97) !important;
+  background: rgba(0, 240, 255, 0.15) !important;
+  border-color: var(--neon-cyan) !important;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3) !important;
+  border-radius: var(--radius-md) !important;
 }
 
 /* APP SHELL (RESPONSIVE VIEWPORT) */
@@ -295,13 +343,7 @@ button:active,
   transition: all 0.18s ease;
   text-align: center;
   gap: 10px;
-}
-
-.menu-action-card:active {
-  transform: scale(0.97);
-  border-color: var(--neon-cyan);
-  background: var(--neon-cyan-dim);
-  box-shadow: 0 0 14px var(--neon-cyan-glow);
+  overflow: hidden;
 }
 
 .menu-action-card.full-width {
