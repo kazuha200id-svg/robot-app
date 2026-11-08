@@ -32,11 +32,6 @@ function triggerHaptic(durationMs = 25) {
 
 // ================= 2. 4-TAB NAVIGATION =================
 function switchMainTab(pageId, btn) {
-  if (!isBleConnected) {
-    showNeonToast('Wajib Terhubung Robot');
-    return;
-  }
-
   currentMainTab = pageId;
 
   // Tutup detail fitur jika meninggalkan tab Robot
@@ -55,6 +50,9 @@ function switchMainTab(pageId, btn) {
   });
   if (btn) {
     btn.classList.add('active');
+  } else {
+    const matchingBtn = document.querySelector(`.nav-tab[data-page="${pageId}"]`);
+    if (matchingBtn) matchingBtn.classList.add('active');
   }
 
   // Refresh previews & telemetry on robot tab
@@ -589,6 +587,9 @@ window.onBLEStatus = function(connected, message) {
       }, remaining);
     } else {
       if (gate) gate.classList.remove('active');
+      setTimeout(() => {
+        sendCommand({ c: 's' });
+      }, 300);
     }
   } else {
     if (dot) dot.className = 'pulse-dot';
@@ -723,28 +724,33 @@ window.onBLEReceived = function(jsonStr) {
       updateOledClockTick();
     }
 
-    // Alarm config sync
+    // Alarm config sync (sinkronisasi dua arah real-time antara OLED robot & aplikasi)
     if (data.alarm) {
       if (typeof data.alarm.hour === 'number') {
         g_alarmHour = data.alarm.hour;
+        localStorage.setItem('robot_cfg_alarm_h', String(g_alarmHour));
         const hEl = document.getElementById('alarmHour');
         if (hEl) hEl.value = String(data.alarm.hour).padStart(2, '0');
       }
       if (typeof data.alarm.min === 'number') {
         g_alarmMin = data.alarm.min;
+        localStorage.setItem('robot_cfg_alarm_m', String(g_alarmMin));
         const mEl = document.getElementById('alarmMin');
         if (mEl) mEl.value = String(data.alarm.min).padStart(2, '0');
       }
       if (typeof data.alarm.enabled === 'boolean') {
         g_alarmEnabled = data.alarm.enabled;
+        localStorage.setItem('robot_cfg_alarm_en', g_alarmEnabled ? '1' : '0');
         const enEl = document.getElementById('alarmEnabledToggle');
         if (enEl) enEl.checked = data.alarm.enabled;
       }
       if (typeof data.alarm.daily === 'boolean') {
         g_alarmDaily = data.alarm.daily;
+        localStorage.setItem('robot_cfg_alarm_daily', g_alarmDaily ? '1' : '0');
         const dEl = document.getElementById('alarmDailyToggle');
         if (dEl) dEl.checked = data.alarm.daily;
       }
+      renderAlarmOledAndControls();
       updateOledAlarmPreview();
     }
   } catch (e) {
@@ -985,6 +991,9 @@ function closeRobotFeatureDetail() {
   if (overview) overview.style.display = 'block';
 
   document.querySelectorAll('.detail-feature-panel').forEach(p => p.style.display = 'none');
+
+  // Kembalikan ke tab Menu utama
+  switchMainTab('pageMenu', document.getElementById('tabBtnMenu'));
 }
 
 // HANDLER TOMBOL KEMBALI NAVIGASI ANDROID (HARDWARE / GESTURE BACK)
@@ -1005,8 +1014,8 @@ function triggerVirtualTouchTap() {
 // ================= FITUR 3: KONTROL ALARM INTERAKTIF =================
 let g_alarmHour = parseInt(localStorage.getItem('robot_cfg_alarm_h') || '6', 10);
 let g_alarmMin = parseInt(localStorage.getItem('robot_cfg_alarm_m') || '30', 10);
-let g_alarmEnabled = localStorage.getItem('robot_cfg_alarm_en') !== '0';
-let g_alarmDaily = localStorage.getItem('robot_cfg_alarm_daily') !== '0';
+let g_alarmEnabled = localStorage.getItem('robot_cfg_alarm_en') === '1'; // Default OFF (false) persis firmware ESP32
+let g_alarmDaily = localStorage.getItem('robot_cfg_alarm_daily') === '1';
 
 function renderAlarmOledAndControls() {
   const hh = String(g_alarmHour).padStart(2, '0');
@@ -1417,13 +1426,8 @@ function selectAndLaunchGame(idx) {
   render10GamesGrid();
 }
 
-// PILIH FITUR DI MENU LAYAR UTAMA (HANYA GANTI MODE LAYAR OLED FISIK ROBOT, TIDAK MEMBUKA DETAIL DI APLIKASI)
+// PILIH FITUR DI MENU LAYAR UTAMA (GANTI MODE DI ROBOT & BUKA TAMPILAN DETAIL FITUR DI APLIKASI)
 function selectRobotMenuFeature(featureKey, btnEl) {
-  if (!isBleConnected) {
-    showNeonToast('Wajib Terhubung Robot');
-    return;
-  }
-
   if (btnEl && typeof btnEl.blur === 'function') {
     btnEl.blur();
   }
@@ -1437,28 +1441,8 @@ function selectRobotMenuFeature(featureKey, btnEl) {
 
   triggerHaptic(30);
 
-  const modeMap = {
-    'face': 0,
-    'clock': 1,
-    'weather': 2,
-    'subtitle': 3,
-    'game': 4,
-    'stopwatch': 7,
-    'alarm': 8,
-    'spotify': 17,
-    'navigation': 18
-  };
-
-  const targetMode = modeMap[featureKey];
-  if (targetMode !== undefined) {
-    currentRobotMode = targetMode;
-    if (featureKey === 'spotify') {
-      if (window.AndroidBLE && typeof window.AndroidBLE.requestMusicSync === 'function') {
-        window.AndroidBLE.requestMusicSync();
-      }
-    }
-    sendCommand({ c: 'm', v: targetMode });
-  }
+  // Buka detail fitur di aplikasi dan kirim perintah mode ke ESP32
+  openRobotFeatureDetail(featureKey);
 }
 
 // ALIAS PENGIRIMAN WAJAH

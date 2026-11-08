@@ -61,21 +61,22 @@ button, .neon-btn-action, .neon-btn-compact, .neon-btn-subtle, .nav-tab,
   color: var(--neon-cyan) !important;
 }
 
-/* KETIKA DIKLIK / AKTIF, TEKS TETAP MENJAGA WARNA TEMA NEON CYAN */
+/* EFEK PRESS-HOVER RESPON SENTUHAN (HANYA MUNCUL PAS DIPENCET, BUKAN SELECTED KOTAK) */
 button:active, 
 .neon-btn-action:active, 
 .neon-btn-compact:active, 
 .connect-action-btn:active, 
 .neon-action-pad:active,
 .neon-btn-corner:active,
-.btn-fmt-pill.active, 
 .stepper-btn:active, 
-.game-nav-row .highlight,
-.btn-clock-sync:active {
-  color: var(--neon-cyan) !important;
-  background: rgba(0, 240, 255, 0.24) !important;
-  border-color: var(--neon-cyan) !important;
-  box-shadow: 0 0 14px var(--neon-cyan) !important;
+.btn-clock-sync:active,
+.menu-action-card:active,
+.game-select-card:active,
+.oled-screen-card:active {
+  transform: scale(0.96) !important;
+  filter: brightness(1.25) !important;
+  background: rgba(0, 240, 255, 0.12) !important;
+  transition: transform 0.08s ease, filter 0.08s ease;
 }
 
 /* APP SHELL (RESPONSIVE VIEWPORT) */
@@ -214,7 +215,7 @@ button:active,
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding: 12px 14px 24px 14px;
+  padding: 12px 14px 90px 14px;
   display: none;
   flex-direction: column;
   gap: 12px;
@@ -1551,6 +1552,10 @@ input[type="range"]::-webkit-slider-thumb {
   justify-content: space-between;
 }
 
+.stage-screen-content .oled-weather-layout {
+  height: 100%;
+}
+
 .oled-weather-city-top {
   width: 100%;
   text-align: center;
@@ -1894,18 +1899,20 @@ input[type="range"]::-webkit-slider-thumb {
 .oled-game-menu-list {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   width: 100%;
-  height: 100%;
-  padding: 2px 4px;
-  gap: 3px;
+  flex: 1;
+  min-height: 0;
+  padding: 1px 4px 0 4px;
+  gap: 2px;
   box-sizing: border-box;
 }
 
 .oled-game-menu-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 6px;
   width: 100%;
   font-family: var(--font-mono);
   font-size: 0.62rem;
@@ -1913,6 +1920,7 @@ input[type="range"]::-webkit-slider-thumb {
   color: #8EA9C7;
 }
 
+.oled-game-menu-row.selected,
 .oled-game-menu-row.active {
   color: var(--neon-cyan);
   font-weight: 800;
@@ -2423,9 +2431,10 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .game-select-card:active {
-  transform: scale(0.96);
-  background: rgba(5, 10, 22, 0.85) !important;
-  border-color: var(--neon-cyan-border) !important;
+  transform: scale(0.96) !important;
+  filter: brightness(1.25) !important;
+  background: rgba(0, 240, 255, 0.12) !important;
+  border-color: var(--neon-cyan) !important;
   box-shadow: none !important;
   outline: none !important;
 }

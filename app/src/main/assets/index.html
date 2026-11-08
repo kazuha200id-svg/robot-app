@@ -128,17 +128,7 @@
 
       </div>
     </div>
-    <script>
-      (function() {
-        try {
-          var saved = localStorage.getItem('robot_saved_mac');
-          if (!saved) {
-            var g = document.getElementById('setupGate');
-            if (g) g.classList.add('active');
-          }
-        } catch(e) {}
-      })();
-    </script>
+    <!-- Setup gate activation is managed cleanly in app.js via hasSavedRobot() -->
 
     <!-- MAIN VIEWPORT (4 PAGES SYSTEM) -->
     <main class="main-viewport">
@@ -316,7 +306,7 @@
                     </svg>
                   </div>
                   <div class="oled-big-time" id="oledAlarmTimePreview">06:30</div>
-                  <div class="oled-alarm-badge" id="oledAlarmBadgePreview">ON &bull; TIAP HARI</div>
+                  <div class="oled-alarm-badge" id="oledAlarmBadgePreview" style="opacity: 0.45;">OFF &bull; TIAP HARI</div>
                 </div>
               </div>
               <div class="screen-card-meta">
@@ -444,6 +434,12 @@
 
         <!-- DETAIL FITUR ROBOT (HALAMAN BARU - LAYAR OLED 100% PERSIS FISIK ESP32 TANPA TOMBOL TAMBAHAN) -->
         <div id="robotFeatureDetailView" class="robot-feature-detail-view" style="display: none;">
+          <div class="detail-back-bar" style="display: flex; align-items: center; margin-bottom: 12px;">
+            <button type="button" class="btn-detail-back" onclick="closeRobotFeatureDetail()" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; background: rgba(0, 240, 255, 0.08); border: 1px solid var(--neon-cyan-border); border-radius: 99px; color: var(--neon-cyan); font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; cursor: pointer;">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              <span>KEMBALI KE MENU</span>
+            </button>
+          </div>
 
           <!-- 1. DETAIL: EXPRESI WAJAH (128x64 MURNI PERSIS OLED FISIK ROBOT TANPA STATUS BAR) -->
           <div id="detailViewFace" class="detail-feature-panel" style="display: none;">
@@ -573,8 +569,8 @@
                   </div>
                 </div>
                 <div class="toggles-block">
-                  <button type="button" id="btnToggleAlarmEn" class="neon-btn-action active-toggle" onclick="toggleAlarmPowerFromApp()">
-                    ALARM: ON
+                  <button type="button" id="btnToggleAlarmEn" class="neon-btn-action" onclick="toggleAlarmPowerFromApp()">
+                    ALARM: OFF
                   </button>
                   <button type="button" id="btnToggleAlarmRepeat" class="neon-btn-action" onclick="toggleAlarmRepeatFromApp()">
                     TIAP HARI
@@ -890,7 +886,7 @@
     <!-- BOTTOM NAVIGATION (4 PILAR KOKOH) -->
     <nav class="bottom-nav">
       <!-- 1. MENU -->
-      <button id="tabBtnMenu" class="nav-tab active" onclick="switchMainTab('pageMenu', this)">
+      <button id="tabBtnMenu" class="nav-tab active" data-page="pageMenu" onclick="switchMainTab('pageMenu', this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
           <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
@@ -903,7 +899,7 @@
 
 
       <!-- 3. ROBOT -->
-      <button id="tabBtnRobot" class="nav-tab" onclick="switchMainTab('pageRobot', this)">
+      <button id="tabBtnRobot" class="nav-tab" data-page="pageRobot" onclick="switchMainTab('pageRobot', this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="4" y="6" width="16" height="14" rx="3"></rect>
           <line x1="12" y1="2" x2="12" y2="6"></line>
@@ -915,7 +911,7 @@
       </button>
 
       <!-- 4. SETTING -->
-      <button id="tabBtnSetting" class="nav-tab" onclick="switchMainTab('pageSetting', this)">
+      <button id="tabBtnSetting" class="nav-tab" data-page="pageSetting" onclick="switchMainTab('pageSetting', this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"></circle>
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
