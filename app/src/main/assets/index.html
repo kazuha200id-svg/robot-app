@@ -208,20 +208,7 @@
             <span class="card-title">SUBTITLE</span>
           </button>
 
-          <!-- BARIS 4 KIRI: MENU GAME -->
-          <button id="btnMenuGame" type="button" class="menu-action-card" onclick="selectRobotMenuFeature('game', this)">
-            <div class="card-icon-wrap">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
-                <rect x="2" y="6" width="20" height="12" rx="3"></rect>
-                <line x1="6" y1="12" x2="10" y2="12"></line>
-                <line x1="8" y1="10" x2="8" y2="14"></line>
-                <circle cx="16" cy="10" r="1" fill="#00F0FF"></circle>
-              </svg>
-            </div>
-            <span class="card-title">MENU GAME</span>
-          </button>
-
-          <!-- BARIS 4 KANAN: SPOTIFY -->
+          <!-- BARIS 4 KIRI: SPOTIFY -->
           <button id="btnMenuSpotify" type="button" class="menu-action-card" onclick="selectRobotMenuFeature('spotify', this)">
             <div class="card-icon-wrap">
               <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
@@ -232,6 +219,19 @@
               </svg>
             </div>
             <span class="card-title">SPOTIFY</span>
+          </button>
+
+          <!-- BARIS 4 KANAN: MENU GAME -->
+          <button id="btnMenuGame" type="button" class="menu-action-card" onclick="selectRobotMenuFeature('game', this)">
+            <div class="card-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
+                <rect x="2" y="6" width="20" height="12" rx="3"></rect>
+                <line x1="6" y1="12" x2="10" y2="12"></line>
+                <line x1="8" y1="10" x2="8" y2="14"></line>
+                <circle cx="16" cy="10" r="1" fill="#00F0FF"></circle>
+              </svg>
+            </div>
+            <span class="card-title">MENU GAME</span>
           </button>
 
           <!-- BARIS 5: NAVIGASI (FULL WIDTH) -->
@@ -371,7 +371,27 @@
               </div>
             </div>
 
-            <!-- 7. BARIS 4 KIRI: MENU GAME (1:1) -->
+            <!-- 7. BARIS 4 KIRI: SPOTIFY (1:1) -->
+            <div class="oled-screen-card" onclick="openRobotFeatureDetail('spotify')">
+              <div class="oled-display-bezel">
+                <div class="oled-screen-content oled-msg-view">
+                  <div class="oled-spotify-preview-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2.5" class="oled-sp-mini-icon">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <path d="M8 11.5c3-1 6-0.5 8 0.5"></path>
+                      <path d="M7 14c3.5-1 7-0.5 10 0.5"></path>
+                    </svg>
+                    <div class="oled-sp-mini-title" id="oledSpPreviewTitle">SPOTIFY</div>
+                    <div class="oled-sp-mini-lyric" id="oledSpPreviewLyric">Sentuh utk buka</div>
+                  </div>
+                </div>
+              </div>
+              <div class="screen-card-meta">
+                <span class="screen-title">SPOTIFY</span>
+              </div>
+            </div>
+
+            <!-- 8. BARIS 4 KANAN: MENU GAME (1:1) -->
             <div class="oled-screen-card" onclick="openRobotFeatureDetail('game')">
               <div class="oled-display-bezel">
                 <div class="oled-screen-content oled-game-view">
@@ -389,26 +409,6 @@
               </div>
               <div class="screen-card-meta">
                 <span class="screen-title">MENU GAME</span>
-              </div>
-            </div>
-
-            <!-- 8. BARIS 4 KANAN: SPOTIFY (1:1) -->
-            <div class="oled-screen-card" onclick="openRobotFeatureDetail('spotify')">
-              <div class="oled-display-bezel">
-                <div class="oled-screen-content oled-msg-view">
-                  <div class="oled-spotify-preview-wrap">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2.5" class="oled-sp-mini-icon">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <path d="M8 11.5c3-1 6-0.5 8 0.5"></path>
-                      <path d="M7 14c3.5-1 7-0.5 10 0.5"></path>
-                    </svg>
-                    <div class="oled-sp-mini-title" id="oledSpPreviewTitle">SPOTIFY</div>
-                    <div class="oled-sp-mini-lyric" id="oledSpPreviewLyric">Sentuh utk buka</div>
-                  </div>
-                </div>
-              </div>
-              <div class="screen-card-meta">
-                <span class="screen-title">SPOTIFY</span>
               </div>
             </div>
 
@@ -851,9 +851,10 @@
                         <div id="stageNavStreet" style="font-size: 0.62rem; color: #00F0FF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 78px;">Jl. Diponegoro</div>
                       </div>
                     </div>
-                    <!-- Garis Bawah & Info Trip Ringkas -->
-                    <div style="width: 100%; border-top: 1px solid #00F0FF; padding-top: 2px; display: flex; justify-content: space-between; font-size: 0.62rem; color: #00F0FF; font-weight: 700;">
+                    <!-- Garis Bawah & Info Trip Ringkas (Center Sempurna) -->
+                    <div style="width: 100%; border-top: 1px solid #00F0FF; padding-top: 2px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.62rem; color: #00F0FF; font-weight: 700;">
                       <span id="stageNavBottomRem">3.4 km</span>
+                      <span style="font-size: 0.5rem; opacity: 0.8;">•</span>
                       <span id="stageNavBottomTime">15m</span>
                     </div>
                   </div>

@@ -782,15 +782,6 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
 
     @Override
     public void onDataReceived(String json) {
-        if (json != null && json.contains("\"media_ctrl\"")) {
-            if (json.contains("\"play_pause\"")) {
-                SpotifyMediaManager.playPause(this);
-            } else if (json.contains("\"next\"")) {
-                SpotifyMediaManager.skipNext(this);
-            } else if (json.contains("\"prev\"")) {
-                SpotifyMediaManager.skipPrev(this);
-            }
-        }
         runOnUiThread(() -> {
             String safeJson = json.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "").replace("\r", "");
             webView.evaluateJavascript("if (window.onBLEReceived) window.onBLEReceived('" + safeJson + "');", null);
