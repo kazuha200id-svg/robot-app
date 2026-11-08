@@ -697,6 +697,14 @@ window.onBLEReceived = function(jsonStr) {
       }
     }
 
+    // Pembaruan jadwal sholat real-time dari robot ESP32
+    if (data.prayer) {
+      const p = data.prayer;
+      if (typeof updateOledPrayerPreviewWithData === 'function') {
+        updateOledPrayerPreviewWithData(p.city, p.imsak, p.subuh, p.dzuhur, p.ashar, p.maghrib, p.isya);
+      }
+    }
+
     // Time sync ACK from robot
     if (data.action === 'time' || data.action === 't' || (data.status === 'ok' && typeof data.epoch === 'number')) {
       clockSyncAckReceived = true;

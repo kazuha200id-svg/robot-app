@@ -1728,6 +1728,11 @@ input[type="range"]::-webkit-slider-thumb {
   font-weight: 700;
 }
 
+.oled-prayer-stage-layer {
+  padding: 1px 4px 2px 4px !important;
+  justify-content: flex-start !important;
+}
+
 .oled-prayer-city-top {
   width: 100%;
   text-align: center;
