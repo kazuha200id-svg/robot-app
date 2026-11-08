@@ -920,24 +920,40 @@
                     </div>
                   </div>
 
-                  <div class="oled-mode-layer active oled-prayer-stage-layer">
+                  <div class="oled-mode-layer active oled-prayer-stage-layer" onclick="flipPrayerPageApp()">
                     <!-- Baris Mini Kota -->
                     <div class="oled-prayer-city-top" id="stagePrayerCity">KOTA: JAKARTA</div>
 
-                    <!-- 3 Baris 2 Kolom Jadwal Sholat -->
-                    <div class="oled-prayer-table">
-                      <div class="oled-prayer-row">
-                        <div class="prayer-col"><span>Subuh</span><strong id="stageSubuh">04:18</strong></div>
-                        <div class="prayer-col"><span>Imsak</span><strong id="stageImsak">04:08</strong></div>
+                    <!-- HALAMAN 1 (Subuh, Dzuhur, Ashar) -->
+                    <div class="oled-prayer-table" id="stagePrayerPage1">
+                      <div class="oled-prayer-full-row">
+                        <span>Subuh</span><strong id="stageSubuh">04:18</strong>
                       </div>
-                      <div class="oled-prayer-row">
-                        <div class="prayer-col"><span>Dzuhur</span><strong id="stageDzuhur">11:45</strong></div>
-                        <div class="prayer-col"><span>Ashar</span><strong id="stageAshar">15:02</strong></div>
+                      <div class="oled-prayer-full-row">
+                        <span>Dzuhur</span><strong id="stageDzuhur">11:45</strong>
                       </div>
-                      <div class="oled-prayer-row">
-                        <div class="prayer-col"><span>Maghrib</span><strong id="stageMaghrib">17:54</strong></div>
-                        <div class="prayer-col"><span>Isya</span><strong id="stageIsya">19:06</strong></div>
+                      <div class="oled-prayer-full-row">
+                        <span>Ashar</span><strong id="stageAshar">15:02</strong>
                       </div>
+                    </div>
+
+                    <!-- HALAMAN 2 (Maghrib, Isya, Imsak) -->
+                    <div class="oled-prayer-table" id="stagePrayerPage2" style="display: none;">
+                      <div class="oled-prayer-full-row">
+                        <span>Maghrib</span><strong id="stageMaghrib">17:54</strong>
+                      </div>
+                      <div class="oled-prayer-full-row">
+                        <span>Isya</span><strong id="stageIsya">19:06</strong>
+                      </div>
+                      <div class="oled-prayer-full-row">
+                        <span>Imsak</span><strong id="stageImsak">04:08</strong>
+                      </div>
+                    </div>
+
+                    <!-- Modern Pagination Dots (Mirrors SSD1306) -->
+                    <div class="oled-prayer-dots">
+                      <div class="p-dot active" id="prayerDot1"></div>
+                      <div class="p-dot" id="prayerDot2"></div>
                     </div>
                   </div>
                 </div>

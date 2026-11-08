@@ -973,9 +973,20 @@ function openRobotFeatureDetail(featureKey) {
   } else if (featureKey === 'prayer') {
     const panel = document.getElementById('detailViewPrayer');
     if (panel) panel.style.display = 'block';
+    setAppPrayerPage(0);
     updateOledPrayerPreview();
     currentRobotMode = 19;
     sendCommand({ c: 'm', v: 19 });
+
+    if (window._prayerAutoFlipTimer) clearInterval(window._prayerAutoFlipTimer);
+    window._prayerAutoFlipTimer = setInterval(() => {
+      if (currentOpenDetailFeature === 'prayer') {
+        setAppPrayerPage(1 - appPrayerPage);
+      } else {
+        clearInterval(window._prayerAutoFlipTimer);
+        window._prayerAutoFlipTimer = null;
+      }
+    }, 4000);
   }
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -2494,6 +2505,28 @@ function setPrayerBtnVisual(state, text) {
     }
     txt.textContent = 'TERAPKAN KOTA SHOLAT';
   }
+}
+
+let appPrayerPage = 0;
+function setAppPrayerPage(page) {
+  appPrayerPage = page;
+  const p1 = document.getElementById('stagePrayerPage1');
+  const p2 = document.getElementById('stagePrayerPage2');
+  const d1 = document.getElementById('prayerDot1');
+  const d2 = document.getElementById('prayerDot2');
+  if (p1 && p2) {
+    p1.style.display = page === 0 ? 'flex' : 'none';
+    p2.style.display = page === 1 ? 'flex' : 'none';
+  }
+  if (d1 && d2) {
+    d1.classList.toggle('active', page === 0);
+    d2.classList.toggle('active', page === 1);
+  }
+}
+
+function flipPrayerPageApp() {
+  triggerHaptic(15);
+  setAppPrayerPage(1 - appPrayerPage);
 }
 
 function updateOledPrayerPreviewWithData(city, imsak, subuh, dzuhur, ashar, maghrib, isya) {
