@@ -962,6 +962,12 @@ function openRobotFeatureDetail(featureKey) {
     if (panel) panel.style.display = 'block';
     currentRobotMode = 18;
     sendCommand({ c: 'm', v: 18 });
+  } else if (featureKey === 'prayer') {
+    const panel = document.getElementById('detailViewPrayer');
+    if (panel) panel.style.display = 'block';
+    updateOledPrayerPreview();
+    currentRobotMode = 19;
+    sendCommand({ c: 'm', v: 19 });
   }
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1447,7 +1453,8 @@ function selectRobotMenuFeature(featureKey, btnEl) {
     'stopwatch': 7,
     'alarm': 8,
     'spotify': 17,
-    'navigation': 18
+    'navigation': 18,
+    'prayer': 19
   };
 
   const targetMode = modeMap[featureKey];
@@ -2409,6 +2416,400 @@ function applyWeatherCity(isFromSetting) {
     });
 }
 
+// ================= JADWAL SHOLAT (DUNIA / PERSIS KEMENAG RI) =================
+let isSearchingPrayerCity = false;
+let selectedPrayerCityData = null;
+let prayerSearchTimer = null;
+
+function setPrayerBtnVisual(state, text) {
+  const btn = document.getElementById('btnSearchPrayerCity');
+  const txt = document.getElementById('txtSearchPrayerCityBtn');
+  const input = document.getElementById('cfgPrayerCityInput');
+  if (!btn || !txt) return;
+
+  if (state === 'loading') {
+    btn.disabled = true;
+    btn.classList.add('disabled', 'is-loading');
+    btn.classList.remove('is-shaking', 'is-success');
+    btn.blur();
+    if (input) {
+      input.classList.add('is-processing');
+      input.readOnly = true;
+    }
+    txt.innerHTML = '<span class="weather-spinner-cyber"></span> MEMPROSES JADWAL...';
+  } else if (state === 'error') {
+    btn.disabled = false;
+    btn.classList.remove('disabled', 'is-loading');
+    btn.classList.add('is-shaking');
+    btn.blur();
+    if (input) {
+      input.classList.remove('is-processing');
+      input.readOnly = false;
+    }
+    txt.textContent = text || 'KOTA TIDAK DITEMUKAN';
+    setTimeout(() => {
+      btn.classList.remove('is-shaking');
+      btn.blur();
+    }, 450);
+    setTimeout(() => {
+      if (!isSearchingPrayerCity) {
+        txt.textContent = 'TERAPKAN KOTA SHOLAT';
+        btn.blur();
+      }
+    }, 2400);
+  } else if (state === 'success') {
+    btn.disabled = false;
+    btn.classList.remove('disabled', 'is-loading');
+    btn.classList.add('is-success');
+    btn.blur();
+    if (input) {
+      input.classList.remove('is-processing');
+      input.readOnly = false;
+    }
+    txt.textContent = text || 'KOTA BERHASIL DIATUR';
+    setTimeout(() => {
+      btn.classList.remove('is-success');
+      btn.blur();
+    }, 550);
+    setTimeout(() => {
+      if (!isSearchingPrayerCity) {
+        txt.textContent = 'TERAPKAN KOTA SHOLAT';
+        btn.blur();
+      }
+    }, 2400);
+  } else {
+    btn.disabled = false;
+    btn.classList.remove('disabled', 'is-loading', 'is-shaking', 'is-success');
+    if (input) {
+      input.classList.remove('is-processing');
+      input.readOnly = false;
+    }
+    txt.textContent = 'TERAPKAN KOTA SHOLAT';
+  }
+}
+
+function updateOledPrayerPreviewWithData(city, imsak, subuh, dzuhur, ashar, maghrib, isya) {
+  const cityName = (city || 'JAKARTA').toUpperCase();
+
+  // 1. Preview Card di Grid Overview
+  const prevCityEl = document.getElementById('previewPrayerCity');
+  if (prevCityEl) {
+    prevCityEl.textContent = cityName.length > 5 ? cityName.substring(0, 4) : cityName;
+  }
+  const prevSubEl = document.getElementById('prevSubuh');
+  if (prevSubEl) prevSubEl.textContent = subuh || '04:18';
+  const prevDzuEl = document.getElementById('prevDzuhur');
+  if (prevDzuEl) prevDzuEl.textContent = dzuhur || '11:45';
+  const prevAshEl = document.getElementById('prevAshar');
+  if (prevAshEl) prevAshEl.textContent = ashar || '15:02';
+  const prevMagEl = document.getElementById('prevMaghrib');
+  if (prevMagEl) prevMagEl.textContent = maghrib || '17:54';
+  const prevIsyEl = document.getElementById('prevIsya');
+  if (prevIsyEl) prevIsyEl.textContent = isya || '19:06';
+  const prevImsEl = document.getElementById('prevImsak');
+  if (prevImsEl) prevImsEl.textContent = imsak || '04:08';
+
+  // 2. Stage Bezel di Halaman Detail Sholat
+  const stageCityEl = document.getElementById('stagePrayerCity');
+  if (stageCityEl) stageCityEl.textContent = 'KOTA: ' + cityName;
+
+  const stageSubEl = document.getElementById('stageSubuh');
+  if (stageSubEl) stageSubEl.textContent = subuh || '04:18';
+  const stageImsEl = document.getElementById('stageImsak');
+  if (stageImsEl) stageImsEl.textContent = imsak || '04:08';
+  const stageDzuEl = document.getElementById('stageDzuhur');
+  if (stageDzuEl) stageDzuEl.textContent = dzuhur || '11:45';
+  const stageAshEl = document.getElementById('stageAshar');
+  if (stageAshEl) stageAshEl.textContent = ashar || '15:02';
+  const stageMagEl = document.getElementById('stageMaghrib');
+  if (stageMagEl) stageMagEl.textContent = maghrib || '17:54';
+  const stageIsyEl = document.getElementById('stageIsya');
+  if (stageIsyEl) stageIsyEl.textContent = isya || '19:06';
+
+  const inputEl = document.getElementById('cfgPrayerCityInput');
+  if (inputEl && !isSearchingPrayerCity && document.activeElement !== inputEl) {
+    inputEl.value = cityName;
+  }
+}
+
+function updateOledPrayerPreview() {
+  const savedCity = localStorage.getItem('robot_cfg_prayer_city') || 'JAKARTA';
+  const savedImsak = localStorage.getItem('robot_cfg_prayer_imsak') || '04:08';
+  const savedSubuh = localStorage.getItem('robot_cfg_prayer_subuh') || '04:18';
+  const savedDzuhur = localStorage.getItem('robot_cfg_prayer_dzuhur') || '11:45';
+  const savedAshar = localStorage.getItem('robot_cfg_prayer_ashar') || '15:02';
+  const savedMaghrib = localStorage.getItem('robot_cfg_prayer_maghrib') || '17:54';
+  const savedIsya = localStorage.getItem('robot_cfg_prayer_isya') || '19:06';
+
+  updateOledPrayerPreviewWithData(savedCity, savedImsak, savedSubuh, savedDzuhur, savedAshar, savedMaghrib, savedIsya);
+}
+
+// Live Autocomplete Pencarian Kota Sholat (Sama persis pola seperti fitur cuaca)
+function searchPrayerCitySuggestions(query) {
+  const dropdown = document.getElementById('prayerCityDropdown');
+  if (!dropdown) return;
+
+  const clean = (query || '').trim();
+  if (clean.length < 2) {
+    dropdown.innerHTML = '';
+    dropdown.style.display = 'none';
+    return;
+  }
+
+  const url = 'https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(clean) + '&count=6&language=id&format=json';
+
+  fetchGeocoding(url)
+    .then(function(data) {
+      const results = (data && data.results) ? data.results : [];
+      if (results.length === 0) {
+        dropdown.innerHTML = '<div class="city-item-empty">Tidak ada kota yang cocok</div>';
+        dropdown.style.display = 'block';
+        return;
+      }
+
+      dropdown.innerHTML = '';
+      results.forEach(function(item) {
+        const row = document.createElement('div');
+        row.className = 'city-autocomplete-item';
+
+        const nameEl = document.createElement('span');
+        nameEl.className = 'city-item-name';
+        nameEl.textContent = item.name.toUpperCase();
+
+        const descParts = [item.admin1, item.country].filter(Boolean);
+        const descEl = document.createElement('span');
+        descEl.className = 'city-item-desc';
+        descEl.textContent = descParts.join(', ');
+
+        row.appendChild(nameEl);
+        row.appendChild(descEl);
+
+        row.addEventListener('click', function() {
+          selectedPrayerCityData = item;
+          const displayLabel = item.name + (item.country ? (', ' + item.country) : '');
+
+          const input = document.getElementById('cfgPrayerCityInput');
+          if (input) input.value = displayLabel;
+
+          dropdown.style.display = 'none';
+          triggerHaptic(20);
+        });
+
+        dropdown.appendChild(row);
+      });
+
+      dropdown.style.display = 'block';
+    })
+    .catch(function(err) {
+      console.warn('Prayer autocomplete fetch failed:', err);
+    });
+}
+
+// Eksekusi Terapkan Kota Sholat (Aladhan API: Method 20 Kemenag RI untuk Indonesia, atau auto method dunia)
+function applyPrayerCity(isFromSetting) {
+  if (isSearchingPrayerCity) return;
+
+  const activeInput = document.getElementById('cfgPrayerCityInput');
+  if (!activeInput) return;
+
+  let rawQuery = (activeInput.value || '').trim();
+  if (!rawQuery) {
+    const saved = localStorage.getItem('robot_cfg_prayer_city') || 'JAKARTA';
+    activeInput.value = saved;
+    rawQuery = saved;
+  }
+
+  const MIN_ANIMATION_MS = 2500;
+  const startTime = Date.now();
+
+  isSearchingPrayerCity = true;
+  setPrayerBtnVisual('loading');
+  triggerHaptic(25);
+
+  if (rawQuery.length < 2) {
+    const elapsed = Date.now() - startTime;
+    const remainingTime = Math.max(0, MIN_ANIMATION_MS - elapsed);
+    setTimeout(() => {
+      isSearchingPrayerCity = false;
+      setPrayerBtnVisual('error', 'NAMA KOTA HARUS DIISI');
+      triggerHaptic(50);
+      setTimeout(() => triggerHaptic(50), 120);
+    }, remainingTime);
+    return;
+  }
+
+  let resolvePromise;
+  if (selectedPrayerCityData && selectedPrayerCityData.name && rawQuery.toLowerCase().includes(selectedPrayerCityData.name.toLowerCase())) {
+    resolvePromise = Promise.resolve(selectedPrayerCityData);
+  } else {
+    let clean = rawQuery.toLowerCase();
+    let targetCity = clean;
+    if (clean.includes(',')) {
+      const parts = clean.split(',');
+      targetCity = parts[0].trim();
+    }
+
+    const geoUrl = 'https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(targetCity) + '&count=8&language=id&format=json';
+    resolvePromise = fetchGeocoding(geoUrl).then(function(data) {
+      const rawResults = (data && data.results) ? data.results : [];
+      if (rawResults.length === 0) return null;
+
+      let exact = rawResults.filter(item => item.name && item.name.toLowerCase() === targetCity);
+      if (exact.length === 0) exact = rawResults;
+
+      exact.sort((a, b) => (b.population || 0) - (a.population || 0));
+      return exact[0];
+    });
+  }
+
+  resolvePromise
+    .then(function(cityItem) {
+      if (!cityItem) {
+        throw new Error('NOT_FOUND');
+      }
+
+      selectedPrayerCityData = cityItem;
+      const cityName = (cityItem.name || rawQuery).toUpperCase();
+      const lat = parseFloat(cityItem.latitude);
+      const lon = parseFloat(cityItem.longitude);
+
+      // Cek apakah wilayah Indonesia untuk gunakan Method 20 (Kemenag RI)
+      const countryStr = (cityItem.country || '').toLowerCase();
+      const countryCode = (cityItem.country_code || '').toUpperCase();
+      const isIndonesia = countryCode === 'ID' || countryStr.includes('indonesia');
+      const methodId = isIndonesia ? 20 : 3; // 20: Kemenag RI, 3: Muslim World League (Internasional)
+
+      // Format tanggal hari ini DD-MM-YYYY agar tidak terkena HTTP 302 Redirect
+      const now = new Date();
+      const dd = String(now.getDate()).padStart(2, '0');
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const yyyy = now.getFullYear();
+      const dateStr = dd + '-' + mm + '-' + yyyy;
+
+      const prayerUrl = 'https://api.aladhan.com/v1/timings/' + dateStr +
+                        '?latitude=' + lat +
+                        '&longitude=' + lon +
+                        '&method=' + methodId;
+
+      return fetchGeocoding(prayerUrl)
+        .then(function(pData) {
+          if (!pData || !pData.data || !pData.data.timings) {
+            throw new Error('PRAYER_FAIL');
+          }
+
+          const elapsed = Date.now() - startTime;
+          const remainingTime = Math.max(0, MIN_ANIMATION_MS - elapsed);
+
+          return new Promise(function(resolve) {
+            setTimeout(function() {
+              resolve({ timings: pData.data.timings, cityName: cityName, lat: lat, lon: lon });
+            }, remainingTime);
+          });
+        })
+        .then(function(res) {
+          const t = res.timings;
+          // Ambil format jam:menit bersih (cth "04:18 (WIB)" -> "04:18")
+          const cleanTime = (s) => String(s || '').trim().substring(0, 5);
+
+          const subuh = cleanTime(t.Fajr);
+          const imsak = cleanTime(t.Imsak);
+          const dzuhur = cleanTime(t.Dhuhr);
+          const ashar = cleanTime(t.Asr);
+          const maghrib = cleanTime(t.Maghrib);
+          const isya = cleanTime(t.Isha);
+
+          // 1. UPDATE LAYAR OLED PREVIEW DI HP
+          updateOledPrayerPreviewWithData(res.cityName, imsak, subuh, dzuhur, ashar, maghrib, isya);
+
+          // 2. SIMPAN PREFERENSI KE HP
+          localStorage.setItem('robot_cfg_prayer_city', res.cityName);
+          localStorage.setItem('robot_cfg_prayer_lat', res.lat);
+          localStorage.setItem('robot_cfg_prayer_lon', res.lon);
+          localStorage.setItem('robot_cfg_prayer_imsak', imsak);
+          localStorage.setItem('robot_cfg_prayer_subuh', subuh);
+          localStorage.setItem('robot_cfg_prayer_dzuhur', dzuhur);
+          localStorage.setItem('robot_cfg_prayer_ashar', ashar);
+          localStorage.setItem('robot_cfg_prayer_maghrib', maghrib);
+          localStorage.setItem('robot_cfg_prayer_isya', isya);
+
+          // 3. KIRIM DATA JADWAL SHOLAT VIA BLE KE ROBOT ESP32 (SINKRONISASI 100%)
+          sendCommand({
+            cmd: 'set_prayer_live',
+            city: res.cityName,
+            imsak: imsak,
+            subuh: subuh,
+            dzuhur: dzuhur,
+            ashar: ashar,
+            maghrib: maghrib,
+            isya: isya,
+            lat: res.lat,
+            lon: res.lon
+          });
+
+          // 4. EFEK SUKSES PADA TOMBOL & HAPTIC
+          isSearchingPrayerCity = false;
+          setPrayerBtnVisual('success', 'KOTA BERHASIL DIATUR');
+          triggerHaptic(35);
+        });
+    })
+    .catch(function(err) {
+      const elapsed = Date.now() - startTime;
+      const remainingTime = Math.max(0, MIN_ANIMATION_MS - elapsed);
+      setTimeout(function() {
+        isSearchingPrayerCity = false;
+        const msg = (err && err.message === 'NOT_FOUND') ? 'KOTA TIDAK DITEMUKAN' : 'KONEKSI INTERNET GAGAL';
+        setPrayerBtnVisual('error', msg);
+        triggerHaptic(60);
+        setTimeout(() => triggerHaptic(60), 120);
+      }, remainingTime);
+    });
+}
+
+function initPrayerFeature() {
+  const savedCity = localStorage.getItem('robot_cfg_prayer_city') || 'JAKARTA';
+  const savedImsak = localStorage.getItem('robot_cfg_prayer_imsak') || '04:08';
+  const savedSubuh = localStorage.getItem('robot_cfg_prayer_subuh') || '04:18';
+  const savedDzuhur = localStorage.getItem('robot_cfg_prayer_dzuhur') || '11:45';
+  const savedAshar = localStorage.getItem('robot_cfg_prayer_ashar') || '15:02';
+  const savedMaghrib = localStorage.getItem('robot_cfg_prayer_maghrib') || '17:54';
+  const savedIsya = localStorage.getItem('robot_cfg_prayer_isya') || '19:06';
+
+  const input = document.getElementById('cfgPrayerCityInput');
+  if (input) input.value = savedCity;
+
+  updateOledPrayerPreviewWithData(savedCity, savedImsak, savedSubuh, savedDzuhur, savedAshar, savedMaghrib, savedIsya);
+
+  const btn = document.getElementById('btnSearchPrayerCity');
+  if (btn) {
+    btn.addEventListener('pointerup', function() { btn.blur(); });
+    btn.addEventListener('touchend', function() { btn.blur(); });
+    btn.addEventListener('mouseleave', function() { btn.blur(); });
+  }
+
+  if (input) {
+    input.addEventListener('input', (e) => {
+      const q = e.target.value;
+      if (prayerSearchTimer) clearTimeout(prayerSearchTimer);
+      prayerSearchTimer = setTimeout(() => {
+        searchPrayerCitySuggestions(q);
+      }, 250);
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const dropdown = document.getElementById('prayerCityDropdown');
+        if (dropdown) dropdown.style.display = 'none';
+        applyPrayerCity(false);
+      }
+    });
+  }
+
+  document.addEventListener('click', (e) => {
+    const d = document.getElementById('prayerCityDropdown');
+    const i = document.getElementById('cfgPrayerCityInput');
+    if (d && !d.contains(e.target) && e.target !== i) d.style.display = 'none';
+  });
+}
+
 // Kecerahan Layar OLED
 let brightnessDebounce = null;
 function changeOledBrightness(val) {
@@ -2574,6 +2975,7 @@ window.addEventListener('DOMContentLoaded', () => {
   updateOledWeatherPreview();
   syncClockQuiet();
   initSpotifyFeature();
+  initPrayerFeature();
 
   const gate = document.getElementById('setupGate');
   const hasSaved = hasSavedRobot();

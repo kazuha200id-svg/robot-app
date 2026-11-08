@@ -235,8 +235,18 @@
             <span class="card-title">MENU GAME</span>
           </button>
 
-          <!-- BARIS 5: NAVIGASI (FULL WIDTH) -->
-          <button id="btnMenuNavigation" type="button" class="menu-action-card full-width" onclick="selectRobotMenuFeature('navigation', this)">
+          <!-- BARIS 5 KIRI: JADWAL SHOLAT -->
+          <button id="btnMenuPrayer" type="button" class="menu-action-card" onclick="selectRobotMenuFeature('prayer', this)">
+            <div class="card-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
+                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+              </svg>
+            </div>
+            <span class="card-title">JADWAL SHOLAT</span>
+          </button>
+
+          <!-- BARIS 5 KANAN: NAVIGASI -->
+          <button id="btnMenuNavigation" type="button" class="menu-action-card" onclick="selectRobotMenuFeature('navigation', this)">
             <div class="card-icon-wrap">
               <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
                 <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
@@ -413,8 +423,35 @@
               </div>
             </div>
 
-            <!-- 9. BARIS 5: NAVIGASI (1:1 FULL WIDTH) -->
-            <div class="oled-screen-card full-width" onclick="openRobotFeatureDetail('navigation')">
+            <!-- 8. BARIS 5 KIRI: JADWAL SHOLAT -->
+            <div class="oled-screen-card" onclick="openRobotFeatureDetail('prayer')">
+              <div class="oled-display-bezel">
+                <div class="oled-screen-content oled-prayer-preview-view">
+                  <div class="oled-header-tiny">
+                    <span>SHOLAT</span>
+                    <span id="previewPrayerCity">JKT</span>
+                  </div>
+                  <div class="oled-prayer-preview-grid">
+                    <div class="prayer-prev-col">
+                      <div>Sub <span id="prevSubuh">04:28</span></div>
+                      <div>Dzu <span id="prevDzuhur">11:58</span></div>
+                      <div>Ash <span id="prevAshar">15:15</span></div>
+                    </div>
+                    <div class="prayer-prev-col">
+                      <div>Mag <span id="prevMaghrib">18:05</span></div>
+                      <div>Isy <span id="prevIsya">19:16</span></div>
+                      <div>Ims <span id="prevImsak">04:18</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="screen-card-meta">
+                <span class="screen-title">JADWAL SHOLAT</span>
+              </div>
+            </div>
+
+            <!-- 9. BARIS 5 KANAN: NAVIGASI -->
+            <div class="oled-screen-card" onclick="openRobotFeatureDetail('navigation')">
               <div class="oled-display-bezel">
                 <div class="oled-screen-content oled-notif-preview-view">
                   <div class="oled-header-tiny">
@@ -864,6 +901,69 @@
               </div>
             </div>
 
+          </div>
+
+          <!-- 10. DETAIL: JADWAL SHOLAT (100% PERSIS OLED DENGAN STATUS BAR) -->
+          <div id="detailViewPrayer" class="detail-feature-panel" style="display: none;">
+            <div class="main-oled-stage-wrap">
+              <div class="oled-display-bezel stage-bezel">
+                <div class="oled-screen-content stage-screen-content">
+                  <div class="oled-status-bar">
+                    <div class="oled-status-left">
+                      <svg viewBox="0 0 9 9" class="oled-status-wifi"><path d="M0 1.5C2.5 -0.5 6.5 -0.5 9 1.5l-1 1C6.2 0.8 2.8 0.8 1 2.5L0 1.5zm2 2.5c1.4 -1.2 3.6 -1.2 5 0l-1 1c-0.8 -0.7 -2.2 -0.7 -3 0l-1 -1zm2.5 3a1 1 0 1 1 0 2 1 1 0 0 1 0 -2z"/></svg>
+                      <svg viewBox="0 0 8 8" class="oled-status-alarm detail-status-alarm-icon"><path d="M3 0h2v1H3zM2 1h4v1H2zM2 2h4v1H2zM1 3h6v1H1zM0 4h8v2H0zM3 6h2v2H3z"/></svg>
+                    </div>
+                    <div class="oled-status-center">
+                      <span class="oled-feature-title">SHOLAT</span>
+                    </div>
+                    <div class="oled-status-right">
+                      <svg viewBox="0 0 12 6" class="oled-battery-svg"><rect x="0.5" y="0.5" width="9" height="5" rx="1" fill="none" stroke="#00F0FF"/><rect x="10" y="1.5" width="1.5" height="3" rx="0.5" fill="#00F0FF"/><rect x="2" y="2" width="6" height="2" fill="#00F0FF"/></svg>
+                    </div>
+                  </div>
+
+                  <!-- Baris Mini Kota -->
+                  <div class="oled-prayer-city-top" id="stagePrayerCity">KOTA: JAKARTA</div>
+
+                  <!-- 3 Baris 2 Kolom Jadwal Sholat -->
+                  <div class="oled-prayer-table">
+                    <div class="oled-prayer-row">
+                      <div class="prayer-col"><span>Subuh</span><strong id="stageSubuh">04:28</strong></div>
+                      <div class="prayer-col"><span>Imsak</span><strong id="stageImsak">04:18</strong></div>
+                    </div>
+                    <div class="oled-prayer-row">
+                      <div class="prayer-col"><span>Dzuhur</span><strong id="stageDzuhur">11:58</strong></div>
+                      <div class="prayer-col"><span>Ashar</span><strong id="stageAshar">15:15</strong></div>
+                    </div>
+                    <div class="oled-prayer-row">
+                      <div class="prayer-col"><span>Maghrib</span><strong id="stageMaghrib">18:05</strong></div>
+                      <div class="prayer-col"><span>Isya</span><strong id="stageIsya">19:16</strong></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- KONTROL JADWAL SHOLAT DUNIA: PENCARIAN KOTA (TEMA CYBER NEON BLUE) -->
+            <div class="feature-ctrl-panel">
+              <div class="config-card weather-ctrl-card">
+                <div class="config-header">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
+                    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+                  </svg>
+                  <span class="config-title">PENGATURAN KOTA SHOLAT (DUNIA)</span>
+                </div>
+
+                <div class="weather-form-group">
+                  <div class="weather-input-container">
+                    <input type="text" id="cfgPrayerCityInput" class="weather-city-input" placeholder="Ketik nama kota... (cth: Jakarta, Mekkah, London)" autocomplete="off">
+                    <div id="prayerCityDropdown" class="city-autocomplete-dropdown" style="display: none;"></div>
+                  </div>
+                  <button type="button" id="btnSearchPrayerCity" class="weather-action-btn" onclick="applyPrayerCity(false)" onpointerup="this.blur()" ontouchend="this.blur()">
+                    <span class="weather-btn-label" id="txtSearchPrayerCityBtn">TERAPKAN KOTA SHOLAT</span>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
