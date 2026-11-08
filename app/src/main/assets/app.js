@@ -221,6 +221,12 @@ function finalizeSuccess() {
     connectTimeoutId = null;
   }
 
+  // Jika koneksi terputus mendadak sebelum proses selesai, gagalkan dan jangan izinkan masuk
+  if (!isBleConnected) {
+    finalizeFailed();
+    return;
+  }
+
   const btn = document.getElementById('btnConnectRobot');
   const label = document.getElementById('btnConnectLabel');
   const spinner = document.getElementById('btnConnectSpinner');
@@ -237,6 +243,10 @@ function finalizeSuccess() {
   showNeonToast('Robot Tersambung');
 
   setTimeout(() => {
+    if (!isBleConnected) {
+      if (gate && !hasSavedRobot()) gate.classList.add('active');
+      return;
+    }
     if (gate) gate.classList.remove('active');
     syncClockQuiet();
     setTimeout(() => sendCommand({ c: 's' }), 400);
@@ -425,6 +435,8 @@ window.onDeviceForgotten = function() {
   localStorage.removeItem('robot_saved_mac');
   localStorage.removeItem('robot_saved_name');
   showNeonToast('Perangkat robot dilupakan');
+  const gate = document.getElementById('setupGate');
+  if (gate) gate.classList.add('active');
   const isBtOn = (window.AndroidBLE && typeof window.AndroidBLE.isBluetoothEnabled === 'function') ? window.AndroidBLE.isBluetoothEnabled() : true;
   updateSetupGateView(isBtOn);
   retryAutoScan();
@@ -507,6 +519,10 @@ window.onBluetoothPowerState = function(enabled) {
 
     updateSetupGateView(true);
 
+    if (hasSavedRobot()) {
+      if (gate) gate.classList.remove('active');
+    }
+
     if (!isBleConnected) {
       if (hasSavedRobot()) {
         if (window.AndroidBLE && typeof window.AndroidBLE.reconnect === 'function') {
@@ -579,17 +595,13 @@ window.onBLEStatus = function(connected, message) {
     if (label) label.textContent = 'BLE TERPUTUS';
 
     if (!isConnecting && gate) {
-      gate.classList.add('active');
-      const isBtOn = (window.AndroidBLE && typeof window.AndroidBLE.isBluetoothEnabled === 'function') ? window.AndroidBLE.isBluetoothEnabled() : true;
-      updateSetupGateView(isBtOn);
-
-      if (hasSavedRobot()) {
-        const txtSaved = document.getElementById('txtSavedDevState');
-        const spinner = document.getElementById('savedDevSpinner');
-        const btnReconnect = document.getElementById('btnManualReconnect');
-        if (txtSaved) txtSaved.textContent = 'Terputus dari Robot';
-        if (spinner) spinner.style.display = 'none';
-        if (btnReconnect) btnReconnect.style.display = 'block';
+      if (!hasSavedRobot()) {
+        gate.classList.add('active');
+        const isBtOn = (window.AndroidBLE && typeof window.AndroidBLE.isBluetoothEnabled === 'function') ? window.AndroidBLE.isBluetoothEnabled() : true;
+        updateSetupGateView(isBtOn);
+      } else {
+        // Jika robot sudah tersimpan, jangan tutupi layar dengan setup gate!
+        gate.classList.remove('active');
       }
     }
 
@@ -2562,12 +2574,20 @@ window.addEventListener('DOMContentLoaded', () => {
   syncClockQuiet();
   initSpotifyFeature();
 
+  const gate = document.getElementById('setupGate');
+  const hasSaved = hasSavedRobot();
+  if (hasSaved) {
+    if (gate) gate.classList.remove('active');
+  } else {
+    if (gate) gate.classList.add('active');
+  }
+
   // Cek status daya Bluetooth HP & sambungkan kembali ke robot tersimpan
   if (window.AndroidBLE && typeof window.AndroidBLE.isBluetoothEnabled === 'function') {
     const btOn = window.AndroidBLE.isBluetoothEnabled();
     window.onBluetoothPowerState(btOn);
     if (btOn) {
-      if (hasSavedRobot()) {
+      if (hasSaved) {
         if (typeof window.AndroidBLE.reconnect === 'function') {
           window.AndroidBLE.reconnect();
         } else {

@@ -24,7 +24,7 @@
     </header>
 
     <!-- STRICT BLUETOOTH SETUP GATE (LOCK SCREEN) -->
-    <div id="setupGate" class="setup-gate active">
+    <div id="setupGate" class="setup-gate">
       <div class="setup-modal-box">
         
         <div class="setup-radar-wrap">
@@ -128,6 +128,17 @@
 
       </div>
     </div>
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('robot_saved_mac');
+          if (!saved) {
+            var g = document.getElementById('setupGate');
+            if (g) g.classList.add('active');
+          }
+        } catch(e) {}
+      })();
+    </script>
 
     <!-- MAIN VIEWPORT (4 PAGES SYSTEM) -->
     <main class="main-viewport">
