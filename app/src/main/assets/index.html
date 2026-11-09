@@ -271,8 +271,8 @@
             <span class="card-title">NAVIGASI</span>
           </button>
 
-          <!-- BARIS 6: CRYPTO & SAHAM (FULL WIDTH) -->
-          <button id="btnMenuCrypto" type="button" class="menu-action-card full-width"
+          <!-- BARIS 6 KIRI: CRYPTO & SAHAM -->
+          <button id="btnMenuCrypto" type="button" class="menu-action-card"
             onclick="selectRobotMenuFeature('crypto', this)">
             <div class="card-icon-wrap">
               <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
@@ -280,6 +280,18 @@
               </svg>
             </div>
             <span class="card-title">CRYPTO &amp; SAHAM</span>
+          </button>
+
+          <!-- BARIS 6 KANAN: KURS LIVE -->
+          <button id="btnMenuKurs" type="button" class="menu-action-card"
+            onclick="selectRobotMenuFeature('kurs', this)">
+            <div class="card-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M8 8h8M8 12h5M8 16h8"></path>
+              </svg>
+            </div>
+            <span class="card-title">KURS LIVE</span>
           </button>
         </div>
       </section>
@@ -498,8 +510,8 @@
               </div>
             </div>
 
-            <!-- 11. BARIS 6: CRYPTO & SAHAM (1:1 FULL WIDTH) -->
-            <div class="oled-screen-card full-width" onclick="openRobotFeatureDetail('crypto')">
+            <!-- 11. BARIS 6 KIRI: CRYPTO & SAHAM (1:1) -->
+            <div class="oled-screen-card" onclick="openRobotFeatureDetail('crypto')">
               <div class="oled-display-bezel">
                 <div class="oled-screen-content oled-crypto-preview-view">
                   <div class="oled-header-tiny">
@@ -512,6 +524,26 @@
               </div>
               <div class="screen-card-meta">
                 <span class="screen-title">CRYPTO &amp; SAHAM</span>
+              </div>
+            </div>
+
+            <!-- 12. BARIS 6 KANAN: KURS LIVE (1:1) -->
+            <div class="oled-screen-card" onclick="openRobotFeatureDetail('kurs')">
+              <div class="oled-display-bezel">
+                <div class="oled-screen-content oled-kurs-preview-view">
+                  <div class="oled-header-tiny">
+                    <span>KURS LIVE</span>
+                    <span id="previewKursTarget">IDR</span>
+                  </div>
+                  <div class="oled-kurs-prev-list">
+                    <div class="oled-kurs-prev-row"><span>USD</span> <span id="previewKursPrice0">Rp 16.250</span> <span id="previewKursChg0">▲ +0.1%</span></div>
+                    <div class="oled-kurs-prev-row"><span>EUR</span> <span id="previewKursPrice1">Rp 17.480</span> <span id="previewKursChg1">▼ -0.2%</span></div>
+                    <div class="oled-kurs-prev-row"><span>SAR</span> <span id="previewKursPrice2">Rp 4.330</span> <span id="previewKursChg2">▲ +0.1%</span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="screen-card-meta">
+                <span class="screen-title">KURS LIVE</span>
               </div>
             </div>
           </div>
@@ -1307,6 +1339,122 @@
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <!-- 12. DETAIL: KURS LIVE (100% PERSIS OLED FISIK DENGAN STATUS BAR) -->
+          <div id="detailViewKurs" class="detail-feature-panel" style="display: none;">
+            <div class="main-oled-stage-wrap">
+              <div class="oled-display-bezel stage-bezel">
+                <div class="oled-screen-content stage-screen-content">
+                  <div class="oled-status-bar">
+                    <div class="oled-status-left">
+                      <svg viewBox="0 0 9 9" class="oled-status-wifi">
+                        <path d="M0 1.5C2.5 -0.5 6.5 -0.5 9 1.5l-1 1C6.2 0.8 2.8 0.8 1 2.5L0 1.5zm2 2.5c1.4 -1.2 3.6 -1.2 5 0l-1 1c-0.8 -0.7 -2.2 -0.7 -3 0l-1 -1zm2.5 3a1 1 0 1 1 0 2 1 1 0 0 1 0 -2z" />
+                      </svg>
+                      <svg viewBox="0 0 7 9" class="oled-status-ble">
+                        <path d="M1.5 2.5L5.5 6.5L3.5 8.5L3.5 0.5L5.5 2.5L1.5 6.5" />
+                      </svg>
+                    </div>
+                    <div class="oled-status-title">KURS LIVE</div>
+                    <div class="oled-status-right">
+                      <svg viewBox="0 0 5 8" class="oled-status-lightning">
+                        <path d="M2 0h1v3h2L1 8l1-4H0z" />
+                      </svg>
+                      <div class="oled-battery-vert">
+                        <div class="oled-batt-pip"></div>
+                        <div class="oled-batt-body">
+                          <div class="oled-batt-fill" style="height: 100%;"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- KONTEN 100% PERSIS LAYAR FISIK ROBOT (3 BARIS) -->
+                  <div class="oled-mode-layer active oled-kurs-stage-layer">
+                    <div class="stage-kurs-row">
+                      <span class="stage-kurs-sym" id="stageKursSym0">USD</span>
+                      <span class="stage-kurs-price oled-mono" id="stageKursPrice0">Rp 16.250</span>
+                      <span class="stage-kurs-chg" id="stageKursChg0">▲ +0.1%</span>
+                    </div>
+                    <div class="stage-kurs-row">
+                      <span class="stage-kurs-sym" id="stageKursSym1">EUR</span>
+                      <span class="stage-kurs-price oled-mono" id="stageKursPrice1">Rp 17.480</span>
+                      <span class="stage-kurs-chg" id="stageKursChg1">▼ -0.2%</span>
+                    </div>
+                    <div class="stage-kurs-row">
+                      <span class="stage-kurs-sym" id="stageKursSym2">SAR</span>
+                      <span class="stage-kurs-price oled-mono" id="stageKursPrice2">Rp 4.330</span>
+                      <span class="stage-kurs-chg" id="stageKursChg2">▲ +0.1%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- KONTROL PENGATURAN KURS LIVE (TEMA CYBER NEON CYAN - PERSIS FITUR CUACA & SHOLAT) -->
+            <div class="feature-ctrl-panel">
+
+              <!-- KARTU 1: MATA UANG TUJUAN (KONVERSI) -->
+              <div class="config-card weather-ctrl-card">
+                <div class="config-header">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8M12 6v2m0 8v2"></path>
+                  </svg>
+                  <span class="config-title">MATA UANG TUJUAN (KONVERSI)</span>
+                </div>
+                <div class="weather-form-group">
+                  <div class="weather-input-container">
+                    <input type="text" id="cfgKursTargetInput" class="weather-city-input"
+                      placeholder="Cari mata uang tujuan (misal: IDR, USD, EUR, SGD)..." autocomplete="off">
+                    <div id="kursTargetDropdown" class="city-autocomplete-dropdown" style="display: none;"></div>
+                  </div>
+                  <button type="button" id="btnApplyKursTarget" class="weather-action-btn"
+                    onclick="applyKursTarget()" onpointerup="this.blur()" ontouchend="this.blur()">
+                    <span class="weather-btn-label" id="txtApplyKursTargetBtn">TERAPKAN MATA UANG TUJUAN</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- KARTU 2: PENGATURAN 3 SLOT MATA UANG (TIDAK BISA KURANG ATAU LEBIH) -->
+              <div class="config-card weather-ctrl-card">
+                <div class="config-header">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
+                    <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                    <line x1="6" y1="8" x2="10" y2="8"></line>
+                    <line x1="6" y1="12" x2="18" y2="12"></line>
+                    <line x1="6" y1="16" x2="14" y2="16"></line>
+                  </svg>
+                  <span class="config-title">3 MATA UANG DIPANTAU</span>
+                </div>
+
+                <!-- 3 SLOT SELECTOR CHIPS -->
+                <div style="margin-bottom: 10px;">
+                  <span style="font-size: 0.65rem; color: var(--text-secondary); font-family: var(--font-mono); letter-spacing: 0.5px; display: block; margin-bottom: 6px;">PILIH SLOT YANG INGIN DIGANTI:</span>
+                  <div class="chip-preset-row" id="kursSlotsBar"></div>
+                </div>
+
+                <div class="weather-form-group">
+                  <div class="weather-input-container">
+                    <input type="text" id="cfgKursSlotInput" class="weather-city-input"
+                      placeholder="Cari mata uang (misal: USD, EUR, SAR, JPY, GBP)..." autocomplete="off">
+                    <div id="kursSlotDropdown" class="city-autocomplete-dropdown" style="display: none;"></div>
+                  </div>
+                  <button type="button" id="btnApplyKursSlot" class="weather-action-btn"
+                    onclick="applyKursSlot()" onpointerup="this.blur()" ontouchend="this.blur()">
+                    <span class="weather-btn-label" id="txtApplyKursSlotBtn">SIMPAN KE SLOT TERPILIH</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- TOMBOL REFRESH LIVE & SYNC KE ROBOT -->
+              <div style="margin-top: 12px;">
+                <button type="button" class="btn-clock-sync" id="btnSyncKursRobot" onclick="refreshAndSendKursLive(this)">
+                  <span id="btnSyncKursText">REFRESH &amp; KIRIM KE ROBOT</span>
+                </button>
+              </div>
+
             </div>
           </div>
         </div>

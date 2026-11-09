@@ -1100,6 +1100,25 @@ function openRobotFeatureDetail(featureKey) {
     sendCryptoDataToRobot();
     fetchCryptoLivePrices();
     startCryptoInterval();
+  } else if (featureKey === 'kurs') {
+    const panel = document.getElementById('detailViewKurs');
+    if (panel) panel.style.display = 'block';
+
+    const targetInput = document.getElementById('cfgKursTargetInput');
+    if (targetInput) targetInput.value = currentKursTarget;
+    const slotInput = document.getElementById('cfgKursSlotInput');
+    if (slotInput) {
+      const found = FOREX_POPULAR_CURRENCIES.find(c => c.code === configuredKursSlots[activeKursSlotIndex]);
+      slotInput.value = found ? (found.code + ' - ' + found.name) : configuredKursSlots[activeKursSlotIndex];
+    }
+
+    renderKursSlotsUI();
+    updateOledKursPreview();
+    currentRobotMode = 21;
+    sendCommand({ c: 'm', v: 21 }, true);
+    sendKursDataToRobot();
+    fetchKursLiveRates();
+    startKursInterval();
   }
 
   scrollToPageTop();
@@ -1593,7 +1612,8 @@ function selectRobotMenuFeature(featureKey, btnEl) {
     'spotify': 17,
     'navigation': 18,
     'prayer': 19,
-    'crypto': 20
+    'crypto': 20,
+    'kurs': 21
   };
 
   const targetMode = modeMap[featureKey];
@@ -1606,6 +1626,11 @@ function selectRobotMenuFeature(featureKey, btnEl) {
     } else if (featureKey === 'crypto') {
       sendCryptoDataToRobot();
       fetchCryptoLivePrices();
+      return;
+    } else if (featureKey === 'kurs') {
+      sendKursDataToRobot();
+      fetchKursLiveRates();
+      sendCommand({ c: 'm', v: 21 }, true);
       return;
     }
     sendCommand({ c: 'm', v: targetMode }, true);
@@ -5102,6 +5127,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initSpotifyFeature();
   initPrayerFeature();
   initCryptoFeature();
+  initKursFeature();
 
   const gate = document.getElementById('setupGate');
   const hasSaved = hasSavedRobot();
@@ -5730,5 +5756,443 @@ function updateOledNavLiveDisplay(actStr, distStr, instStr, streetStr, remStr, t
     if (stageActive) stageActive.style.display = 'none';
     if (stageStandby) stageStandby.style.display = 'flex';
   }
+}
+
+// ========================================================
+// FITUR KURS LIVE (TEPAT 3 MATA UANG • POLA SAMA CUACA)
+// ========================================================
+const FOREX_POPULAR_CURRENCIES = [
+  { code: 'IDR', name: 'Rupiah Indonesia', symbol: 'Rp' },
+  { code: 'USD', name: 'Dolar Amerika Serikat', symbol: '$' },
+  { code: 'EUR', name: 'Euro Uni Eropa', symbol: '€' },
+  { code: 'SAR', name: 'Riyal Arab Saudi', symbol: 'SAR' },
+  { code: 'SGD', name: 'Dolar Singapura', symbol: 'S$' },
+  { code: 'JPY', name: 'Yen Jepang', symbol: '¥' },
+  { code: 'GBP', name: 'Poundsterling Inggris', symbol: '£' },
+  { code: 'MYR', name: 'Ringgit Malaysia', symbol: 'RM' },
+  { code: 'AUD', name: 'Dolar Australia', symbol: 'A$' },
+  { code: 'CNY', name: 'Yuan Tiongkok', symbol: '¥' },
+  { code: 'KRW', name: 'Won Korea Selatan', symbol: '₩' },
+  { code: 'CAD', name: 'Dolar Kanada', symbol: 'C$' },
+  { code: 'CHF', name: 'Franc Swiss', symbol: 'CHF' },
+  { code: 'THB', name: 'Baht Thailand', symbol: '฿' },
+  { code: 'AED', name: 'Dirham Uni Emirat Arab', symbol: 'AED' },
+  { code: 'TRY', name: 'Lira Turki', symbol: '₺' },
+  { code: 'INR', name: 'Rupee India', symbol: '₹' },
+  { code: 'BRL', name: 'Real Brasil', symbol: 'R$' }
+];
+
+const DEFAULT_KURS_SLOTS = ['USD', 'EUR', 'SAR']; // Tepat 3 slot (tidak boleh kurang/lebih)
+let configuredKursSlots = (() => {
+  try {
+    const saved = localStorage.getItem('robot_cfg_kurs_slots');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length === 3) return parsed.map(s => String(s).toUpperCase());
+    }
+  } catch (e) {}
+  return [...DEFAULT_KURS_SLOTS];
+})();
+
+let currentKursTarget = (localStorage.getItem('robot_cfg_kurs_target') || 'IDR').toUpperCase();
+let activeKursSlotIndex = 0; // 0, 1, 2
+let isKursFetching = false;
+let kursAutoInterval = null;
+let kursSlotSearchTimer = null;
+let kursTargetSearchTimer = null;
+
+let kursRatesCache = {
+  'USD_IDR': { price: 16250, change24h: 0.10, isUp: true },
+  'EUR_IDR': { price: 17480, change24h: -0.20, isUp: false },
+  'SAR_IDR': { price: 4330,  change24h: 0.10, isUp: true },
+  'USD_USD': { price: 1.0,   change24h: 0.00, isUp: true },
+  'EUR_USD': { price: 1.08,  change24h: -0.20, isUp: false },
+  'SAR_USD': { price: 0.27,  change24h: 0.00, isUp: true }
+};
+
+function saveConfiguredKurs() {
+  try {
+    localStorage.setItem('robot_cfg_kurs_slots', JSON.stringify(configuredKursSlots));
+    localStorage.setItem('robot_cfg_kurs_target', currentKursTarget);
+  } catch (e) {}
+}
+
+function renderKursSlotsUI() {
+  const bar = document.getElementById('kursSlotsBar');
+  if (!bar) return;
+  bar.innerHTML = '';
+  configuredKursSlots.forEach((code, idx) => {
+    const chip = document.createElement('div');
+    chip.className = 'chip-preset' + (idx === activeKursSlotIndex ? ' active' : '');
+    chip.textContent = `Slot ${idx + 1}: ${code}`;
+    chip.onclick = () => selectKursSlot(idx);
+    bar.appendChild(chip);
+  });
+}
+
+function selectKursSlot(idx) {
+  if (idx < 0 || idx >= 3) return;
+  activeKursSlotIndex = idx;
+  const input = document.getElementById('cfgKursSlotInput');
+  if (input) {
+    const found = FOREX_POPULAR_CURRENCIES.find(c => c.code === configuredKursSlots[idx]);
+    input.value = found ? (found.code + ' - ' + found.name) : configuredKursSlots[idx];
+  }
+  renderKursSlotsUI();
+}
+
+function formatKursDisplayPrice(price, targetCode) {
+  if (typeof price !== 'number' || isNaN(price) || price <= 0) return '0';
+  if (targetCode === 'IDR') {
+    return 'Rp ' + Math.round(price).toLocaleString('id-ID');
+  }
+  const curr = FOREX_POPULAR_CURRENCIES.find(c => c.code === targetCode);
+  const sym = curr ? (curr.symbol + ' ') : (targetCode + ' ');
+  if (price >= 100) return sym + price.toFixed(2);
+  if (price >= 1) return sym + price.toFixed(3);
+  return sym + price.toFixed(4);
+}
+
+async function fetchSingleKursRate(fromCode, toCode) {
+  const from = fromCode.toUpperCase();
+  const to = toCode.toUpperCase();
+  const pairKey = from + '_' + to;
+
+  if (from === to) {
+    kursRatesCache[pairKey] = { price: 1.0, change24h: 0.0, isUp: true };
+    return;
+  }
+
+  let yfSymbol = `${from}${to}=X`;
+  try {
+    let yfUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(yfSymbol) + '?interval=1d';
+    let yfData = await fetchGeocoding(yfUrl, 2500).catch(async () => {
+      return await fetchGeocoding('https://query2.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(yfSymbol) + '?interval=1d', 2500);
+    });
+
+    if (yfData && yfData.chart && Array.isArray(yfData.chart.result) && yfData.chart.result.length > 0) {
+      const meta = yfData.chart.result[0].meta;
+      if (meta && typeof meta.regularMarketPrice === 'number') {
+        const rawPrice = meta.regularMarketPrice;
+        let changeVal = meta.regularMarketChangePercent || 0;
+        if (changeVal === 0 && typeof meta.chartPreviousClose === 'number' && meta.chartPreviousClose > 0) {
+          changeVal = ((rawPrice - meta.chartPreviousClose) / meta.chartPreviousClose) * 100;
+        }
+        kursRatesCache[pairKey] = {
+          price: rawPrice,
+          change24h: changeVal,
+          isUp: (changeVal >= 0)
+        };
+        return;
+      }
+    }
+  } catch (e) {}
+
+  // Fallback Indodax untuk konversi Rupiah lokal jika Yahoo diblokir
+  if (to === 'IDR' && (usdToIdrRate > 10000 && usdToIdrRate < 25000)) {
+    if (from === 'USD') {
+      kursRatesCache[pairKey] = { price: usdToIdrRate, change24h: 0.1, isUp: true };
+      return;
+    } else if (from === 'EUR') {
+      kursRatesCache[pairKey] = { price: usdToIdrRate * 1.08, change24h: -0.2, isUp: false };
+      return;
+    } else if (from === 'SAR') {
+      kursRatesCache[pairKey] = { price: usdToIdrRate / 3.75, change24h: 0.1, isUp: true };
+      return;
+    } else if (from === 'SGD') {
+      kursRatesCache[pairKey] = { price: usdToIdrRate * 0.76, change24h: 0.05, isUp: true };
+      return;
+    }
+  }
+}
+
+async function fetchKursLiveRates() {
+  if (isKursFetching) return;
+  isKursFetching = true;
+
+  try {
+    const fetches = configuredKursSlots.map(code => fetchSingleKursRate(code, currentKursTarget));
+    await Promise.allSettled(fetches);
+
+    updateOledKursPreview();
+    sendKursDataToRobot();
+  } catch (err) {
+    console.warn('[KURS] Gagal mengambil data kurs live:', err);
+    updateOledKursPreview();
+    sendKursDataToRobot();
+  } finally {
+    isKursFetching = false;
+  }
+}
+
+function updateOledKursPreview() {
+  const target = currentKursTarget;
+  const pTarget = document.getElementById('previewKursTarget');
+  if (pTarget) pTarget.textContent = target;
+
+  configuredKursSlots.forEach((sym, idx) => {
+    const pairKey = sym + '_' + target;
+    const data = kursRatesCache[pairKey] || { price: 0, change24h: 0, isUp: true };
+    const priceStr = formatKursDisplayPrice(data.price, target);
+    const arrowStr = data.isUp ? '▲' : '▼';
+    const chgNum = (data.isUp ? '+' : '') + Math.abs(data.change24h).toFixed(1) + '%';
+
+    // 1. Pratinjau di Card Halaman Robot
+    const prevPrice = document.getElementById(`previewKursPrice${idx}`);
+    const prevChg = document.getElementById(`previewKursChg${idx}`);
+    if (prevPrice) prevPrice.textContent = priceStr;
+    if (prevChg) prevChg.textContent = `${arrowStr} ${chgNum}`;
+
+    // 2. Layar Stage Virtual OLED di Detail View
+    const stageSym = document.getElementById(`stageKursSym${idx}`);
+    const stagePrice = document.getElementById(`stageKursPrice${idx}`);
+    const stageChg = document.getElementById(`stageKursChg${idx}`);
+    if (stageSym) stageSym.textContent = sym;
+    if (stagePrice) stagePrice.textContent = priceStr;
+    if (stageChg) stageChg.textContent = `${arrowStr} ${chgNum}`;
+  });
+}
+
+function sendKursDataToRobot() {
+  configuredKursSlots.forEach((sym, idx) => {
+    const pairKey = sym + '_' + currentKursTarget;
+    const data = kursRatesCache[pairKey] || { price: 0, change24h: 0, isUp: true };
+    const priceStr = formatKursDisplayPrice(data.price, currentKursTarget);
+    const chgStr = (data.isUp ? '+' : '') + Math.abs(data.change24h).toFixed(1) + '%';
+
+    sendCommand({
+      c: 'kurs',
+      slot: idx,
+      sym: sym,
+      price: priceStr,
+      chg: chgStr,
+      is_up: data.isUp
+    }, true);
+  });
+}
+
+function startKursInterval() {
+  if (kursAutoInterval) clearInterval(kursAutoInterval);
+  kursAutoInterval = setInterval(() => {
+    if (currentOpenDetailFeature === 'kurs' || currentRobotMode === 21) {
+      fetchKursLiveRates();
+    }
+  }, 60000);
+}
+
+// Live Autocomplete Pencarian Mata Uang Tujuan (Target)
+function searchKursTargetSuggestions(query) {
+  const dropdown = document.getElementById('kursTargetDropdown');
+  if (!dropdown) return;
+  const clean = (query || '').trim().toUpperCase();
+  dropdown.innerHTML = '';
+
+  let matches = [];
+  if (clean.length === 0) {
+    matches = FOREX_POPULAR_CURRENCIES.slice(0, 8);
+  } else {
+    matches = FOREX_POPULAR_CURRENCIES.filter(c =>
+      c.code.toUpperCase().includes(clean) ||
+      c.name.toUpperCase().includes(clean)
+    ).slice(0, 8);
+  }
+
+  if (clean.length >= 2 && !matches.some(m => m.code.toUpperCase() === clean)) {
+    matches.unshift({ code: clean, name: 'Custom: ' + clean, symbol: clean + ' ' });
+  }
+
+  if (matches.length === 0) {
+    dropdown.innerHTML = '<div class="city-item-empty">Tidak ada mata uang cocok</div>';
+    dropdown.style.display = 'block';
+    return;
+  }
+
+  matches.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'city-autocomplete-item';
+    const nameEl = document.createElement('span');
+    nameEl.className = 'city-item-name';
+    nameEl.textContent = item.code;
+    const descEl = document.createElement('span');
+    descEl.className = 'city-item-desc';
+    descEl.textContent = item.name;
+    row.appendChild(nameEl);
+    row.appendChild(descEl);
+    row.addEventListener('click', () => {
+      const input = document.getElementById('cfgKursTargetInput');
+      if (input) input.value = item.code + ' - ' + item.name;
+      dropdown.style.display = 'none';
+      triggerHaptic(20);
+    });
+    dropdown.appendChild(row);
+  });
+  dropdown.style.display = 'block';
+}
+
+// Live Autocomplete Pencarian Mata Uang Slot
+function searchKursSlotSuggestions(query) {
+  const dropdown = document.getElementById('kursSlotDropdown');
+  if (!dropdown) return;
+  const clean = (query || '').trim().toUpperCase();
+  dropdown.innerHTML = '';
+
+  let matches = [];
+  if (clean.length === 0) {
+    matches = FOREX_POPULAR_CURRENCIES.slice(0, 8);
+  } else {
+    matches = FOREX_POPULAR_CURRENCIES.filter(c =>
+      c.code.toUpperCase().includes(clean) ||
+      c.name.toUpperCase().includes(clean)
+    ).slice(0, 8);
+  }
+
+  if (clean.length >= 2 && !matches.some(m => m.code.toUpperCase() === clean)) {
+    matches.unshift({ code: clean, name: 'Custom: ' + clean, symbol: clean + ' ' });
+  }
+
+  if (matches.length === 0) {
+    dropdown.innerHTML = '<div class="city-item-empty">Tidak ada mata uang cocok</div>';
+    dropdown.style.display = 'block';
+    return;
+  }
+
+  matches.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'city-autocomplete-item';
+    const nameEl = document.createElement('span');
+    nameEl.className = 'city-item-name';
+    nameEl.textContent = item.code;
+    const descEl = document.createElement('span');
+    descEl.className = 'city-item-desc';
+    descEl.textContent = item.name;
+    row.appendChild(nameEl);
+    row.appendChild(descEl);
+    row.addEventListener('click', () => {
+      const input = document.getElementById('cfgKursSlotInput');
+      if (input) input.value = item.code + ' - ' + item.name;
+      dropdown.style.display = 'none';
+      triggerHaptic(20);
+    });
+    dropdown.appendChild(row);
+  });
+  dropdown.style.display = 'block';
+}
+
+async function applyKursTarget() {
+  const input = document.getElementById('cfgKursTargetInput');
+  const raw = (input ? input.value : '').trim();
+  const code = raw.split(/[-–—/]/)[0].trim().toUpperCase();
+  if (!code || code.length < 2) {
+    triggerHaptic(40);
+    showNeonToast('Masukkan kode mata uang tujuan!');
+    return;
+  }
+
+  triggerHaptic(25);
+  currentKursTarget = code;
+  saveConfiguredKurs();
+
+  const btn = document.getElementById('btnApplyKursTarget');
+  const txt = document.getElementById('txtApplyKursTargetBtn');
+  if (txt) txt.textContent = 'MEMUAT...';
+  if (btn) btn.classList.add('loading');
+
+  try {
+    await fetchKursLiveRates();
+    triggerHaptic(30);
+    showNeonToast('Mata Uang Tujuan Diatur: ' + code);
+  } finally {
+    if (txt) txt.textContent = 'TERAPKAN MATA UANG TUJUAN';
+    if (btn) btn.classList.remove('loading');
+  }
+}
+
+async function applyKursSlot() {
+  const input = document.getElementById('cfgKursSlotInput');
+  const raw = (input ? input.value : '').trim();
+  const code = raw.split(/[-–—/]/)[0].trim().toUpperCase();
+  if (!code || code.length < 2) {
+    triggerHaptic(40);
+    showNeonToast('Masukkan kode mata uang slot!');
+    return;
+  }
+
+  triggerHaptic(25);
+  configuredKursSlots[activeKursSlotIndex] = code;
+  saveConfiguredKurs();
+  renderKursSlotsUI();
+
+  const btn = document.getElementById('btnApplyKursSlot');
+  const txt = document.getElementById('txtApplyKursSlotBtn');
+  if (txt) txt.textContent = 'MEMUAT...';
+  if (btn) btn.classList.add('loading');
+
+  try {
+    await fetchKursLiveRates();
+    triggerHaptic(30);
+    showNeonToast(`Slot ${activeKursSlotIndex + 1} Diatur: ` + code);
+  } finally {
+    if (txt) txt.textContent = 'SIMPAN KE SLOT TERPILIH';
+    if (btn) btn.classList.remove('loading');
+  }
+}
+
+async function refreshAndSendKursLive(btnEl) {
+  triggerHaptic(25);
+  const txt = document.getElementById('btnSyncKursText');
+  if (txt) txt.textContent = 'MENGAMBIL KURS LIVE...';
+  try {
+    await fetchKursLiveRates();
+    triggerHaptic(30);
+    showNeonToast('Kurs Live Berhasil Disinkronkan!');
+  } finally {
+    if (txt) txt.textContent = 'REFRESH & KIRIM KE ROBOT';
+  }
+}
+
+function initKursFeature() {
+  renderKursSlotsUI();
+
+  const targetInput = document.getElementById('cfgKursTargetInput');
+  if (targetInput) {
+    const foundTarget = FOREX_POPULAR_CURRENCIES.find(c => c.code === currentKursTarget);
+    targetInput.value = foundTarget ? (foundTarget.code + ' - ' + foundTarget.name) : currentKursTarget;
+    targetInput.addEventListener('input', (e) => {
+      const q = e.target.value;
+      if (kursTargetSearchTimer) clearTimeout(kursTargetSearchTimer);
+      kursTargetSearchTimer = setTimeout(() => searchKursTargetSuggestions(q), 200);
+    });
+  }
+
+  const slotInput = document.getElementById('cfgKursSlotInput');
+  if (slotInput) {
+    const curSlotCode = configuredKursSlots[activeKursSlotIndex] || 'USD';
+    const foundSlot = FOREX_POPULAR_CURRENCIES.find(c => c.code === curSlotCode);
+    slotInput.value = foundSlot ? (foundSlot.code + ' - ' + foundSlot.name) : curSlotCode;
+    slotInput.addEventListener('input', (e) => {
+      const q = e.target.value;
+      if (kursSlotSearchTimer) clearTimeout(kursSlotSearchTimer);
+      kursSlotSearchTimer = setTimeout(() => searchKursSlotSuggestions(q), 200);
+    });
+  }
+
+  document.addEventListener('click', (e) => {
+    const dTarget = document.getElementById('kursTargetDropdown');
+    const iTarget = document.getElementById('cfgKursTargetInput');
+    if (dTarget && !dTarget.contains(e.target) && e.target !== iTarget) {
+      dTarget.style.display = 'none';
+    }
+
+    const dSlot = document.getElementById('kursSlotDropdown');
+    const iSlot = document.getElementById('cfgKursSlotInput');
+    if (dSlot && !dSlot.contains(e.target) && e.target !== iSlot) {
+      dSlot.style.display = 'none';
+    }
+  });
+
+  updateOledKursPreview();
+  setTimeout(() => {
+    fetchKursLiveRates();
+  }, 1000);
 }
 
