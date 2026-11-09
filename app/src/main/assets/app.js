@@ -587,6 +587,9 @@ window.onBLEStatus = function(connected, message) {
     // Sinkronkan detik jam HP ke robot seketika saat tersambung agar realtime tanpa jeda
     syncClockQuiet();
 
+    // Sinkronkan jadwal sholat resmi Kemenag RI ke robot seketika saat tersambung
+    syncPrayerQuiet();
+
     if (isConnecting) {
       const elapsed = Date.now() - connectStartTime;
       const remaining = Math.max(0, 3000 - elapsed);
@@ -2735,29 +2738,86 @@ function applyPrayerCity(isFromSetting) {
       const yyyy = now.getFullYear();
       const dateStr = dd + '-' + mm + '-' + yyyy;
 
-      const prayerUrl = 'https://api.aladhan.com/v1/timings/' + dateStr +
+      let prayerFetchPromise;
+      if (isIndonesia) {
+        let cleanCity = cityName.toLowerCase().replace(/^(kota|kabupaten|kab\.)\s+/i, '').trim();
+        const myQuranSearchUrl = 'https://api.myquran.com/v2/sholat/kota/cari/' + encodeURIComponent(cleanCity);
+        prayerFetchPromise = fetchGeocoding(myQuranSearchUrl)
+          .then(function(mqData) {
+            const list = (mqData && mqData.data) ? mqData.data : [];
+            if (list.length > 0) {
+              const cityId = list[0].id;
+              const jadwalUrl = 'https://api.myquran.com/v2/sholat/jadwal/' + cityId + '/' + yyyy + '/' + mm + '/' + dd;
+              return fetchGeocoding(jadwalUrl).then(function(jData) {
+                if (jData && jData.data && jData.data.jadwal) {
+                  const j = jData.data.jadwal;
+                  return {
+                    cityName: jData.data.lokasi || cityName,
+                    lat: lat,
+                    lon: lon,
+                    timings: {
+                      Fajr: j.subuh,
+                      Imsak: j.imsak,
+                      Dhuhr: j.dzuhur,
+                      Asr: j.ashar,
+                      Maghrib: j.maghrib,
+                      Isha: j.isya
+                    }
+                  };
+                }
+                throw new Error('MYQURAN_NO_JADWAL');
+              });
+            }
+            throw new Error('MYQURAN_NO_CITY');
+          })
+          .catch(function(mqErr) {
+            console.warn('MyQuran API fallback to Aladhan tuned:', mqErr);
+            // Fallback ke Aladhan dengan tune offset resmi Kemenag RI (+3 Imsak, +3 Fajr, +4 Dhuhr, +2 Asr, +3 Maghrib, +2 Isha)
+            const tunedUrl = 'https://api.aladhan.com/v1/timings/' + dateStr +
+                             '?latitude=' + lat +
+                             '&longitude=' + lon +
+                             '&method=20&tune=3,3,0,4,2,3,2,2,0';
+            return fetchGeocoding(tunedUrl).then(function(pData) {
+              if (!pData || !pData.data || !pData.data.timings) throw new Error('PRAYER_FAIL');
+              return {
+                cityName: cityName,
+                lat: lat,
+                lon: lon,
+                timings: pData.data.timings
+              };
+            });
+          });
+      } else {
+        // Internasional (Luar Indonesia)
+        const intlUrl = 'https://api.aladhan.com/v1/timings/' + dateStr +
                         '?latitude=' + lat +
                         '&longitude=' + lon +
                         '&method=' + methodId;
+        prayerFetchPromise = fetchGeocoding(intlUrl).then(function(pData) {
+          if (!pData || !pData.data || !pData.data.timings) throw new Error('PRAYER_FAIL');
+          return {
+            cityName: cityName,
+            lat: lat,
+            lon: lon,
+            timings: pData.data.timings
+          };
+        });
+      }
 
-      return fetchGeocoding(prayerUrl)
-        .then(function(pData) {
-          if (!pData || !pData.data || !pData.data.timings) {
-            throw new Error('PRAYER_FAIL');
-          }
-
+      return prayerFetchPromise
+        .then(function(res) {
           const elapsed = Date.now() - startTime;
           const remainingTime = Math.max(0, MIN_ANIMATION_MS - elapsed);
 
           return new Promise(function(resolve) {
             setTimeout(function() {
-              resolve({ timings: pData.data.timings, cityName: cityName, lat: lat, lon: lon });
+              resolve(res);
             }, remainingTime);
           });
         })
         .then(function(res) {
           const t = res.timings;
-          // Ambil format jam:menit bersih (cth "04:18 (WIB)" -> "04:18")
+          // Ambil format jam:menit bersih (cth "04:07 (WIB)" -> "04:07")
           const cleanTime = (s) => String(s || '').trim().substring(0, 5);
 
           const subuh = cleanTime(t.Fajr);
@@ -2780,6 +2840,7 @@ function applyPrayerCity(isFromSetting) {
           localStorage.setItem('robot_cfg_prayer_ashar', ashar);
           localStorage.setItem('robot_cfg_prayer_maghrib', maghrib);
           localStorage.setItem('robot_cfg_prayer_isya', isya);
+          localStorage.setItem('robot_cfg_prayer_last_date', dateStr);
 
           // 3. KIRIM DATA JADWAL SHOLAT VIA BLE KE ROBOT ESP32 (SINKRONISASI 100%)
           sendCommand({
@@ -2814,19 +2875,71 @@ function applyPrayerCity(isFromSetting) {
     });
 }
 
+function syncPrayerQuiet() {
+  if (!isBleConnected) return;
+
+  const savedCity = localStorage.getItem('robot_cfg_prayer_city') || 'JAKARTA';
+  const savedImsak = localStorage.getItem('robot_cfg_prayer_imsak') || '03:57';
+  const savedSubuh = localStorage.getItem('robot_cfg_prayer_subuh') || '04:07';
+  const savedDzuhur = localStorage.getItem('robot_cfg_prayer_dzuhur') || '11:40';
+  const savedAshar = localStorage.getItem('robot_cfg_prayer_ashar') || '14:59';
+  const savedMaghrib = localStorage.getItem('robot_cfg_prayer_maghrib') || '17:51';
+  const savedIsya = localStorage.getItem('robot_cfg_prayer_isya') || '19:03';
+  const savedLat = parseFloat(localStorage.getItem('robot_cfg_prayer_lat') || '-6.2088');
+  const savedLon = parseFloat(localStorage.getItem('robot_cfg_prayer_lon') || '106.8456');
+
+  sendCommand({
+    cmd: 'set_prayer_live',
+    city: savedCity,
+    imsak: savedImsak,
+    subuh: savedSubuh,
+    dzuhur: savedDzuhur,
+    ashar: savedAshar,
+    maghrib: savedMaghrib,
+    isya: savedIsya,
+    lat: savedLat,
+    lon: savedLon
+  });
+}
+
 function initPrayerFeature() {
   const savedCity = localStorage.getItem('robot_cfg_prayer_city') || 'JAKARTA';
-  const savedImsak = localStorage.getItem('robot_cfg_prayer_imsak') || '04:08';
-  const savedSubuh = localStorage.getItem('robot_cfg_prayer_subuh') || '04:18';
-  const savedDzuhur = localStorage.getItem('robot_cfg_prayer_dzuhur') || '11:45';
-  const savedAshar = localStorage.getItem('robot_cfg_prayer_ashar') || '15:02';
-  const savedMaghrib = localStorage.getItem('robot_cfg_prayer_maghrib') || '17:54';
-  const savedIsya = localStorage.getItem('robot_cfg_prayer_isya') || '19:06';
+  let savedImsak = localStorage.getItem('robot_cfg_prayer_imsak') || '03:57';
+  let savedSubuh = localStorage.getItem('robot_cfg_prayer_subuh') || '04:07';
+  let savedDzuhur = localStorage.getItem('robot_cfg_prayer_dzuhur') || '11:40';
+  let savedAshar = localStorage.getItem('robot_cfg_prayer_ashar') || '14:59';
+  let savedMaghrib = localStorage.getItem('robot_cfg_prayer_maghrib') || '17:51';
+  let savedIsya = localStorage.getItem('robot_cfg_prayer_isya') || '19:03';
+
+  // Bersihkan data dummy lama jika ada
+  if (savedSubuh === '04:18' || savedSubuh === '04:28' || savedDzuhur === '11:45' || savedDzuhur === '11:58' || savedMaghrib === '17:54' || savedMaghrib === '18:05') {
+    savedImsak = '03:57';
+    savedSubuh = '04:07';
+    savedDzuhur = '11:40';
+    savedAshar = '14:59';
+    savedMaghrib = '17:51';
+    savedIsya = '19:03';
+    localStorage.setItem('robot_cfg_prayer_imsak', savedImsak);
+    localStorage.setItem('robot_cfg_prayer_subuh', savedSubuh);
+    localStorage.setItem('robot_cfg_prayer_dzuhur', savedDzuhur);
+    localStorage.setItem('robot_cfg_prayer_ashar', savedAshar);
+    localStorage.setItem('robot_cfg_prayer_maghrib', savedMaghrib);
+    localStorage.setItem('robot_cfg_prayer_isya', savedIsya);
+  }
 
   const input = document.getElementById('cfgPrayerCityInput');
   if (input) input.value = savedCity;
 
   updateOledPrayerPreviewWithData(savedCity, savedImsak, savedSubuh, savedDzuhur, savedAshar, savedMaghrib, savedIsya);
+
+  // Auto-refresh jadwal hari ini jika tanggal sudah berganti
+  const now = new Date();
+  const todayStr = String(now.getDate()).padStart(2, '0') + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + now.getFullYear();
+  if (localStorage.getItem('robot_cfg_prayer_last_date') !== todayStr) {
+    setTimeout(() => {
+      applyPrayerCity(false);
+    }, 1500);
+  }
 
   const btn = document.getElementById('btnSearchPrayerCity');
   if (btn) {
