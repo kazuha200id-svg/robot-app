@@ -1152,183 +1152,146 @@
           <h2>PENGATURAN</h2>
         </div>
 
-        <div class="settings-scroll-container">
+        <!-- KARTU 1: LAYAR OLED & AUTO-SLEEP -->
+        <div class="setting-card">
+          <div class="setting-card-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
+              <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+            <span class="setting-card-title">LAYAR OLED & AUTO-SLEEP</span>
+          </div>
 
-          <!-- KARTU 1: LAYAR OLED & AUTO-SLEEP -->
-          <div class="setting-card">
-            <div class="setting-card-header">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
-                <rect x="2" y="3" width="20" height="14" rx="2"></rect>
-                <line x1="8" y1="21" x2="16" y2="21"></line>
-                <line x1="12" y1="17" x2="12" y2="21"></line>
-              </svg>
-              <span class="setting-card-title">LAYAR OLED & AUTO-SLEEP</span>
+          <!-- Slider Kecerahan -->
+          <div class="setting-item-block">
+            <div class="setting-item-header">
+              <span class="setting-item-label">Kecerahan Layar</span>
+              <span id="txtOledBrightnessVal" class="setting-val-badge">80%</span>
             </div>
-
-            <!-- Slider Kecerahan -->
-            <div class="setting-item-block">
-              <div class="setting-item-header">
-                <span class="setting-item-label">Kecerahan Layar OLED</span>
-                <span id="txtOledBrightnessVal" class="setting-val-badge">80%</span>
-              </div>
-              <div class="setting-slider-wrap">
-                <input type="range" id="sliderOledBrightness" min="10" max="100" value="80" class="neon-range-slider" oninput="onBrightnessSliderInput(this.value)" onchange="onBrightnessSliderChange(this.value)">
-              </div>
-            </div>
-
-            <!-- Preset Auto-Sleep -->
-            <div class="setting-item-block">
-              <div class="setting-item-header">
-                <span class="setting-item-label">Waktu Layar Mati (Auto-Sleep)</span>
-                <span id="txtActiveSleepBadge" class="setting-val-badge">5 MENIT</span>
-              </div>
-              <div class="setting-pills-row">
-                <button type="button" class="setting-pill-btn active" data-sec="300" onclick="selectSleepPreset(300, this)">5 Menit</button>
-                <button type="button" class="setting-pill-btn" data-sec="600" onclick="selectSleepPreset(600, this)">10 Menit</button>
-                <button type="button" class="setting-pill-btn" data-sec="900" onclick="selectSleepPreset(900, this)">15 Menit</button>
-                <button type="button" class="setting-pill-btn" data-sec="0" onclick="selectSleepPreset(0, this)">Selalu Nyala</button>
-              </div>
-
-              <!-- Input Kustom Menit -->
-              <div class="setting-custom-sleep-row">
-                <div class="custom-input-wrap">
-                  <input type="number" id="inputCustomSleepMin" min="5" max="1440" placeholder="Kustom (menit)" class="neon-number-input">
-                </div>
-                <button type="button" id="btnApplyCustomSleep" class="setting-action-btn" onclick="applyCustomSleepSetting()">TERAPKAN</button>
-              </div>
-              <div class="setting-field-hint">*Batas minimal auto-sleep adalah 5 menit untuk proteksi layar.</div>
-            </div>
-
-            <!-- Tombol Layar Cepat -->
-            <div class="setting-actions-grid">
-              <button type="button" class="setting-control-btn" onclick="triggerQuickScreenSleep()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-                <span>Tidurkan Layar</span>
-              </button>
-              <button type="button" class="setting-control-btn" onclick="triggerQuickScreenWake()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-                <span>Bangunkan Layar</span>
-              </button>
+            <div class="setting-slider-wrap">
+              <input type="range" id="sliderOledBrightness" min="10" max="100" value="80" class="neon-range-slider" oninput="onBrightnessSliderInput(this.value)" onchange="onBrightnessSliderChange(this.value)">
             </div>
           </div>
 
-          <!-- KARTU 2: DIAGNOSTIK & UJI PERANGKAT KERAS -->
-          <div class="setting-card">
-            <div class="setting-card-header">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
-                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
-              </svg>
-              <span class="setting-card-title">DIAGNOSTIK & UJI PERANGKAT KERAS</span>
+          <!-- Preset Auto-Sleep -->
+          <div class="setting-item-block">
+            <div class="setting-item-header">
+              <span class="setting-item-label">Waktu Layar Mati (Auto-Sleep)</span>
+              <span id="txtActiveSleepBadge" class="setting-val-badge">5 MENIT</span>
+            </div>
+            <div class="setting-pills-row">
+              <button type="button" class="setting-pill-btn active" data-sec="300" onclick="selectSleepPreset(300, this)">5 Menit</button>
+              <button type="button" class="setting-pill-btn" data-sec="600" onclick="selectSleepPreset(600, this)">10 Menit</button>
+              <button type="button" class="setting-pill-btn" data-sec="900" onclick="selectSleepPreset(900, this)">15 Menit</button>
+              <button type="button" class="setting-pill-btn" data-sec="0" onclick="selectSleepPreset(0, this)">Selalu Nyala</button>
             </div>
 
-            <div class="setting-diag-list">
-              <!-- Uji Buzzer -->
-              <div class="setting-diag-item">
-                <div class="diag-item-info">
-                  <span class="diag-title">Tes Suara Buzzer</span>
-                  <span class="diag-sub">Membunyikan nada uji 2000Hz (GPIO 4)</span>
-                </div>
-                <button type="button" class="setting-test-btn" onclick="testHardwareBuzzer()">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
-                  <span>UJI</span>
-                </button>
+            <!-- Input Kustom Menit -->
+            <div class="setting-custom-sleep-row">
+              <div class="custom-input-wrap">
+                <input type="number" id="inputCustomSleepMin" min="5" max="1440" placeholder="Kustom menit" class="neon-number-input">
               </div>
-
-              <!-- Uji Motor Getar -->
-              <div class="setting-diag-item">
-                <div class="diag-item-info">
-                  <span class="diag-title">Tes Motor Getar</span>
-                  <span class="diag-sub">Memicu getaran haptic 150ms (GPIO 10)</span>
-                </div>
-                <button type="button" class="setting-test-btn" onclick="testHardwareVibrate()">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M12 2v20M2 12h20M5 5l14 14M19 5L5 19"></path></svg>
-                  <span>UJI</span>
-                </button>
-              </div>
-
-              <!-- Uji Sentuh Virtual -->
-              <div class="setting-diag-item">
-                <div class="diag-item-info">
-                  <span class="diag-title">Simulasi Sentuh Kepala</span>
-                  <span class="diag-sub">Memicu respon sensor sentuh (GPIO 7)</span>
-                </div>
-                <button type="button" class="setting-test-btn" onclick="testHardwareTouch()">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8M18 11a4 4 0 0 1 4 4v2a6 6 0 0 1-6 6h-2a6 6 0 0 1-6-6v-2"></path></svg>
-                  <span>UJI</span>
-                </button>
-              </div>
+              <button type="button" id="btnApplyCustomSleep" class="setting-action-btn" onclick="applyCustomSleepSetting()">TERAPKAN</button>
             </div>
           </div>
 
-          <!-- KARTU 3: STATUS & KESEHATAN SISTEM -->
-          <div class="setting-card">
-            <div class="setting-card-header">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-              </svg>
-              <span class="setting-card-title">STATUS & KESEHATAN SISTEM</span>
-              <button type="button" class="setting-refresh-icon-btn" onclick="refreshSystemHealthStatus()" title="Segarkan Data">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+          <!-- Tombol Layar Cepat -->
+          <div class="setting-actions-grid">
+            <button type="button" class="setting-control-btn" onclick="triggerQuickScreenSleep()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+              <span>Tidurkan Layar</span>
+            </button>
+            <button type="button" class="setting-control-btn" onclick="triggerQuickScreenWake()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+              <span>Bangunkan Layar</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- KARTU 2: DIAGNOSTIK PERANGKAT KERAS -->
+        <div class="setting-card">
+          <div class="setting-card-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+            </svg>
+            <span class="setting-card-title">DIAGNOSTIK PERANGKAT KERAS</span>
+          </div>
+
+          <div class="setting-diag-list">
+            <!-- Uji Buzzer -->
+            <div class="setting-diag-item">
+              <div class="diag-item-info">
+                <span class="diag-title">Buzzer</span>
+                <span class="diag-sub">Uji speaker buzzer</span>
+              </div>
+              <button type="button" class="setting-test-btn" onclick="testHardwareBuzzer()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                <span>UJI</span>
               </button>
             </div>
 
-            <div class="setting-telemetry-grid">
-              <div class="telemetry-box">
-                <span class="telemetry-label">Kondisi Layar</span>
-                <span id="txtTelemetryScreenState" class="telemetry-val">AKTIF</span>
+            <!-- Uji Motor Getar -->
+            <div class="setting-diag-item">
+              <div class="diag-item-info">
+                <span class="diag-title">Getar</span>
+                <span class="diag-sub">Uji motor getar</span>
               </div>
-              <div class="telemetry-box">
-                <span class="telemetry-label">Waktu Beroperasi</span>
-                <span id="txtTelemetryUptime" class="telemetry-val">0m</span>
+              <button type="button" class="setting-test-btn" onclick="testHardwareVibrate()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M12 2v20M2 12h20M5 5l14 14M19 5L5 19"></path></svg>
+                <span>UJI</span>
+              </button>
+            </div>
+
+            <!-- Uji Sentuh Virtual -->
+            <div class="setting-diag-item">
+              <div class="diag-item-info">
+                <span class="diag-title">Sentuh</span>
+                <span class="diag-sub">Uji sensor sentuh</span>
               </div>
-              <div class="telemetry-box">
-                <span class="telemetry-label">Sisa RAM ESP32</span>
-                <span id="txtTelemetryHeap" class="telemetry-val">Memuat...</span>
-              </div>
-              <div class="telemetry-box">
-                <span class="telemetry-label">Timer Sleep Aktif</span>
-                <span id="txtTelemetrySleepTo" class="telemetry-val">5 Menit</span>
-              </div>
+              <button type="button" class="setting-test-btn" onclick="testHardwareTouch()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8M18 11a4 4 0 0 1 4 4v2a6 6 0 0 1-6 6h-2a6 6 0 0 1-6-6v-2"></path></svg>
+                <span>UJI</span>
+              </button>
             </div>
           </div>
+        </div>
 
-          <!-- KARTU 4: PEMELIHARAAN SISTEM & DAYA -->
-          <div class="setting-card">
-            <div class="setting-card-header">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
-                <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
-                <line x1="12" y1="2" x2="12" y2="12"></line>
-              </svg>
-              <span class="setting-card-title">PEMELIHARAAN SISTEM & DAYA</span>
-            </div>
-
-            <div class="setting-maintenance-actions">
-              <!-- Tombol Restart Robot -->
-              <div class="maintenance-item">
-                <div class="maintenance-item-text">
-                  <span class="maintenance-title">Restart Robot (Reboot)</span>
-                  <span class="maintenance-desc">Memulai ulang sistem ESP32 secara aman tanpa menghapus data apapun</span>
-                </div>
-                <button type="button" class="setting-btn-danger-outline" onclick="openRebootConfirmModal()">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
-                  <span>RESTART</span>
-                </button>
-              </div>
-
-              <!-- Tombol Reset Jaringan WiFi -->
-              <div class="maintenance-item">
-                <div class="maintenance-item-text">
-                  <span class="maintenance-title">Reset Jaringan WiFi</span>
-                  <span class="maintenance-desc">Menghapus SSID & Password WiFi tersimpan di memori Flash robot</span>
-                </div>
-                <button type="button" class="setting-btn-danger-solid" onclick="openResetWiFiConfirmModal()">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#FF2E63" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"></line><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path><path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
-                  <span>HAPUS WIFI</span>
-                </button>
-              </div>
-            </div>
+        <!-- KARTU 3: PEMELIHARAAN SISTEM -->
+        <div class="setting-card">
+          <div class="setting-card-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
+              <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+              <line x1="12" y1="2" x2="12" y2="12"></line>
+            </svg>
+            <span class="setting-card-title">PEMELIHARAAN SISTEM</span>
           </div>
 
+          <div class="setting-maintenance-actions">
+            <!-- Tombol Restart Robot -->
+            <div class="maintenance-item">
+              <div class="maintenance-item-text">
+                <span class="maintenance-title">Restart Robot</span>
+                <span class="maintenance-desc">Mulai ulang ESP32</span>
+              </div>
+              <button type="button" class="setting-btn-action" onclick="openRebootConfirmModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                <span>RESTART</span>
+              </button>
+            </div>
+
+            <!-- Tombol Reset Jaringan WiFi -->
+            <div class="maintenance-item">
+              <div class="maintenance-item-text">
+                <span class="maintenance-title">Reset WiFi</span>
+                <span class="maintenance-desc">Hapus WiFi tersimpan</span>
+              </div>
+              <button type="button" class="setting-btn-action" onclick="openResetWiFiConfirmModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"></line><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path><path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
+                <span>HAPUS</span>
+              </button>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -1383,32 +1346,31 @@
       <div class="cyber-modal-content">
         <div class="cyber-modal-header">
           <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2.5" class="modal-header-icon"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
-          <h3>Restart Robot Desk?</h3>
+          <h3>Restart Robot?</h3>
         </div>
         <div class="cyber-modal-body">
-          <p>Robot akan mematikan layar dan periferal sejenak, lalu menyala kembali. Sambungan Bluetooth akan terputus sementara saat proses reboot berlangsung.</p>
+          <p>Robot akan dimulai ulang sejenak.</p>
         </div>
         <div class="cyber-modal-actions">
           <button type="button" class="modal-btn-cancel" onclick="closeRebootConfirmModal()">Batal</button>
-          <button type="button" class="modal-btn-confirm" onclick="executeRebootCommand()">Ya, Restart</button>
+          <button type="button" class="modal-btn-confirm" onclick="executeRebootCommand()">Restart</button>
         </div>
       </div>
     </div>
 
     <!-- MODAL 2: KONFIRMASI RESET JARINGAN WIFI -->
     <div id="modalResetWiFiConfirm" class="cyber-modal-backdrop" style="display: none;">
-      <div class="cyber-modal-content warning-border">
+      <div class="cyber-modal-content">
         <div class="cyber-modal-header">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#FF2E63" stroke-width="2.5" class="modal-header-icon"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-          <h3 style="color: #FF2E63 !important;">Hapus Jaringan WiFi?</h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2.5" class="modal-header-icon"><line x1="1" y1="1" x2="23" y2="23"></line><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path><path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
+          <h3>Hapus WiFi?</h3>
         </div>
         <div class="cyber-modal-body">
-          <p>Nama (SSID) dan kata sandi WiFi yang tersimpan di robot akan <strong>dihapus permanen</strong> dari memori Flash.</p>
-          <p style="margin-top: 8px; font-size: 0.78rem; opacity: 0.85;">Robot akan terputus dari internet dan fitur cuaca tidak dapat diperbarui otomatis sampai Anda menyambungkan WiFi kembali.</p>
+          <p>Kredensial WiFi robot akan dihapus.</p>
         </div>
         <div class="cyber-modal-actions">
           <button type="button" class="modal-btn-cancel" onclick="closeResetWiFiConfirmModal()">Batal</button>
-          <button type="button" class="modal-btn-danger" onclick="executeResetWiFiCommand()">Ya, Hapus WiFi</button>
+          <button type="button" class="modal-btn-confirm" onclick="executeResetWiFiCommand()">Hapus</button>
         </div>
       </div>
     </div>
@@ -1419,8 +1381,8 @@
         <div class="reboot-neon-ring"></div>
         <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2" class="reboot-center-icon"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
       </div>
-      <div class="reboot-overlay-title">MEMULAI ULANG ROBOT...</div>
-      <div id="txtRebootCountdown" class="reboot-overlay-sub">Menunggu robot menyala kembali & menyambung ulang...</div>
+      <div class="reboot-overlay-title">MEMULAI ULANG...</div>
+      <div id="txtRebootCountdown" class="reboot-overlay-sub">Menghubungkan kembali...</div>
     </div>
 
   </div>
