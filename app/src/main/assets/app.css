@@ -4027,7 +4027,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 /* ========================================================
-   KRIPTO TICKER (100% CYBER NEON CYAN THEME)
+   CRYPTO TICKER (100% CYBER NEON CYAN THEME)
    ======================================================== */
 .oled-crypto-preview-view {
   display: flex;
@@ -4103,87 +4103,6 @@ input[type="range"]::-webkit-slider-thumb {
   color: var(--neon-cyan);
   background: rgba(0, 240, 255, 0.12);
   box-shadow: 0 0 8px rgba(0, 240, 255, 0.25);
-}
-
-.crypto-coins-grid {
-  display: flex;
-  gap: 6px;
-  flex-wrap: nowrap;
-  margin-top: 6px;
-}
-
-.crypto-coin-pill {
-  flex: 1;
-  min-width: 0;
-  padding: 9px 2px;
-  background: rgba(0, 240, 255, 0.04);
-  border: 1px solid rgba(0, 240, 255, 0.25);
-  border-radius: 6px;
-  color: rgba(0, 240, 255, 0.65);
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  font-weight: 800;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-align: center;
-}
-
-.crypto-coin-pill:hover {
-  border-color: var(--neon-cyan);
-  color: var(--neon-cyan);
-  background: rgba(0, 240, 255, 0.12);
-}
-
-.crypto-coin-pill.active {
-  background: rgba(0, 240, 255, 0.22);
-  border-color: var(--neon-cyan);
-  color: var(--neon-cyan);
-  box-shadow: 0 0 12px rgba(0, 240, 255, 0.45);
-  font-weight: 900;
-}
-
-.crypto-settings-row {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-  margin-bottom: 12px;
-}
-
-.crypto-field-group {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.crypto-action-wrap {
-  margin-top: 8px;
-  margin-bottom: 8px;
-}
-
-.crypto-sync-status {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  color: rgba(0, 240, 255, 0.75);
-  margin-top: 6px;
-}
-
-.crypto-status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--neon-cyan);
-  box-shadow: 0 0 6px var(--neon-cyan);
-  animation: pulseNeonDot 2s infinite ease-in-out;
-}
-
-@keyframes pulseNeonDot {
-  0%, 100% { opacity: 0.4; transform: scale(0.85); }
-  50% { opacity: 1; transform: scale(1.15); }
 }
 
 
