@@ -3168,62 +3168,62 @@ const CRYPTO_POPULAR_COINS = [
 
 const STOCK_POPULAR_LIST = [
   // Saham Indonesia (IDX / BEI)
-  { symbol: 'BBCA', querySym: 'BBCA.JK', name: 'Bank Central Asia', market: 'IDX', curr: 'IDR' },
-  { symbol: 'BBRI', querySym: 'BBRI.JK', name: 'Bank Rakyat Indonesia', market: 'IDX', curr: 'IDR' },
-  { symbol: 'BMRI', querySym: 'BMRI.JK', name: 'Bank Mandiri', market: 'IDX', curr: 'IDR' },
-  { symbol: 'BBNI', querySym: 'BBNI.JK', name: 'Bank Negara Indonesia', market: 'IDX', curr: 'IDR' },
-  { symbol: 'GOTO', querySym: 'GOTO.JK', name: 'GoTo Gojek Tokopedia', market: 'IDX', curr: 'IDR' },
-  { symbol: 'TLKM', querySym: 'TLKM.JK', name: 'Telkom Indonesia', market: 'IDX', curr: 'IDR' },
-  { symbol: 'ASII', querySym: 'ASII.JK', name: 'Astra International', market: 'IDX', curr: 'IDR' },
-  { symbol: 'ICBP', querySym: 'ICBP.JK', name: 'Indofood CBP Sukses Makmur', market: 'IDX', curr: 'IDR' },
-  { symbol: 'INDF', querySym: 'INDF.JK', name: 'Indofood Sukses Makmur', market: 'IDX', curr: 'IDR' },
-  { symbol: 'AMMN', querySym: 'AMMN.JK', name: 'Amman Mineral Internasional', market: 'IDX', curr: 'IDR' },
-  { symbol: 'BRIS', querySym: 'BRIS.JK', name: 'Bank Syariah Indonesia', market: 'IDX', curr: 'IDR' },
-  { symbol: 'ANTM', querySym: 'ANTM.JK', name: 'Aneka Tambang', market: 'IDX', curr: 'IDR' },
-  { symbol: 'MDKA', querySym: 'MDKA.JK', name: 'Merdeka Copper Gold', market: 'IDX', curr: 'IDR' },
-  { symbol: 'UNTR', querySym: 'UNTR.JK', name: 'United Tractors', market: 'IDX', curr: 'IDR' },
-  { symbol: 'PGAS', querySym: 'PGAS.JK', name: 'Perusahaan Gas Negara', market: 'IDX', curr: 'IDR' },
-  { symbol: 'ADRO', querySym: 'ADRO.JK', name: 'Adaro Energy Indonesia', market: 'IDX', curr: 'IDR' },
-  { symbol: 'PTBA', querySym: 'PTBA.JK', name: 'Bukit Asam', market: 'IDX', curr: 'IDR' },
-  { symbol: 'CPIN', querySym: 'CPIN.JK', name: 'Charoen Pokphand Indonesia', market: 'IDX', curr: 'IDR' },
-  { symbol: 'KLBF', querySym: 'KLBF.JK', name: 'Kalbe Farma', market: 'IDX', curr: 'IDR' },
-  { symbol: 'INCO', querySym: 'INCO.JK', name: 'Vale Indonesia', market: 'IDX', curr: 'IDR' },
-  { symbol: 'SMGR', querySym: 'SMGR.JK', name: 'Semen Indonesia', market: 'IDX', curr: 'IDR' },
-  { symbol: 'BUKA', querySym: 'BUKA.JK', name: 'Bukalapak.com', market: 'IDX', curr: 'IDR' },
-  { symbol: 'ACES', querySym: 'ACES.JK', name: 'Aspirasi Hidup Indonesia', market: 'IDX', curr: 'IDR' },
-  { symbol: 'MYOR', querySym: 'MYOR.JK', name: 'Mayora Indah', market: 'IDX', curr: 'IDR' },
-  { symbol: 'BRPT', querySym: 'BRPT.JK', name: 'Barito Pacific', market: 'IDX', curr: 'IDR' },
-  { symbol: 'TPIA', querySym: 'TPIA.JK', name: 'Chandra Asri Pacific', market: 'IDX', curr: 'IDR' },
-  { symbol: 'MEDC', querySym: 'MEDC.JK', name: 'Medco Energi Internasional', market: 'IDX', curr: 'IDR' },
-  { symbol: 'AKRA', querySym: 'AKRA.JK', name: 'AKR Corporindo', market: 'IDX', curr: 'IDR' },
-  { symbol: 'EMTK', querySym: 'EMTK.JK', name: 'Elang Mahkota Teknologi', market: 'IDX', curr: 'IDR' },
-  { symbol: 'UNVR', querySym: 'UNVR.JK', name: 'Unilever Indonesia', market: 'IDX', curr: 'IDR' },
+  { symbol: 'BBCA', querySym: 'BBCA.JK', name: 'Bank Central Asia', market: 'IDX' },
+  { symbol: 'BBRI', querySym: 'BBRI.JK', name: 'Bank Rakyat Indonesia', market: 'IDX' },
+  { symbol: 'BMRI', querySym: 'BMRI.JK', name: 'Bank Mandiri', market: 'IDX' },
+  { symbol: 'BBNI', querySym: 'BBNI.JK', name: 'Bank Negara Indonesia', market: 'IDX' },
+  { symbol: 'GOTO', querySym: 'GOTO.JK', name: 'GoTo Gojek Tokopedia', market: 'IDX' },
+  { symbol: 'TLKM', querySym: 'TLKM.JK', name: 'Telkom Indonesia', market: 'IDX' },
+  { symbol: 'ASII', querySym: 'ASII.JK', name: 'Astra International', market: 'IDX' },
+  { symbol: 'ICBP', querySym: 'ICBP.JK', name: 'Indofood CBP Sukses Makmur', market: 'IDX' },
+  { symbol: 'INDF', querySym: 'INDF.JK', name: 'Indofood Sukses Makmur', market: 'IDX' },
+  { symbol: 'AMMN', querySym: 'AMMN.JK', name: 'Amman Mineral Internasional', market: 'IDX' },
+  { symbol: 'BRIS', querySym: 'BRIS.JK', name: 'Bank Syariah Indonesia', market: 'IDX' },
+  { symbol: 'ANTM', querySym: 'ANTM.JK', name: 'Aneka Tambang', market: 'IDX' },
+  { symbol: 'MDKA', querySym: 'MDKA.JK', name: 'Merdeka Copper Gold', market: 'IDX' },
+  { symbol: 'UNTR', querySym: 'UNTR.JK', name: 'United Tractors', market: 'IDX' },
+  { symbol: 'PGAS', querySym: 'PGAS.JK', name: 'Perusahaan Gas Negara', market: 'IDX' },
+  { symbol: 'ADRO', querySym: 'ADRO.JK', name: 'Adaro Energy Indonesia', market: 'IDX' },
+  { symbol: 'PTBA', querySym: 'PTBA.JK', name: 'Bukit Asam', market: 'IDX' },
+  { symbol: 'CPIN', querySym: 'CPIN.JK', name: 'Charoen Pokphand Indonesia', market: 'IDX' },
+  { symbol: 'KLBF', querySym: 'KLBF.JK', name: 'Kalbe Farma', market: 'IDX' },
+  { symbol: 'INCO', querySym: 'INCO.JK', name: 'Vale Indonesia', market: 'IDX' },
+  { symbol: 'SMGR', querySym: 'SMGR.JK', name: 'Semen Indonesia', market: 'IDX' },
+  { symbol: 'BUKA', querySym: 'BUKA.JK', name: 'Bukalapak.com', market: 'IDX' },
+  { symbol: 'ACES', querySym: 'ACES.JK', name: 'Aspirasi Hidup Indonesia', market: 'IDX' },
+  { symbol: 'MYOR', querySym: 'MYOR.JK', name: 'Mayora Indah', market: 'IDX' },
+  { symbol: 'BRPT', querySym: 'BRPT.JK', name: 'Barito Pacific', market: 'IDX' },
+  { symbol: 'TPIA', querySym: 'TPIA.JK', name: 'Chandra Asri Pacific', market: 'IDX' },
+  { symbol: 'MEDC', querySym: 'MEDC.JK', name: 'Medco Energi Internasional', market: 'IDX' },
+  { symbol: 'AKRA', querySym: 'AKRA.JK', name: 'AKR Corporindo', market: 'IDX' },
+  { symbol: 'EMTK', querySym: 'EMTK.JK', name: 'Elang Mahkota Teknologi', market: 'IDX' },
+  { symbol: 'UNVR', querySym: 'UNVR.JK', name: 'Unilever Indonesia', market: 'IDX' },
   // Saham Global / AS (Wall Street / Global Tech)
-  { symbol: 'AAPL', querySym: 'AAPL', name: 'Apple Inc.', market: 'US', curr: 'USD' },
-  { symbol: 'NVDA', querySym: 'NVDA', name: 'NVIDIA Corporation', market: 'US', curr: 'USD' },
-  { symbol: 'TSLA', querySym: 'TSLA', name: 'Tesla Inc.', market: 'US', curr: 'USD' },
-  { symbol: 'MSFT', querySym: 'MSFT', name: 'Microsoft Corporation', market: 'US', curr: 'USD' },
-  { symbol: 'GOOGL', querySym: 'GOOGL', name: 'Alphabet / Google', market: 'US', curr: 'USD' },
-  { symbol: 'AMZN', querySym: 'AMZN', name: 'Amazon.com', market: 'US', curr: 'USD' },
-  { symbol: 'META', querySym: 'META', name: 'Meta Platforms (Facebook)', market: 'US', curr: 'USD' },
-  { symbol: 'AMD', querySym: 'AMD', name: 'Advanced Micro Devices', market: 'US', curr: 'USD' },
-  { symbol: 'NFLX', querySym: 'NFLX', name: 'Netflix Inc.', market: 'US', curr: 'USD' },
-  { symbol: 'PLTR', querySym: 'PLTR', name: 'Palantir Technologies', market: 'US', curr: 'USD' },
-  { symbol: 'COIN', querySym: 'COIN', name: 'Coinbase Global', market: 'US', curr: 'USD' },
-  { symbol: 'BABA', querySym: 'BABA', name: 'Alibaba Group', market: 'US', curr: 'USD' },
-  { symbol: 'INTC', querySym: 'INTC', name: 'Intel Corporation', market: 'US', curr: 'USD' },
-  { symbol: 'QCOM', querySym: 'QCOM', name: 'Qualcomm Inc.', market: 'US', curr: 'USD' },
-  { symbol: 'ARM', querySym: 'ARM', name: 'Arm Holdings', market: 'US', curr: 'USD' },
-  { symbol: 'AVGO', querySym: 'AVGO', name: 'Broadcom Inc.', market: 'US', curr: 'USD' },
-  { symbol: 'DIS', querySym: 'DIS', name: 'Walt Disney Co.', market: 'US', curr: 'USD' },
-  { symbol: 'PYPL', querySym: 'PYPL', name: 'PayPal Holdings', market: 'US', curr: 'USD' },
-  { symbol: 'UBER', querySym: 'UBER', name: 'Uber Technologies', market: 'US', curr: 'USD' },
-  { symbol: 'SBUX', querySym: 'SBUX', name: 'Starbucks Corporation', market: 'US', curr: 'USD' },
-  { symbol: 'NKE', querySym: 'NKE', name: 'Nike Inc.', market: 'US', curr: 'USD' },
-  { symbol: 'KO', querySym: 'KO', name: 'Coca-Cola Company', market: 'US', curr: 'USD' },
-  { symbol: 'PEP', querySym: 'PEP', name: 'PepsiCo Inc.', market: 'US', curr: 'USD' },
-  { symbol: 'MCD', querySym: 'MCD', name: 'McDonald\'s Corp.', market: 'US', curr: 'USD' },
-  { symbol: 'WMT', querySym: 'WMT', name: 'Walmart Inc.', market: 'US', curr: 'USD' }
+  { symbol: 'AAPL', querySym: 'AAPL', name: 'Apple Inc.', market: 'US' },
+  { symbol: 'NVDA', querySym: 'NVDA', name: 'NVIDIA Corporation', market: 'US' },
+  { symbol: 'TSLA', querySym: 'TSLA', name: 'Tesla Inc.', market: 'US' },
+  { symbol: 'MSFT', querySym: 'MSFT', name: 'Microsoft Corporation', market: 'US' },
+  { symbol: 'GOOGL', querySym: 'GOOGL', name: 'Alphabet / Google', market: 'US' },
+  { symbol: 'AMZN', querySym: 'AMZN', name: 'Amazon.com', market: 'US' },
+  { symbol: 'META', querySym: 'META', name: 'Meta Platforms (Facebook)', market: 'US' },
+  { symbol: 'AMD', querySym: 'AMD', name: 'Advanced Micro Devices', market: 'US' },
+  { symbol: 'NFLX', querySym: 'NFLX', name: 'Netflix Inc.', market: 'US' },
+  { symbol: 'PLTR', querySym: 'PLTR', name: 'Palantir Technologies', market: 'US' },
+  { symbol: 'COIN', querySym: 'COIN', name: 'Coinbase Global', market: 'US' },
+  { symbol: 'BABA', querySym: 'BABA', name: 'Alibaba Group', market: 'US' },
+  { symbol: 'INTC', querySym: 'INTC', name: 'Intel Corporation', market: 'US' },
+  { symbol: 'QCOM', querySym: 'QCOM', name: 'Qualcomm Inc.', market: 'US' },
+  { symbol: 'ARM', querySym: 'ARM', name: 'Arm Holdings', market: 'US' },
+  { symbol: 'AVGO', querySym: 'AVGO', name: 'Broadcom Inc.', market: 'US' },
+  { symbol: 'DIS', querySym: 'DIS', name: 'Walt Disney Co.', market: 'US' },
+  { symbol: 'PYPL', querySym: 'PYPL', name: 'PayPal Holdings', market: 'US' },
+  { symbol: 'UBER', querySym: 'UBER', name: 'Uber Technologies', market: 'US' },
+  { symbol: 'SBUX', querySym: 'SBUX', name: 'Starbucks Corporation', market: 'US' },
+  { symbol: 'NKE', querySym: 'NKE', name: 'Nike Inc.', market: 'US' },
+  { symbol: 'KO', querySym: 'KO', name: 'Coca-Cola Company', market: 'US' },
+  { symbol: 'PEP', querySym: 'PEP', name: 'PepsiCo Inc.', market: 'US' },
+  { symbol: 'MCD', querySym: 'MCD', name: 'McDonald\'s Corp.', market: 'US' },
+  { symbol: 'WMT', querySym: 'WMT', name: 'Walmart Inc.', market: 'US' }
 ];
 
 const CRYPTO_ALL_CURRENCIES = [
@@ -3291,11 +3291,11 @@ const DEFAULT_CRYPTO_SLOTS = [
 ];
 
 const DEFAULT_STOCK_SLOTS = [
-  { symbol: 'BBCA', querySym: 'BBCA.JK', name: 'Bank Central Asia', market: 'IDX', curr: 'IDR' },
-  { symbol: 'BBRI', querySym: 'BBRI.JK', name: 'Bank Rakyat Indonesia', market: 'IDX', curr: 'IDR' },
-  { symbol: 'BMRI', querySym: 'BMRI.JK', name: 'Bank Mandiri', market: 'IDX', curr: 'IDR' },
-  { symbol: 'GOTO', querySym: 'GOTO.JK', name: 'GoTo Gojek Tokopedia', market: 'IDX', curr: 'IDR' },
-  { symbol: 'AAPL', querySym: 'AAPL', name: 'Apple Inc.', market: 'US', curr: 'USD' }
+  { symbol: 'AAPL', querySym: 'AAPL', name: 'Apple Inc.', market: 'US' },
+  { symbol: 'NVDA', querySym: 'NVDA', name: 'NVIDIA Corporation', market: 'US' },
+  { symbol: 'TSLA', querySym: 'TSLA', name: 'Tesla Inc.', market: 'US' },
+  { symbol: 'BBCA', querySym: 'BBCA.JK', name: 'Bank Central Asia', market: 'IDX' },
+  { symbol: 'GOTO', querySym: 'GOTO.JK', name: 'GoTo Gojek Tokopedia', market: 'IDX' }
 ];
 
 let configuredCryptoCoins = (() => {
@@ -3311,10 +3311,19 @@ let configuredCryptoCoins = (() => {
 
 let configuredStocks = (() => {
   try {
+    const version = localStorage.getItem('robot_cfg_stocks_version');
+    if (version !== 'v2_usd') {
+      localStorage.setItem('robot_cfg_stocks_version', 'v2_usd');
+      localStorage.setItem('robot_cfg_stocks_list', JSON.stringify(DEFAULT_STOCK_SLOTS));
+      return [...DEFAULT_STOCK_SLOTS];
+    }
     const saved = localStorage.getItem('robot_cfg_stocks_list');
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length >= 1 && parsed.length <= 5) return parsed;
+      if (Array.isArray(parsed) && parsed.length >= 1 && parsed.length <= 5) {
+        parsed.forEach(s => delete s.curr);
+        return parsed;
+      }
     }
   } catch (e) {}
   return [...DEFAULT_STOCK_SLOTS];
@@ -3356,11 +3365,11 @@ let cryptoPriceCache = {
   'SOL_USD': { price: 87.0, change24h: -2.80, isUp: false },
   'BNB_USD': { price: 690, change24h: -1.00, isUp: false },
   'DOGE_USD': { price: 0.0705, change24h: -1.10, isUp: false },
-  'BBCA_IDR': { price: 5325, change24h: 2.40, isUp: true },
-  'BBRI_IDR': { price: 2820, change24h: 0.36, isUp: true },
-  'BMRI_IDR': { price: 3710, change24h: 0.27, isUp: true },
-  'GOTO_IDR': { price: 25, change24h: 4.17, isUp: true },
-  'AAPL_USD': { price: 352.16, change24h: 2.85, isUp: true }
+  'AAPL_USD': { price: 352.16, change24h: 2.85, isUp: true },
+  'NVDA_USD': { price: 142.50, change24h: 4.15, isUp: true },
+  'TSLA_USD': { price: 385.20, change24h: 1.75, isUp: true },
+  'BBCA_USD': { price: 0.33, change24h: 2.40, isUp: true },
+  'GOTO_USD': { price: 0.0015, change24h: 4.17, isUp: true }
 };
 
 function saveConfiguredAssets() {
@@ -3469,7 +3478,7 @@ function addStockSlot() {
     return;
   }
   const nextStock = STOCK_POPULAR_LIST.find(s => !configuredStocks.some(item => item.symbol.toUpperCase() === s.symbol.toUpperCase())) || {
-    symbol: 'TSLA', querySym: 'TSLA', name: 'Tesla Inc.', market: 'US', curr: 'USD'
+    symbol: 'TSLA', querySym: 'TSLA', name: 'Tesla Inc.', market: 'US'
   };
   configuredStocks.push({ ...nextStock });
   activeStockSlotIndex = configuredStocks.length - 1;
@@ -3537,26 +3546,25 @@ function updateOledCryptoPreview() {
   if (currentVirtualRotationIndex >= total) currentVirtualRotationIndex = 0;
 
   const isStock = (currentVirtualRotationIndex >= cCount);
+  const globalCurr = (currentCryptoCurrency && currentCryptoCurrency.code) ? currentCryptoCurrency.code.toUpperCase() : 'USD';
   let assetSym = '';
-  let currCode = '';
   let headerTitle = '';
 
   if (isStock) {
     const stockIdx = currentVirtualRotationIndex - cCount;
     const curStock = configuredStocks[stockIdx] || configuredStocks[0];
-    assetSym = (curStock && curStock.symbol) ? curStock.symbol.toUpperCase() : 'BBCA';
-    currCode = (curStock && curStock.curr) ? curStock.curr : ((currentCryptoCurrency && currentCryptoCurrency.code) ? currentCryptoCurrency.code.toUpperCase() : 'IDR');
+    assetSym = (curStock && curStock.symbol) ? curStock.symbol.toUpperCase() : 'AAPL';
     headerTitle = 'SAHAM';
   } else {
     const curCoin = configuredCryptoCoins[currentVirtualRotationIndex] || configuredCryptoCoins[0];
     assetSym = (curCoin && curCoin.symbol) ? curCoin.symbol.toUpperCase() : 'BTC';
-    currCode = (currentCryptoCurrency && currentCryptoCurrency.code) ? currentCryptoCurrency.code.toUpperCase() : 'USD';
     headerTitle = 'CRYPTO';
   }
 
+  const currCode = globalCurr;
   const pairKey = assetSym + '_' + currCode;
   const pairSymbol = assetSym + '/' + currCode;
-  const data = cryptoPriceCache[pairKey] || { price: (isStock ? 5325 : 74600), change24h: 2.40, isUp: true };
+  const data = cryptoPriceCache[pairKey] || { price: (isStock ? 352.16 : 75100), change24h: 2.40, isUp: true };
   const priceStr = formatCryptoDisplayPrice(data.price, currCode);
   const changeNumStr = (data.isUp ? '+' : '') + Math.abs(data.change24h).toFixed(2) + '%';
   const changeFullStr = '24h ' + changeNumStr;
@@ -3606,7 +3614,7 @@ function sendAllTickerItemsToRobot() {
     const assetSym = coin.symbol.toUpperCase();
     const pairKey = assetSym + '_' + globalCurr;
     const pairSymbol = assetSym + '/' + globalCurr;
-    const data = cryptoPriceCache[pairKey] || { price: 74600, change24h: 2.40, isUp: true };
+    const data = cryptoPriceCache[pairKey] || { price: 75100, change24h: 2.40, isUp: true };
     const priceStr = formatCryptoDisplayPrice(data.price, globalCurr);
     const changeStr = (data.isUp ? '+' : '') + Math.abs(data.change24h).toFixed(2) + '%';
     const isCurrentActive = (idx === currentVirtualRotationIndex);
@@ -3624,15 +3632,14 @@ function sendAllTickerItemsToRobot() {
     }, true);
   });
 
-  // Kirim semua slot Saham (index cCount .. total - 1)
+  // Kirim semua slot Saham (index cCount .. total - 1) menggunakan globalCurr (USD)
   configuredStocks.forEach((stock, sIdx) => {
     const globalIdx = cCount + sIdx;
     const assetSym = stock.symbol.toUpperCase();
-    const stockCurr = stock.curr || (stock.market === 'IDX' ? 'IDR' : globalCurr);
-    const pairKey = assetSym + '_' + stockCurr;
-    const pairSymbol = assetSym + '/' + stockCurr;
-    const data = cryptoPriceCache[pairKey] || { price: 5325, change24h: 1.85, isUp: true };
-    const priceStr = formatCryptoDisplayPrice(data.price, stockCurr);
+    const pairKey = assetSym + '_' + globalCurr;
+    const pairSymbol = assetSym + '/' + globalCurr;
+    const data = cryptoPriceCache[pairKey] || { price: 352.16, change24h: 2.85, isUp: true };
+    const priceStr = formatCryptoDisplayPrice(data.price, globalCurr);
     const changeStr = (data.isUp ? '+' : '') + Math.abs(data.change24h).toFixed(2) + '%';
     const isCurrentActive = (globalIdx === currentVirtualRotationIndex);
 
@@ -3800,11 +3807,8 @@ async function fetchCryptoLivePrices() {
     // 2. Fetch parallel semua coin crypto yang dikonfigurasi (maks 5)
     const cryptoFetches = configuredCryptoCoins.map(coin => fetchSingleCryptoPrice(coin, globalCurr));
 
-    // 3. Fetch parallel semua saham yang dikonfigurasi (maks 5)
-    const stockFetches = configuredStocks.map(stock => {
-      const stockCurr = stock.curr || (stock.market === 'IDX' ? 'IDR' : globalCurr);
-      return fetchSingleStockPrice(stock, stockCurr);
-    });
+    // 3. Fetch parallel semua saham yang dikonfigurasi (maks 5) menggunakan globalCurr (USD)
+    const stockFetches = configuredStocks.map(stock => fetchSingleStockPrice(stock, globalCurr));
 
     await Promise.allSettled([...cryptoFetches, ...stockFetches]);
 
@@ -3973,8 +3977,7 @@ function searchStockSuggestions(query) {
       symbol: clean,
       querySym: isIdxGuess ? (clean + '.JK') : clean,
       name: isIdxGuess ? ('Saham IDX: ' + clean + '.JK') : ('Saham: ' + clean),
-      market: isIdxGuess ? 'IDX' : 'GLOBAL',
-      curr: isIdxGuess ? 'IDR' : 'USD'
+      market: isIdxGuess ? 'IDX' : 'GLOBAL'
     });
   }
 
@@ -4434,8 +4437,7 @@ async function applyStock(isFromCycle = false) {
       symbol: sym,
       querySym: (sym.length === 4 && !sym.includes('.')) ? (sym + '.JK') : sym,
       name: sym,
-      market: (sym.length === 4 && !sym.includes('.')) ? 'IDX' : 'GLOBAL',
-      curr: (sym.length === 4 && !sym.includes('.')) ? 'IDR' : 'USD'
+      market: (sym.length === 4 && !sym.includes('.')) ? 'IDX' : 'GLOBAL'
     };
   }
 
