@@ -569,6 +569,14 @@ window.onBLEStatus = function(connected, message) {
   const label = document.getElementById('bleStatusLabel');
   const gate = document.getElementById('setupGate');
 
+  document.querySelectorAll('.oled-status-ble').forEach(el => {
+    if (connected) {
+      el.classList.add('visible');
+    } else {
+      el.classList.remove('visible');
+    }
+  });
+
   if (connected) {
     if (dot) dot.className = 'pulse-dot online';
     if (label) label.textContent = 'BLE TERHUBUNG';
