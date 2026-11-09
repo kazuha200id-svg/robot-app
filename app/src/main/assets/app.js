@@ -3,6 +3,7 @@
    ======================================================== */
 
 let isBleConnected = false;
+let s_isRebooting = false;
 let currentFaceIndex = 0;
 let currentRobotMode = 0; // 0 = MODE_ANIMATION
 let currentOpenDetailFeature = null;
@@ -593,6 +594,21 @@ window.onBLEStatus = function(connected, message) {
   });
 
   if (connected) {
+    if (s_isRebooting) {
+      s_isRebooting = false;
+      if (s_rebootTimer) {
+        clearInterval(s_rebootTimer);
+        s_rebootTimer = null;
+      }
+      const overlay = document.getElementById('overlayRebootProgress');
+      if (overlay) {
+        overlay.classList.remove('failed');
+        overlay.style.display = 'none';
+      }
+      showNeonToast('Robot berhasil terhubung kembali');
+      triggerHaptic(40);
+    }
+
     localStorage.setItem('robot_saved_mac', 'connected');
     localStorage.setItem('robot_saved_name', 'Robot Desk');
 
@@ -3132,6 +3148,9 @@ function executeRebootCommand(sendBle = true) {
   const title = document.querySelector('.reboot-overlay-title');
   const sub = document.getElementById('txtRebootCountdown');
 
+  s_isRebooting = true;
+  isBleConnected = false;
+
   if (overlay) {
     overlay.classList.remove('failed');
     overlay.style.display = 'flex';
@@ -3157,7 +3176,7 @@ function executeRebootCommand(sendBle = true) {
     } else {
       clearInterval(s_rebootTimer);
       s_rebootTimer = null;
-      // FASE 2: Coba hubungkan kembali otomatis ke robot
+      // FASE 2: Hubungkan kembali dengan durasi pencarian yang memadai
       attemptReconnectAfterReboot();
     }
   }, 1000);
@@ -3171,41 +3190,57 @@ function attemptReconnectAfterReboot() {
   if (title) title.textContent = 'MENGHUBUNGKAN KEMBALI...';
   if (sub) sub.textContent = 'Mencari koneksi robot...';
 
-  // Panggil perintah connect native AndroidBLE jika tersedia
+  // Panggil perintah connect native AndroidBLE
   if (window.AndroidBLE && typeof window.AndroidBLE.connect === 'function') {
     window.AndroidBLE.connect();
   }
 
-  let attemptSeconds = 4;
+  // Berikan waktu realistis 12 detik agar robot selesai booting dan menyalakan BLE
+  let attemptSeconds = 12;
   if (s_rebootTimer) clearInterval(s_rebootTimer);
 
   s_rebootTimer = setInterval(() => {
-    // Jika sudah berhasil tersambung
+    // Jika robot sudah berhasil tersambung kembali
     if (isBleConnected) {
       clearInterval(s_rebootTimer);
       s_rebootTimer = null;
-      if (overlay) overlay.style.display = 'none';
+      s_isRebooting = false;
+      if (overlay) {
+        overlay.classList.remove('failed');
+        overlay.style.display = 'none';
+      }
       showNeonToast('Robot berhasil terhubung kembali');
       triggerHaptic(40);
       return;
     }
 
+    // Ping scan/koneksi ulang setiap 4 detik jika belum terhubung
+    if (attemptSeconds % 4 === 0) {
+      if (window.AndroidBLE && typeof window.AndroidBLE.connect === 'function') {
+        window.AndroidBLE.connect();
+      }
+    }
+
     attemptSeconds--;
     if (attemptSeconds > 0) {
-      if (sub) sub.textContent = `Mencoba tersambung (${attemptSeconds}s)...`;
+      if (sub) sub.textContent = `Mencari koneksi robot (${attemptSeconds}s)...`;
     } else {
       clearInterval(s_rebootTimer);
       s_rebootTimer = null;
 
       // Cek sekali lagi apakah tersambung
       if (isBleConnected) {
-        if (overlay) overlay.style.display = 'none';
+        s_isRebooting = false;
+        if (overlay) {
+          overlay.classList.remove('failed');
+          overlay.style.display = 'none';
+        }
         showNeonToast('Robot berhasil terhubung kembali');
         triggerHaptic(40);
         return;
       }
 
-      // FASE 3: Gagal Menghubungkan -> Tampilkan status gagal selama 5 detik, lalu pindah ke halaman Bluetooth
+      // FASE 3: Jika setelah total waktu habis robot benar-benar tidak merespons
       showRebootFailAndRedirect();
     }
   }, 1000);
@@ -3216,30 +3251,24 @@ function showRebootFailAndRedirect() {
   const title = document.querySelector('.reboot-overlay-title');
   const sub = document.getElementById('txtRebootCountdown');
 
-  if (overlay) overlay.classList.add('failed');
-  if (title) title.textContent = 'GAGAL MENGHUBUNGKAN';
+  s_isRebooting = false;
 
-  let failCountdown = 5;
-  if (sub) sub.textContent = `Mengalihkan ke halaman Bluetooth dalam (${failCountdown}s)...`;
+  // Hentikan proses scanning/koneksi background agar tidak tiba-tiba menyambung setelah dinyatakan gagal
+  if (window.AndroidBLE && typeof window.AndroidBLE.disconnect === 'function') {
+    window.AndroidBLE.disconnect();
+  }
+
+  if (overlay) overlay.classList.add('failed');
+  if (title) title.textContent = 'GAGAL TERHUBUNG';
+
+  let failCountdown = 3;
+  if (sub) sub.textContent = `Robot belum aktif. Ke halaman Bluetooth (${failCountdown}s)...`;
 
   if (s_rebootTimer) clearInterval(s_rebootTimer);
   s_rebootTimer = setInterval(() => {
-    // Jika secara tiba-tiba tersambung saat fase ini
-    if (isBleConnected) {
-      clearInterval(s_rebootTimer);
-      s_rebootTimer = null;
-      if (overlay) {
-        overlay.classList.remove('failed');
-        overlay.style.display = 'none';
-      }
-      showNeonToast('Robot berhasil terhubung');
-      triggerHaptic(40);
-      return;
-    }
-
     failCountdown--;
     if (failCountdown > 0) {
-      if (sub) sub.textContent = `Mengalihkan ke halaman Bluetooth dalam (${failCountdown}s)...`;
+      if (sub) sub.textContent = `Robot belum aktif. Ke halaman Bluetooth (${failCountdown}s)...`;
     } else {
       clearInterval(s_rebootTimer);
       s_rebootTimer = null;
@@ -3248,31 +3277,14 @@ function showRebootFailAndRedirect() {
         overlay.style.display = 'none';
       }
 
-      // Alihkan ke Gate Setup Bluetooth
-      s_forceSetupGate = true;
-      if (window.AndroidBLE && typeof window.AndroidBLE.forgetDevice === 'function') {
-        window.AndroidBLE.forgetDevice();
-      }
-      localStorage.removeItem('robot_saved_mac');
-      localStorage.removeItem('robot_saved_name');
-
+      // Buka halaman Setup Gate Bluetooth agar pengguna bisa melihat status & menghubungkan manual
       const gate = document.getElementById('setupGate');
       if (gate) {
         gate.classList.add('active');
       }
       const isBtOn = (window.AndroidBLE && typeof window.AndroidBLE.isBluetoothEnabled === 'function') ? window.AndroidBLE.isBluetoothEnabled() : true;
       updateSetupGateView(isBtOn);
-
-      const boxSaved = document.getElementById('boxSavedDevice');
-      const boxDetected = document.getElementById('boxDetectedDevices');
-      const radarWrap = document.querySelector('.setup-radar-wrap');
-      if (boxSaved) boxSaved.style.display = 'none';
-      if (boxDetected) boxDetected.style.display = 'flex';
-      if (radarWrap) radarWrap.style.display = 'flex';
-
-      // Mulai scan ulang perangkat secara otomatis
-      retryAutoScan();
-      showNeonToast('Silakan pilih perangkat');
+      showNeonToast('Robot tidak merespons');
     }
   }, 1000);
 }
