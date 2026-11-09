@@ -3001,6 +3001,14 @@ let s_brightnessDebounce = null;
 function onBrightnessSliderInput(val) {
   const badge = document.getElementById('txtOledBrightnessVal');
   if (badge) badge.textContent = val + '%';
+
+  const intVal = parseInt(val, 10);
+  const rawByte = Math.round((intVal * 255) / 100);
+
+  if (s_brightnessDebounce) clearTimeout(s_brightnessDebounce);
+  s_brightnessDebounce = setTimeout(() => {
+    sendCommand({ c: 'bright', p: intVal, v: rawByte });
+  }, 100);
 }
 
 function onBrightnessSliderChange(val) {
@@ -3011,11 +3019,9 @@ function onBrightnessSliderChange(val) {
   const rawByte = Math.round((intVal * 255) / 100);
 
   if (s_brightnessDebounce) clearTimeout(s_brightnessDebounce);
-  s_brightnessDebounce = setTimeout(() => {
-    sendCommand({ c: 'bright', p: intVal, v: rawByte });
-    showNeonToast('Kecerahan: ' + val + '%');
-    triggerHaptic(15);
-  }, 60);
+  sendCommand({ c: 'bright', p: intVal, v: rawByte });
+  showNeonToast('Kecerahan: ' + val + '%');
+  triggerHaptic(15);
 }
 
 // 2. Preset Auto-Sleep
@@ -3099,35 +3105,11 @@ function onBuzzerVolumeChange(val) {
   }, 60);
 }
 
-let s_vibStrDebounce = null;
-function onVibrationStrengthInput(val) {
-  const badge = document.getElementById('txtVibrationStrengthVal');
-  if (badge) badge.textContent = val + '%';
-}
-
-function onVibrationStrengthChange(val) {
-  const badge = document.getElementById('txtVibrationStrengthVal');
-  if (badge) badge.textContent = val + '%';
-  const intVal = parseInt(val, 10);
-  if (s_vibStrDebounce) clearTimeout(s_vibStrDebounce);
-  s_vibStrDebounce = setTimeout(() => {
-    sendCommand({ c: 'vib_str', v: intVal });
-    showNeonToast('Getaran: ' + val + '%');
-    triggerHaptic(25);
-  }, 60);
-}
-
 // 6. Diagnostik Perangkat Keras
 function testHardwareBuzzer() {
   sendCommand({ c: 'buzzer', freq: 2000, dur: 150 });
   showNeonToast('Menguji buzzer...');
   triggerHaptic(20);
-}
-
-function testHardwareVibrate() {
-  sendCommand({ c: 'vibrate', dur: 400 });
-  showNeonToast('Menguji getar...');
-  triggerHaptic(40);
 }
 
 // 6. Modal Konfirmasi & Eksekusi Reboot

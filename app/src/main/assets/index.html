@@ -1229,26 +1229,11 @@
             </div>
           </div>
 
-          <!-- Slider Kekuatan Getaran -->
-          <div class="setting-item-block">
-            <div class="setting-item-header">
-              <span class="setting-item-label">Getaran</span>
-              <span id="txtVibrationStrengthVal" class="setting-val-badge">100%</span>
-            </div>
-            <div class="setting-slider-wrap">
-              <input type="range" id="sliderVibrationStrength" min="0" max="100" value="100" class="neon-range-slider" oninput="onVibrationStrengthInput(this.value)" onchange="onVibrationStrengthChange(this.value)">
-            </div>
-          </div>
-
-          <!-- Tombol Uji Kontrol Cepat -->
-          <div class="setting-actions-grid">
+          <!-- Tombol Uji Buzzer -->
+          <div class="setting-actions-single">
             <button type="button" class="setting-control-btn" onclick="testHardwareBuzzer()">
               <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
               <span>Uji Buzzer</span>
-            </button>
-            <button type="button" class="setting-control-btn" onclick="testHardwareVibrate()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M12 2v20M2 12h20M5 5l14 14M19 5L5 19"></path></svg>
-              <span>Uji Getar</span>
             </button>
           </div>
         </div>
