@@ -1216,48 +1216,53 @@
 
             <!-- KONTROL PENGATURAN CRYPTO & SAHAM (TEMA CYBER NEON CYAN - PERSIS FITUR CUACA & SHOLAT) -->
             <div class="feature-ctrl-panel">
-              <!-- SEGMENTED TABS: PILIH KATEGORI ASET (CRYPTO ATAU SAHAM) -->
-              <div class="asset-category-tabs">
-                <button type="button" id="tabAssetCrypto" class="asset-tab-btn active" onclick="switchAssetCategory('crypto')">
-                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <path d="M12 6v12M15 9.5H10a2.5 2.5 0 0 0 0 5h4a2.5 2.5 0 0 1 0 5H9"></path>
-                  </svg>
-                  <span>KOIN CRYPTO</span>
-                </button>
-                <button type="button" id="tabAssetStock" class="asset-tab-btn" onclick="switchAssetCategory('stock')">
-                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-                    <polyline points="17 6 23 6 23 12"></polyline>
-                  </svg>
-                  <span>SAHAM (STOCKS)</span>
-                </button>
-              </div>
-
-              <!-- KARTU 1: PENGATURAN KOIN / SAHAM -->
+              <!-- KARTU 1: PENGATURAN COIN CRYPTO -->
               <div class="config-card weather-ctrl-card">
                 <div class="config-header">
-                  <svg id="iconCryptoAssetCard" viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
                     <circle cx="12" cy="12" r="10"></circle>
                     <path d="M12 6v12M15 9.5H10a2.5 2.5 0 0 0 0 5h4a2.5 2.5 0 0 1 0 5H9"></path>
                   </svg>
-                  <span class="config-title" id="txtCryptoAssetCardTitle">PENGATURAN KOIN CRYPTO</span>
+                  <span class="config-title">PENGATURAN COIN CRYPTO</span>
                 </div>
 
                 <div class="weather-form-group">
                   <div class="weather-input-container">
                     <input type="text" id="cfgCryptoCoinInput" class="weather-city-input"
-                      placeholder="Cari koin (misal: BTC, ETH, SOL, PEPE)..." autocomplete="off">
+                      placeholder="Cari coin (misal: BTC, ETH, SOL, PEPE, DOGE)..." autocomplete="off">
                     <div id="cryptoCoinDropdown" class="city-autocomplete-dropdown" style="display: none;"></div>
                   </div>
                   <button type="button" id="btnSearchCryptoCoin" class="weather-action-btn"
-                    onclick="applyCryptoAsset(false)" onpointerup="this.blur()" ontouchend="this.blur()">
-                    <span class="weather-btn-label" id="txtSearchCryptoCoinBtn">TERAPKAN KOIN CRYPTO</span>
+                    onclick="applyCryptoCoin(false)" onpointerup="this.blur()" ontouchend="this.blur()">
+                    <span class="weather-btn-label" id="txtSearchCryptoCoinBtn">TERAPKAN COIN CRYPTO</span>
                   </button>
                 </div>
               </div>
 
-              <!-- KARTU 2: PENGATURAN MATA UANG -->
+              <!-- KARTU 2: PENGATURAN SAHAM -->
+              <div class="config-card weather-ctrl-card">
+                <div class="config-header">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
+                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                    <polyline points="17 6 23 6 23 12"></polyline>
+                  </svg>
+                  <span class="config-title">PENGATURAN SAHAM</span>
+                </div>
+
+                <div class="weather-form-group">
+                  <div class="weather-input-container">
+                    <input type="text" id="cfgStockInput" class="weather-city-input"
+                      placeholder="Cari saham (misal: BBCA, BBRI, GOTO, AAPL, TSLA)..." autocomplete="off">
+                    <div id="stockDropdown" class="city-autocomplete-dropdown" style="display: none;"></div>
+                  </div>
+                  <button type="button" id="btnSearchStock" class="weather-action-btn"
+                    onclick="applyStock(false)" onpointerup="this.blur()" ontouchend="this.blur()">
+                    <span class="weather-btn-label" id="txtSearchStockBtn">TERAPKAN SAHAM</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- KARTU 3: PENGATURAN MATA UANG -->
               <div class="config-card weather-ctrl-card">
                 <div class="config-header">
                   <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">

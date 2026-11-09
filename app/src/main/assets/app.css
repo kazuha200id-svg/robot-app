@@ -4105,7 +4105,7 @@ input[type="range"]::-webkit-slider-thumb {
   box-shadow: 0 0 8px rgba(0, 240, 255, 0.25);
 }
 
-/* Tab Segmented Kategori: KOIN CRYPTO vs SAHAM (STOCKS) */
+/* Tab Segmented Kategori: COIN CRYPTO vs SAHAM (STOCKS) */
 .asset-category-tabs {
   display: flex;
   gap: 8px;
