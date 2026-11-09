@@ -759,7 +759,7 @@ window.onBLEReceived = function(jsonStr) {
         if (cIdx !== currentCryptoCoinIndex) {
           currentCryptoCoinIndex = cIdx;
           if (typeof updateOledCryptoPreview === 'function') updateOledCryptoPreview();
-          if (typeof fetchCryptoLivePrices === 'function') fetchCryptoLivePrices();
+          if (typeof debouncedFetchCrypto === 'function') debouncedFetchCrypto();
         }
       }
     }
@@ -3235,13 +3235,21 @@ async function fetchCryptoLivePrices() {
   }
 }
 
+let s_cryptoLiveDebounce = null;
+function debouncedFetchCrypto() {
+  if (s_cryptoLiveDebounce) clearTimeout(s_cryptoLiveDebounce);
+  s_cryptoLiveDebounce = setTimeout(() => {
+    fetchCryptoLivePrices();
+  }, 250);
+}
+
 function selectCryptoCoinApp(coinIndex, coinName) {
   triggerHaptic(25);
   currentCryptoCoinIndex = coinIndex;
   updateOledCryptoPreview();
   sendCryptoDataToRobot();
   sendCommand({ c: 'crypto_coin', idx: coinIndex });
-  fetchCryptoLivePrices();
+  debouncedFetchCrypto();
 }
 
 function cycleCryptoCoinApp() {
