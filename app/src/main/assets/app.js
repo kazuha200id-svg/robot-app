@@ -618,6 +618,10 @@ window.onBLEStatus = function(connected, message) {
     // Sinkronkan jadwal sholat resmi Kemenag RI ke robot seketika saat tersambung
     syncPrayerQuiet();
 
+    // Sinkronkan data Kurs Live & Crypto terkini secara tenang saat tersambung
+    fetchKursLiveRates();
+    fetchCryptoLivePrices();
+
     if (isConnecting) {
       const elapsed = Date.now() - connectStartTime;
       const remaining = Math.max(0, 3000 - elapsed);
@@ -1624,6 +1628,7 @@ function selectRobotMenuFeature(featureKey, btnEl) {
     } else if (featureKey === 'crypto') {
       sendCryptoDataToRobot();
       fetchCryptoLivePrices();
+      sendCommand({ c: 'm', v: 20 }, true);
       return;
     } else if (featureKey === 'kurs') {
       sendKursDataToRobot();
@@ -2257,6 +2262,25 @@ function escapeWeatherText(s) {
 
 // Helper Fetch Antar-Platform Cepat, Aman & Asinkron (100% Non-Blocking, Anti-Freeze / Hang)
 function fetchGeocoding(url, timeoutMs = 3500) {
+  // Untuk domain yang memblokir CORS browser seperti Yahoo Finance dan Indodax,
+  // langsung prioritaskan AndroidBLE bridge jika tersedia agar tidak tertahan CORS WebView
+  if (window.AndroidBLE && typeof window.AndroidBLE.httpGet === 'function' &&
+      (url.includes('yahoo.com') || url.includes('indodax.com'))) {
+    return new Promise(function(resolve, reject) {
+      setTimeout(function() {
+        try {
+          const raw = window.AndroidBLE.httpGet(url);
+          if (raw && raw.length > 0) {
+            return resolve(JSON.parse(raw));
+          }
+          reject(new Error('AndroidBLE httpGet returned empty'));
+        } catch (e) {
+          reject(e);
+        }
+      }, 0);
+    });
+  }
+
   return new Promise(function(resolve, reject) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -3339,8 +3363,8 @@ let configuredCryptoCoins = (() => {
 let configuredStocks = (() => {
   try {
     const version = localStorage.getItem('robot_cfg_stocks_version');
-    if (version !== 'v2_usd') {
-      localStorage.setItem('robot_cfg_stocks_version', 'v2_usd');
+    if (version !== 'v3_usd') {
+      localStorage.setItem('robot_cfg_stocks_version', 'v3_usd');
       localStorage.setItem('robot_cfg_stocks_list', JSON.stringify(DEFAULT_STOCK_SLOTS));
       return [...DEFAULT_STOCK_SLOTS];
     }
@@ -3383,20 +3407,20 @@ let stockSearchTimer = null;
 let cryptoCurrencySearchTimer = null;
 let cryptoActiveAbortController = null;
 let stockActiveAbortController = null;
-let usdToIdrRate = 16250; // Nilai estimasi kurs USD/IDR
+let usdToIdrRate = 18050; // Nilai estimasi kurs USD/IDR live aktual
 
-// Cache lokal untuk menyimpan data harga (coin & saham)
+// Cache lokal untuk menyimpan data harga (coin & saham) dengan nilai live aktual
 let cryptoPriceCache = {
-  'BTC_USD': { price: 75100, change24h: -1.25, isUp: false },
-  'ETH_USD': { price: 2140, change24h: -4.00, isUp: false },
-  'SOL_USD': { price: 87.0, change24h: -2.80, isUp: false },
-  'BNB_USD': { price: 690, change24h: -1.00, isUp: false },
-  'DOGE_USD': { price: 0.0705, change24h: -1.10, isUp: false },
-  'AAPL_USD': { price: 352.16, change24h: 2.85, isUp: true },
-  'NVDA_USD': { price: 142.50, change24h: 4.15, isUp: true },
-  'TSLA_USD': { price: 385.20, change24h: 1.75, isUp: true },
-  'BBCA_USD': { price: 0.33, change24h: 2.40, isUp: true },
-  'GOTO_USD': { price: 0.0015, change24h: 4.17, isUp: true }
+  'BTC_USD': { price: 75150, change24h: 0.50, isUp: true },
+  'ETH_USD': { price: 2130, change24h: -0.30, isUp: false },
+  'SOL_USD': { price: 86.6, change24h: -0.20, isUp: false },
+  'BNB_USD': { price: 690, change24h: 0.50, isUp: true },
+  'DOGE_USD': { price: 0.070, change24h: 0.60, isUp: true },
+  'AAPL_USD': { price: 350.70, change24h: 2.43, isUp: true },
+  'NVDA_USD': { price: 178.70, change24h: -4.27, isUp: false },
+  'TSLA_USD': { price: 378.10, change24h: 5.54, isUp: true },
+  'BBCA_USD': { price: 0.29, change24h: 2.40, isUp: true },
+  'GOTO_USD': { price: 0.0014, change24h: 4.17, isUp: true }
 };
 
 function saveConfiguredAssets() {
@@ -3695,58 +3719,61 @@ async function fetchSingleCryptoPrice(coin, currCode) {
   let priceVal = 0;
   let changeVal = 0;
 
-  // 1. Cek Indodax jika mata uang IDR
+  // 1. Ambil dari Gate.io (Sangat cepat, live spot, 24h change akurat, CORS enabled)
+  try {
+    const gateUrl = 'https://api.gateio.ws/api/v4/spot/tickers?currency_pair=' + encodeURIComponent(coinSym + '_USDT');
+    const gateData = await fetchGeocoding(gateUrl, 3000);
+    if (Array.isArray(gateData) && gateData.length > 0 && gateData[0].last) {
+      const usdPrice = parseFloat(gateData[0].last);
+      changeVal = parseFloat(gateData[0].change_percentage) || 0;
+
+      const effRate = (usdToIdrRate > 10000 && usdToIdrRate < 25000) ? usdToIdrRate : 18050;
+      if (currCode === 'USD' || currCode === 'USDT') {
+        priceVal = usdPrice;
+        gotPrice = true;
+      } else if (currCode === 'IDR') {
+        priceVal = usdPrice * effRate;
+        gotPrice = true;
+      } else {
+        priceVal = usdPrice;
+        gotPrice = true;
+      }
+    }
+  } catch (e) {}
+
+  // 2. Cek Indodax jika mata uang IDR untuk memastikan harga lokal bursa Indonesia
   if (currCode === 'IDR') {
     try {
       const idxUrl = 'https://indodax.com/api/ticker/' + coinSym.toLowerCase() + 'idr';
       const idxData = await fetchGeocoding(idxUrl, 2500);
       if (idxData && idxData.ticker && idxData.ticker.last) {
-        priceVal = parseFloat(idxData.ticker.last);
-        if (priceVal > 0) gotPrice = true;
+        const idxPrice = parseFloat(idxData.ticker.last);
+        if (idxPrice > 0) {
+          priceVal = idxPrice;
+          gotPrice = true;
+        }
       }
     } catch (e) {}
   }
 
-  // 2. Ambil dari Gate.io (Sangat cepat, live, tanpa blokir Kominfo)
-  try {
-    const gateUrl = 'https://api.gateio.ws/api/v4/spot/tickers?currency_pair=' + encodeURIComponent(coinSym + '_USDT');
-    const gateData = await fetchGeocoding(gateUrl, 2500);
-    if (Array.isArray(gateData) && gateData.length > 0 && gateData[0].last) {
-      const usdPrice = parseFloat(gateData[0].last);
-      changeVal = parseFloat(gateData[0].change_percentage) || 0;
-
-      if (!gotPrice) {
-        if (currCode === 'USD' || currCode === 'USDT') {
-          priceVal = usdPrice;
-          gotPrice = true;
-        } else if (currCode === 'IDR') {
-          priceVal = usdPrice * (usdToIdrRate > 0 ? usdToIdrRate : 16250);
-          gotPrice = true;
-        } else {
-          priceVal = usdPrice;
-          gotPrice = true;
-        }
-      }
-    }
-  } catch (e) {}
-
-  // 3. Fallback ke CoinGecko untuk coin langka/DEX
+  // 3. Fallback ke CoinGecko untuk coin langka/DEX jika Gate.io tidak punya
   if (!gotPrice) {
     try {
       const coinId = coin.id || coinSym.toLowerCase();
       const vsCurrs = currCode.toLowerCase() + ',usd';
       const cgUrl = 'https://api.coingecko.com/api/v3/simple/price?ids=' + encodeURIComponent(coinId) +
                     '&vs_currencies=' + vsCurrs + '&include_24hr_change=true';
-      const cgData = await fetchGeocoding(cgUrl, 2500);
+      const cgData = await fetchGeocoding(cgUrl, 3000);
       if (cgData && cgData[coinId]) {
         const item = cgData[coinId];
         const cKey = currCode.toLowerCase();
+        const effRate = (usdToIdrRate > 10000 && usdToIdrRate < 25000) ? usdToIdrRate : 18050;
         if (typeof item[cKey] === 'number') {
           priceVal = item[cKey];
           changeVal = item[cKey + '_24h_change'] || item['usd_24h_change'] || 0;
           gotPrice = true;
         } else if (typeof item.usd === 'number') {
-          priceVal = (currCode === 'IDR') ? (item.usd * usdToIdrRate) : item.usd;
+          priceVal = (currCode === 'IDR') ? (item.usd * effRate) : item.usd;
           changeVal = item.usd_24h_change || 0;
           gotPrice = true;
         }
@@ -3767,7 +3794,8 @@ async function fetchSingleStockPrice(stock, currCode) {
   const stockSym = stock.symbol.toUpperCase();
   let qSym = stock.querySym || stockSym;
 
-  if (!qSym.includes('.') && (stock.market === 'IDX' || stockSym.length === 4)) {
+  // Hanya tambahkan .JK jika saham memang terdaftar di bursa IDX
+  if (!qSym.includes('.') && stock.market === 'IDX') {
     qSym = stockSym + '.JK';
   }
 
@@ -3778,9 +3806,7 @@ async function fetchSingleStockPrice(stock, currCode) {
 
   try {
     let yfUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(qSym) + '?interval=1d';
-    let yfData = await fetchGeocoding(yfUrl, 2500).catch(async () => {
-      return await fetchGeocoding('https://query2.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(qSym) + '?interval=1d', 2500);
-    });
+    let yfData = await fetchGeocoding(yfUrl, 3000);
 
     if (yfData && yfData.chart && Array.isArray(yfData.chart.result) && yfData.chart.result.length > 0) {
       const meta = yfData.chart.result[0].meta;
@@ -3792,12 +3818,13 @@ async function fetchSingleStockPrice(stock, currCode) {
           changeVal = ((rawPrice - meta.chartPreviousClose) / meta.chartPreviousClose) * 100;
         }
 
+        const effRate = (usdToIdrRate > 10000 && usdToIdrRate < 25000) ? usdToIdrRate : 18050;
         if (currCode === baseCurr) {
           priceVal = rawPrice;
         } else if (baseCurr === 'IDR' && currCode === 'USD') {
-          priceVal = rawPrice / (usdToIdrRate > 0 ? usdToIdrRate : 16250);
+          priceVal = rawPrice / effRate;
         } else if (baseCurr === 'USD' && currCode === 'IDR') {
-          priceVal = rawPrice * (usdToIdrRate > 0 ? usdToIdrRate : 16250);
+          priceVal = rawPrice * effRate;
         } else {
           priceVal = rawPrice;
         }
@@ -3822,11 +3849,16 @@ async function fetchCryptoLivePrices() {
   const globalCurr = (currentCryptoCurrency && currentCryptoCurrency.code) ? currentCryptoCurrency.code.toUpperCase() : 'USD';
 
   try {
-    // 1. Ambil estimasi kurs live USDT/IDR dari Indodax secara non-blocking
+    // 1. Ambil estimasi kurs live USDT/IDR dari Indodax / open.er-api secara non-blocking
     try {
-      const idrData = await fetchGeocoding('https://indodax.com/api/ticker/usdtidr', 2000);
+      const idrData = await fetchGeocoding('https://indodax.com/api/ticker/usdtidr', 2000).catch(async () => {
+        return await fetchGeocoding('https://open.er-api.com/v6/latest/USD', 2000);
+      });
       if (idrData && idrData.ticker && idrData.ticker.last) {
         const r = parseFloat(idrData.ticker.last);
+        if (r > 10000 && r < 25000) usdToIdrRate = r;
+      } else if (idrData && idrData.rates && idrData.rates.IDR) {
+        const r = parseFloat(idrData.rates.IDR);
         if (r > 10000 && r < 25000) usdToIdrRate = r;
       }
     } catch (e) {}
@@ -3841,7 +3873,6 @@ async function fetchCryptoLivePrices() {
 
     updateOledCryptoPreview();
     sendAllTickerItemsToRobot();
-
   } catch (err) {
     console.warn('[TICKER] Gagal mengambil data harga live:', err);
     updateOledCryptoPreview();
@@ -3849,6 +3880,16 @@ async function fetchCryptoLivePrices() {
   } finally {
     isCryptoFetching = false;
   }
+}
+
+let cryptoAutoInterval = null;
+function startCryptoInterval() {
+  if (cryptoAutoInterval) clearInterval(cryptoAutoInterval);
+  cryptoAutoInterval = setInterval(() => {
+    if (currentOpenDetailFeature === 'crypto' || currentRobotMode === 20) {
+      fetchCryptoLivePrices();
+    }
+  }, 30000); // Sinkronisasi otomatis setiap 30 detik saat aktif
 }
 
 let s_cryptoLiveDebounce = null;
@@ -5792,11 +5833,11 @@ let kursSlotSearchTimer = null;
 let kursTargetSearchTimer = null;
 
 let kursRatesCache = {
-  'USD_IDR': { price: 16250, change24h: 0.10, isUp: true },
-  'EUR_IDR': { price: 17480, change24h: -0.20, isUp: false },
-  'SAR_IDR': { price: 4330,  change24h: 0.10, isUp: true },
+  'USD_IDR': { price: 18040, change24h: 0.20, isUp: true },
+  'EUR_IDR': { price: 20230, change24h: 0.88, isUp: true },
+  'SAR_IDR': { price: 4810,  change24h: 0.19, isUp: true },
   'USD_USD': { price: 1.0,   change24h: 0.00, isUp: true },
-  'EUR_USD': { price: 1.08,  change24h: -0.20, isUp: false },
+  'EUR_USD': { price: 1.12,  change24h: 0.68, isUp: true },
   'SAR_USD': { price: 0.27,  change24h: 0.00, isUp: true }
 };
 
@@ -5853,45 +5894,125 @@ async function fetchSingleKursRate(fromCode, toCode) {
     return;
   }
 
-  let yfSymbol = `${from}${to}=X`;
-  try {
-    let yfUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(yfSymbol) + '?interval=1d';
-    let yfData = await fetchGeocoding(yfUrl, 2500).catch(async () => {
-      return await fetchGeocoding('https://query2.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(yfSymbol) + '?interval=1d', 2500);
-    });
+  let gotData = false;
 
-    if (yfData && yfData.chart && Array.isArray(yfData.chart.result) && yfData.chart.result.length > 0) {
-      const meta = yfData.chart.result[0].meta;
-      if (meta && typeof meta.regularMarketPrice === 'number') {
-        const rawPrice = meta.regularMarketPrice;
-        let changeVal = meta.regularMarketChangePercent || 0;
-        if (changeVal === 0 && typeof meta.chartPreviousClose === 'number' && meta.chartPreviousClose > 0) {
-          changeVal = ((rawPrice - meta.chartPreviousClose) / meta.chartPreviousClose) * 100;
+  // 1. Kasus khusus mata uang terpatok USD (SAR = 3.7500 per USD)
+  // Yahoo Finance tidak menyediakan ticker SARIDR=X langsung, sehingga dihitung presisi via USDIDR=X & USDSAR=X
+  if (from === 'SAR' && to === 'IDR') {
+    try {
+      const uIdrUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/USDIDR=X?interval=1d';
+      const uSarUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/USDSAR=X?interval=1d';
+      const [uIdrRes, uSarRes] = await Promise.allSettled([
+        fetchGeocoding(uIdrUrl, 2500),
+        fetchGeocoding(uSarUrl, 2500)
+      ]);
+
+      let uIdrPrice = 0, uIdrClose = 0;
+      let uSarPrice = 3.7535, uSarClose = 3.7533;
+
+      if (uIdrRes.status === 'fulfilled' && uIdrRes.value && uIdrRes.value.chart && uIdrRes.value.chart.result) {
+        const m = uIdrRes.value.chart.result[0].meta;
+        if (m && typeof m.regularMarketPrice === 'number') {
+          uIdrPrice = m.regularMarketPrice;
+          uIdrClose = m.chartPreviousClose || uIdrPrice;
+          if (uIdrPrice > 10000 && uIdrPrice < 25000) usdToIdrRate = uIdrPrice;
         }
+      }
+
+      if (uSarRes.status === 'fulfilled' && uSarRes.value && uSarRes.value.chart && uSarRes.value.chart.result) {
+        const m = uSarRes.value.chart.result[0].meta;
+        if (m && typeof m.regularMarketPrice === 'number') {
+          uSarPrice = m.regularMarketPrice;
+          uSarClose = m.chartPreviousClose || uSarPrice;
+        }
+      }
+
+      if (uIdrPrice > 0 && uSarPrice > 0) {
+        const sarPrice = uIdrPrice / uSarPrice;
+        const sarClose = uIdrClose / uSarClose;
+        const chg = sarClose > 0 ? (((sarPrice - sarClose) / sarClose) * 100) : 0;
         kursRatesCache[pairKey] = {
-          price: rawPrice,
-          change24h: changeVal,
-          isUp: (changeVal >= 0)
+          price: sarPrice,
+          change24h: chg,
+          isUp: (chg >= 0)
         };
+        gotData = true;
         return;
       }
-    }
-  } catch (e) {}
+    } catch (e) {}
+  }
 
-  // Fallback Indodax untuk konversi Rupiah lokal jika Yahoo diblokir
-  if (to === 'IDR' && (usdToIdrRate > 10000 && usdToIdrRate < 25000)) {
+  // 2. Ambil dari Yahoo Finance Chart untuk pasangan forex umum
+  if (!gotData) {
+    let yfSymbol = `${from}${to}=X`;
+    try {
+      let yfUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(yfSymbol) + '?interval=1d';
+      let yfData = await fetchGeocoding(yfUrl, 2500);
+
+      if (yfData && yfData.chart && Array.isArray(yfData.chart.result) && yfData.chart.result.length > 0) {
+        const meta = yfData.chart.result[0].meta;
+        if (meta && typeof meta.regularMarketPrice === 'number') {
+          const rawPrice = meta.regularMarketPrice;
+          let changeVal = meta.regularMarketChangePercent || 0;
+          if (changeVal === 0 && typeof meta.chartPreviousClose === 'number' && meta.chartPreviousClose > 0) {
+            changeVal = ((rawPrice - meta.chartPreviousClose) / meta.chartPreviousClose) * 100;
+          }
+          kursRatesCache[pairKey] = {
+            price: rawPrice,
+            change24h: changeVal,
+            isUp: (changeVal >= 0)
+          };
+          if (from === 'USD' && to === 'IDR' && rawPrice > 10000 && rawPrice < 25000) {
+            usdToIdrRate = rawPrice;
+          }
+          gotData = true;
+          return;
+        }
+      }
+    } catch (e) {}
+  }
+
+  // 3. Sumber Live Global: open.er-api.com (100% Free, CORS Enabled, Real-time Real Market)
+  if (!gotData) {
+    try {
+      const erUrl = 'https://open.er-api.com/v6/latest/' + encodeURIComponent(from);
+      const erData = await fetchGeocoding(erUrl, 3000);
+      if (erData && erData.rates && typeof erData.rates[to] === 'number') {
+        const livePrice = erData.rates[to];
+        let chg = 0;
+        const prevData = kursRatesCache[pairKey];
+        if (prevData && prevData.price > 0 && Math.abs(prevData.price - livePrice) > 0.0001) {
+          chg = ((livePrice - prevData.price) / prevData.price) * 100;
+        } else if (prevData && typeof prevData.change24h === 'number') {
+          chg = prevData.change24h;
+        }
+        kursRatesCache[pairKey] = {
+          price: livePrice,
+          change24h: chg,
+          isUp: (chg >= 0)
+        };
+        if (from === 'USD' && to === 'IDR' && livePrice > 10000 && livePrice < 25000) {
+          usdToIdrRate = livePrice;
+        }
+        gotData = true;
+        return;
+      }
+    } catch (e) {}
+  }
+
+  // 4. Fallback dengan rate pasar aktual jika jaringan lambat
+  if (!gotData && to === 'IDR') {
+    const effUsd = (usdToIdrRate > 10000 && usdToIdrRate < 25000) ? usdToIdrRate : 18040;
     if (from === 'USD') {
-      kursRatesCache[pairKey] = { price: usdToIdrRate, change24h: 0.1, isUp: true };
-      return;
+      kursRatesCache[pairKey] = { price: effUsd, change24h: 0.20, isUp: true };
     } else if (from === 'EUR') {
-      kursRatesCache[pairKey] = { price: usdToIdrRate * 1.08, change24h: -0.2, isUp: false };
-      return;
+      kursRatesCache[pairKey] = { price: effUsd * 1.1214, change24h: 0.88, isUp: true };
     } else if (from === 'SAR') {
-      kursRatesCache[pairKey] = { price: usdToIdrRate / 3.75, change24h: 0.1, isUp: true };
-      return;
+      kursRatesCache[pairKey] = { price: effUsd / 3.7535, change24h: 0.19, isUp: true };
     } else if (from === 'SGD') {
-      kursRatesCache[pairKey] = { price: usdToIdrRate * 0.76, change24h: 0.05, isUp: true };
-      return;
+      kursRatesCache[pairKey] = { price: effUsd * 0.7825, change24h: 0.56, isUp: true };
+    } else if (from === 'JPY') {
+      kursRatesCache[pairKey] = { price: effUsd / 158.3, change24h: 0.54, isUp: true };
     }
   }
 }
@@ -5901,6 +6022,11 @@ async function fetchKursLiveRates() {
   isKursFetching = true;
 
   try {
+    // Pastikan usdToIdrRate terupdate untuk kalkulasi lokal
+    if (currentKursTarget === 'IDR') {
+      await fetchSingleKursRate('USD', 'IDR').catch(() => {});
+    }
+
     const fetches = configuredKursSlots.map(code => fetchSingleKursRate(code, currentKursTarget));
     await Promise.allSettled(fetches);
 
