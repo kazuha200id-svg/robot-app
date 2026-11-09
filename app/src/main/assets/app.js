@@ -2443,6 +2443,8 @@ function searchCitySuggestions(query, isSetting) {
     })
     .catch(function(err) {
       console.warn('Autocomplete fetch failed:', err);
+      dropdown.innerHTML = '<div class="city-item-empty">Tidak ada kota yang cocok</div>';
+      dropdown.style.display = 'block';
     });
 }
 
@@ -2805,6 +2807,8 @@ function searchPrayerCitySuggestions(query) {
     })
     .catch(function(err) {
       console.warn('Prayer autocomplete fetch failed:', err);
+      dropdown.innerHTML = '<div class="city-item-empty">Tidak ada kota yang cocok</div>';
+      dropdown.style.display = 'block';
     });
 }
 
@@ -3880,48 +3884,37 @@ function searchCryptoCoinSuggestions(query) {
     ).slice(0, 8);
   }
 
-  // Jika user mengetik simbol custom apa pun di dunia
-  if (clean.length >= 2 && !matches.some(m => m.symbol.toUpperCase() === clean)) {
-    matches.unshift({
-      symbol: clean,
-      name: 'Custom Coin: ' + clean,
-      id: clean.toLowerCase()
-    });
-  }
-
   if (matches.length === 0) {
     dropdown.innerHTML = '<div class="city-item-empty">Tidak ada coin yang cocok</div>';
     dropdown.style.display = 'block';
-    return;
-  }
+  } else {
+    matches.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'city-autocomplete-item';
 
-  matches.forEach(item => {
-    const row = document.createElement('div');
-    row.className = 'city-autocomplete-item';
+      const nameEl = document.createElement('span');
+      nameEl.className = 'city-item-name';
+      nameEl.textContent = item.symbol;
 
-    const nameEl = document.createElement('span');
-    nameEl.className = 'city-item-name';
-    nameEl.textContent = item.symbol;
+      const descEl = document.createElement('span');
+      descEl.className = 'city-item-desc';
+      descEl.textContent = item.name;
 
-    const descEl = document.createElement('span');
-    descEl.className = 'city-item-desc';
-    descEl.textContent = item.name;
+      row.appendChild(nameEl);
+      row.appendChild(descEl);
 
-    row.appendChild(nameEl);
-    row.appendChild(descEl);
+      row.addEventListener('click', () => {
+        selectedCryptoCoin = item;
+        const input = document.getElementById('cfgCryptoCoinInput');
+        if (input) input.value = item.symbol + ' - ' + item.name;
+        dropdown.style.display = 'none';
+        triggerHaptic(20);
+      });
 
-    row.addEventListener('click', () => {
-      selectedCryptoCoin = item;
-      const input = document.getElementById('cfgCryptoCoinInput');
-      if (input) input.value = item.symbol + ' - ' + item.name;
-      dropdown.style.display = 'none';
-      triggerHaptic(20);
+      dropdown.appendChild(row);
     });
-
-    dropdown.appendChild(row);
-  });
-
-  dropdown.style.display = 'block';
+    dropdown.style.display = 'block';
+  }
 
   // Cari seluruh coin di dunia dari CoinGecko jika query >= 2 karakter
   if (clean.length >= 2) {
@@ -3932,10 +3925,13 @@ function searchCryptoCoinSuggestions(query) {
     fetch(cgSearchUrl, { signal: ctrl.signal, headers: { 'Accept': 'application/json' } })
       .then(res => res.ok ? res.json() : null)
       .then(res => {
-        if (res && Array.isArray(res.coins) && res.coins.length > 0) {
-          const currentInput = (document.getElementById('cfgCryptoCoinInput')?.value || '').trim().toUpperCase();
-          if (!currentInput.includes(clean)) return;
+        const currentInput = (document.getElementById('cfgCryptoCoinInput')?.value || '').trim().toUpperCase();
+        if (!currentInput.includes(clean)) return;
 
+        if (res && Array.isArray(res.coins) && res.coins.length > 0) {
+          if (matches.length === 0) {
+            dropdown.innerHTML = '';
+          }
           res.coins.slice(0, 5).forEach(c => {
             const sym = c.symbol.toUpperCase();
             if (!matches.some(m => m.symbol.toUpperCase() === sym)) {
@@ -3965,9 +3961,18 @@ function searchCryptoCoinSuggestions(query) {
               matches.push({ symbol: sym, name: c.name, id: c.id });
             }
           });
+          dropdown.style.display = 'block';
+        } else if (matches.length === 0) {
+          dropdown.innerHTML = '<div class="city-item-empty">Tidak ada coin yang cocok</div>';
+          dropdown.style.display = 'block';
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        if (matches.length === 0) {
+          dropdown.innerHTML = '<div class="city-item-empty">Tidak ada coin yang cocok</div>';
+          dropdown.style.display = 'block';
+        }
+      });
   }
 }
 
@@ -3995,50 +4000,37 @@ function searchStockSuggestions(query) {
     ).slice(0, 8);
   }
 
-  // Jika user mengetik kode saham custom apa pun di dunia
-  if (clean.length >= 2 && !matches.some(m => m.symbol.toUpperCase() === clean)) {
-    const isIdxGuess = (clean.length === 4 && !clean.includes('.'));
-    matches.unshift({
-      symbol: clean,
-      querySym: isIdxGuess ? (clean + '.JK') : clean,
-      name: isIdxGuess ? ('Saham IDX: ' + clean + '.JK') : ('Saham: ' + clean),
-      market: isIdxGuess ? 'IDX' : 'GLOBAL'
-    });
-  }
-
   if (matches.length === 0) {
     dropdown.innerHTML = '<div class="city-item-empty">Tidak ada saham yang cocok</div>';
     dropdown.style.display = 'block';
-    return;
-  }
+  } else {
+    matches.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'city-autocomplete-item';
 
-  matches.forEach(item => {
-    const row = document.createElement('div');
-    row.className = 'city-autocomplete-item';
+      const nameEl = document.createElement('span');
+      nameEl.className = 'city-item-name';
+      nameEl.textContent = item.symbol + (item.market ? (' [' + item.market + ']') : '');
 
-    const nameEl = document.createElement('span');
-    nameEl.className = 'city-item-name';
-    nameEl.textContent = item.symbol + (item.market ? (' [' + item.market + ']') : '');
+      const descEl = document.createElement('span');
+      descEl.className = 'city-item-desc';
+      descEl.textContent = item.name;
 
-    const descEl = document.createElement('span');
-    descEl.className = 'city-item-desc';
-    descEl.textContent = item.name;
+      row.appendChild(nameEl);
+      row.appendChild(descEl);
 
-    row.appendChild(nameEl);
-    row.appendChild(descEl);
+      row.addEventListener('click', () => {
+        selectedStock = item;
+        const input = document.getElementById('cfgStockInput');
+        if (input) input.value = item.symbol + ' - ' + item.name;
+        dropdown.style.display = 'none';
+        triggerHaptic(20);
+      });
 
-    row.addEventListener('click', () => {
-      selectedStock = item;
-      const input = document.getElementById('cfgStockInput');
-      if (input) input.value = item.symbol + ' - ' + item.name;
-      dropdown.style.display = 'none';
-      triggerHaptic(20);
+      dropdown.appendChild(row);
     });
-
-    dropdown.appendChild(row);
-  });
-
-  dropdown.style.display = 'block';
+    dropdown.style.display = 'block';
+  }
 
   // Cari seluruh saham di dunia dari Yahoo Finance jika query >= 2 karakter
   if (clean.length >= 2) {
@@ -4049,10 +4041,13 @@ function searchStockSuggestions(query) {
     fetch(yfSearchUrl, { signal: ctrl.signal, headers: { 'Accept': 'application/json' } })
       .then(res => res.ok ? res.json() : null)
       .then(res => {
-        if (res && Array.isArray(res.quotes) && res.quotes.length > 0) {
-          const currentInput = (document.getElementById('cfgStockInput')?.value || '').trim().toUpperCase();
-          if (!currentInput.includes(clean)) return;
+        const currentInput = (document.getElementById('cfgStockInput')?.value || '').trim().toUpperCase();
+        if (!currentInput.includes(clean)) return;
 
+        if (res && Array.isArray(res.quotes) && res.quotes.length > 0) {
+          if (matches.length === 0) {
+            dropdown.innerHTML = '';
+          }
           res.quotes.slice(0, 5).forEach(q => {
             if (!q.symbol) return;
             const symClean = q.symbol.toUpperCase();
@@ -4090,9 +4085,18 @@ function searchStockSuggestions(query) {
               matches.push({ symbol: baseSym, querySym: symClean, name: q.shortname || baseSym });
             }
           });
+          dropdown.style.display = 'block';
+        } else if (matches.length === 0) {
+          dropdown.innerHTML = '<div class="city-item-empty">Tidak ada saham yang cocok</div>';
+          dropdown.style.display = 'block';
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        if (matches.length === 0) {
+          dropdown.innerHTML = '<div class="city-item-empty">Tidak ada saham yang cocok</div>';
+          dropdown.style.display = 'block';
+        }
+      });
   }
 }
 
@@ -4112,15 +4116,6 @@ function searchCryptoCurrencySuggestions(query) {
       c.code.toUpperCase().includes(clean) ||
       c.name.toUpperCase().includes(clean)
     ).slice(0, 8);
-  }
-
-  // Jika user mengetik kode mata uang 3 karakter custom
-  if (clean.length === 3 && !matches.some(m => m.code.toUpperCase() === clean)) {
-    matches.unshift({
-      code: clean,
-      name: 'Mata Uang Custom: ' + clean,
-      symbol: clean + ' '
-    });
   }
 
   if (matches.length === 0) {
@@ -4403,16 +4398,12 @@ async function applyCryptoCoin(isFromCycle = false) {
   let targetCoin = selectedCryptoCoin;
   if (!targetCoin && raw.length > 0) {
     const sym = raw.split(/[-–—/]/)[0].trim().toUpperCase();
-    targetCoin = CRYPTO_POPULAR_COINS.find(c => c.symbol.toUpperCase() === sym) || {
-      symbol: sym,
-      name: sym,
-      id: sym.toLowerCase()
-    };
+    targetCoin = CRYPTO_POPULAR_COINS.find(c => c.symbol.toUpperCase() === sym);
   }
 
   if (!targetCoin) {
     triggerHaptic(40);
-    setCryptoCoinBtnState('error', 'PILIH COIN TERLEBIH DAHULU');
+    setCryptoCoinBtnState('error', 'COIN TIDAK DITEMUKAN');
     return;
   }
 
@@ -4458,17 +4449,12 @@ async function applyStock(isFromCycle = false) {
   let targetStock = selectedStock;
   if (!targetStock && raw.length > 0) {
     const sym = raw.split(/[-–—/]/)[0].trim().toUpperCase();
-    targetStock = STOCK_POPULAR_LIST.find(s => s.symbol.toUpperCase() === sym) || {
-      symbol: sym,
-      querySym: (sym.length === 4 && !sym.includes('.')) ? (sym + '.JK') : sym,
-      name: sym,
-      market: (sym.length === 4 && !sym.includes('.')) ? 'IDX' : 'GLOBAL'
-    };
+    targetStock = STOCK_POPULAR_LIST.find(s => s.symbol.toUpperCase() === sym);
   }
 
   if (!targetStock) {
     triggerHaptic(40);
-    setStockBtnState('error', 'PILIH SAHAM TERLEBIH DAHULU');
+    setStockBtnState('error', 'SAHAM TIDAK DITEMUKAN');
     return;
   }
 
@@ -4514,16 +4500,12 @@ async function applyCryptoCurrency() {
   let targetCurr = selectedCryptoCurrency;
   if (!targetCurr && raw.length > 0) {
     const code = raw.split(/[-–—/]/)[0].trim().toUpperCase();
-    targetCurr = CRYPTO_ALL_CURRENCIES.find(c => c.code.toUpperCase() === code) || {
-      code: code,
-      name: code,
-      symbol: code + ' '
-    };
+    targetCurr = CRYPTO_ALL_CURRENCIES.find(c => c.code.toUpperCase() === code);
   }
 
   if (!targetCurr) {
     triggerHaptic(40);
-    setCryptoCurrencyBtnState('error', 'PILIH MATA UANG TERLEBIH DAHULU');
+    setCryptoCurrencyBtnState('error', 'MATA UANG TIDAK COCOK');
     return;
   }
 
@@ -5776,10 +5758,20 @@ const FOREX_POPULAR_CURRENCIES = [
   { code: 'CAD', name: 'Dolar Kanada', symbol: 'C$' },
   { code: 'CHF', name: 'Franc Swiss', symbol: 'CHF' },
   { code: 'THB', name: 'Baht Thailand', symbol: '฿' },
+  { code: 'PHP', name: 'Peso Filipina', symbol: '₱' },
+  { code: 'VND', name: 'Dong Vietnam', symbol: '₫' },
   { code: 'AED', name: 'Dirham Uni Emirat Arab', symbol: 'AED' },
   { code: 'TRY', name: 'Lira Turki', symbol: '₺' },
   { code: 'INR', name: 'Rupee India', symbol: '₹' },
-  { code: 'BRL', name: 'Real Brasil', symbol: 'R$' }
+  { code: 'BRL', name: 'Real Brasil', symbol: 'R$' },
+  { code: 'NZD', name: 'Dolar Selandia Baru', symbol: 'NZ$' },
+  { code: 'TWD', name: 'Dolar Taiwan Baru', symbol: 'NT$' },
+  { code: 'HKD', name: 'Dolar Hong Kong', symbol: 'HK$' },
+  { code: 'ZAR', name: 'Rand Afrika Selatan', symbol: 'R' },
+  { code: 'MXN', name: 'Peso Meksiko', symbol: 'Mex$' },
+  { code: 'RUB', name: 'Rubel Rusia', symbol: '₽' },
+  { code: 'QAR', name: 'Riyal Qatar', symbol: 'QAR' },
+  { code: 'KWD', name: 'Dinar Kuwait', symbol: 'KWD' }
 ];
 
 const DEFAULT_KURS_SLOTS = ['USD', 'EUR', 'SAR']; // Tepat 3 slot (tidak boleh kurang/lebih)
@@ -5997,10 +5989,6 @@ function searchKursTargetSuggestions(query) {
     ).slice(0, 8);
   }
 
-  if (clean.length >= 2 && !matches.some(m => m.code.toUpperCase() === clean)) {
-    matches.unshift({ code: clean, name: 'Custom: ' + clean, symbol: clean + ' ' });
-  }
-
   if (matches.length === 0) {
     dropdown.innerHTML = '<div class="city-item-empty">Tidak ada mata uang cocok</div>';
     dropdown.style.display = 'block';
@@ -6046,10 +6034,6 @@ function searchKursSlotSuggestions(query) {
     ).slice(0, 8);
   }
 
-  if (clean.length >= 2 && !matches.some(m => m.code.toUpperCase() === clean)) {
-    matches.unshift({ code: clean, name: 'Custom: ' + clean, symbol: clean + ' ' });
-  }
-
   if (matches.length === 0) {
     dropdown.innerHTML = '<div class="city-item-empty">Tidak ada mata uang cocok</div>';
     dropdown.style.display = 'block';
@@ -6088,6 +6072,13 @@ async function applyKursTarget() {
     return;
   }
 
+  const found = FOREX_POPULAR_CURRENCIES.find(c => c.code === code);
+  if (!found) {
+    triggerHaptic(40);
+    showNeonToast('Mata uang tidak ditemukan!');
+    return;
+  }
+
   triggerHaptic(25);
   currentKursTarget = code;
   saveConfiguredKurs();
@@ -6117,6 +6108,13 @@ async function applyKursSlot() {
     return;
   }
 
+  const found = FOREX_POPULAR_CURRENCIES.find(c => c.code === code);
+  if (!found) {
+    triggerHaptic(40);
+    showNeonToast('Mata uang tidak ditemukan!');
+    return;
+  }
+
   triggerHaptic(25);
   configuredKursSlots[activeKursSlotIndex] = code;
   saveConfiguredKurs();
@@ -6134,19 +6132,6 @@ async function applyKursSlot() {
   } finally {
     if (txt) txt.textContent = 'SIMPAN KE SLOT TERPILIH';
     if (btn) btn.classList.remove('loading');
-  }
-}
-
-async function refreshAndSendKursLive(btnEl) {
-  triggerHaptic(25);
-  const txt = document.getElementById('btnSyncKursText');
-  if (txt) txt.textContent = 'MENGAMBIL KURS LIVE...';
-  try {
-    await fetchKursLiveRates();
-    triggerHaptic(30);
-    showNeonToast('Kurs Live Berhasil Disinkronkan!');
-  } finally {
-    if (txt) txt.textContent = 'REFRESH & KIRIM KE ROBOT';
   }
 }
 
