@@ -533,7 +533,7 @@ window.onBluetoothPowerState = function(enabled) {
 
     updateSetupGateView(true);
 
-    if (hasSavedRobot()) {
+    if (hasSavedRobot() && !s_forceSetupGate) {
       if (gate) gate.classList.remove('active');
     }
 
@@ -581,6 +581,7 @@ function disconnectBluetooth() {
 // BLE CONNECTION STATUS CALLBACK FROM NATIVE ANDROID
 window.onBLEStatus = function(connected, message) {
   isBleConnected = connected;
+  if (connected) s_forceSetupGate = false;
   const gate = document.getElementById('setupGate');
 
   document.querySelectorAll('.oled-status-ble').forEach(el => {
@@ -615,7 +616,7 @@ window.onBLEStatus = function(connected, message) {
     }
   } else {
     if (!isConnecting && gate) {
-      if (!hasSavedRobot()) {
+      if (!hasSavedRobot() || s_forceSetupGate) {
         gate.classList.add('active');
         const isBtOn = (window.AndroidBLE && typeof window.AndroidBLE.isBluetoothEnabled === 'function') ? window.AndroidBLE.isBluetoothEnabled() : true;
         updateSetupGateView(isBtOn);
@@ -3142,7 +3143,8 @@ function closeRebootConfirmModal() {
 }
 
 let s_rebootTimer = null;
-function executeRebootCommand() {
+let s_forceSetupGate = false;
+function executeRebootCommand(sendBle = true) {
   closeRebootConfirmModal();
   const overlay = document.getElementById('overlayRebootProgress');
   const title = document.querySelector('.reboot-overlay-title');
@@ -3154,8 +3156,10 @@ function executeRebootCommand() {
   }
   if (title) title.textContent = 'MEMULAI ULANG...';
 
-  // Kirim perintah reboot ke robot
-  sendCommand({ c: 'reboot' });
+  // Kirim perintah reboot ke robot (hanya jika sendBle = true)
+  if (sendBle) {
+    sendCommand({ c: 'reboot' });
+  }
   triggerHaptic(40);
 
   if (s_rebootTimer) clearInterval(s_rebootTimer);
@@ -3263,10 +3267,27 @@ function showRebootFailAndRedirect() {
       }
 
       // Alihkan ke Gate Setup Bluetooth
+      s_forceSetupGate = true;
+      if (window.AndroidBLE && typeof window.AndroidBLE.forgetDevice === 'function') {
+        window.AndroidBLE.forgetDevice();
+      }
+      localStorage.removeItem('robot_saved_mac');
+      localStorage.removeItem('robot_saved_name');
+
       const gate = document.getElementById('setupGate');
       if (gate) {
         gate.classList.add('active');
       }
+      const isBtOn = (window.AndroidBLE && typeof window.AndroidBLE.isBluetoothEnabled === 'function') ? window.AndroidBLE.isBluetoothEnabled() : true;
+      updateSetupGateView(isBtOn);
+
+      const boxSaved = document.getElementById('boxSavedDevice');
+      const boxDetected = document.getElementById('boxDetectedDevices');
+      const radarWrap = document.querySelector('.setup-radar-wrap');
+      if (boxSaved) boxSaved.style.display = 'none';
+      if (boxDetected) boxDetected.style.display = 'flex';
+      if (radarWrap) radarWrap.style.display = 'flex';
+
       // Mulai scan ulang perangkat secara otomatis
       retryAutoScan();
       showNeonToast('Silakan pilih perangkat');
@@ -3289,8 +3310,12 @@ function closeResetWiFiConfirmModal() {
 function executeResetWiFiCommand() {
   closeResetWiFiConfirmModal();
   sendCommand({ c: 'reset_wifi' });
-  showNeonToast('WiFi dihapus');
+  showNeonToast('WiFi dihapus, me-restart robot...');
   triggerHaptic(40);
+  // Mulai alur restart di aplikasi agar sinkron dengan reboot otomatis robot
+  setTimeout(() => {
+    executeRebootCommand(false);
+  }, 250);
 }
 
 // Restore saved preferences on startup & trigger auto check
