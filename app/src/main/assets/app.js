@@ -752,16 +752,17 @@ window.onBLEReceived = function(jsonStr) {
       }
     }
 
-    // Pembaruan crypto ticker real-time dari robot ESP32 (Sinkronisasi Dua Arah)
-    if (data.status === 'crypto_sync' || typeof data.coin === 'number' || (data.crypto && typeof data.crypto.coin === 'number')) {
-      const cIdx = (data.crypto && typeof data.crypto.coin === 'number') ? data.crypto.coin : (typeof data.coin === 'number' ? data.coin : 0);
-      if (typeof CRYPTO_POPULAR_COINS !== 'undefined' && cIdx >= 0 && cIdx < CRYPTO_POPULAR_COINS.length) {
-        if (cIdx !== currentCryptoCoinIndex) {
-          currentCryptoCoinIndex = cIdx;
-          currentCryptoCoin = CRYPTO_POPULAR_COINS[cIdx];
-          if (typeof updateOledCryptoPreview === 'function') updateOledCryptoPreview();
-          if (typeof debouncedFetchCrypto === 'function') debouncedFetchCrypto();
-        }
+    // Pembaruan crypto / saham ticker real-time dari robot ESP32 (Sinkronisasi Dua Arah)
+    if (data.status === 'crypto_cycle' || data.status === 'crypto_sync' || typeof data.coin === 'number' || (data.crypto && typeof data.crypto.coin === 'number')) {
+      const rotIdx = (typeof data.idx === 'number')
+        ? data.idx
+        : ((data.crypto && typeof data.crypto.coin === 'number') ? data.crypto.coin : (typeof data.coin === 'number' ? data.coin : 0));
+      const total = (typeof configuredCryptoCoins !== 'undefined' && typeof configuredStocks !== 'undefined')
+        ? (configuredCryptoCoins.length + configuredStocks.length)
+        : 10;
+      if (rotIdx >= 0 && rotIdx < total) {
+        currentVirtualRotationIndex = rotIdx;
+        if (typeof updateOledCryptoPreview === 'function') updateOledCryptoPreview();
       }
     }
 
@@ -3275,15 +3276,58 @@ CRYPTO_ALL_CURRENCIES.forEach(c => {
   CRYPTO_CURRENCY_SYMBOLS[c.code] = c.symbol;
 });
 
-// State aktif Tipe Aset yang sedang aktif ditampilkan ('crypto' atau 'stock')
+// State aktif Tipe Aset yang sedang diedit / dipilih ('crypto' atau 'stock')
 let currentActiveAssetType = 'crypto';
 
-// State aktif Coin Crypto
-let currentCryptoCoin = { symbol: 'BTC', name: 'Bitcoin', id: 'bitcoin' };
-let currentCryptoCoinIndex = 0;
+// ==========================================
+// KONFIGURASI MULTI-ASSET (1..5 COIN & 1..5 SAHAM -> TOTAL 2..10)
+// ==========================================
+const DEFAULT_CRYPTO_SLOTS = [
+  { symbol: 'BTC', name: 'Bitcoin', id: 'bitcoin' },
+  { symbol: 'ETH', name: 'Ethereum', id: 'ethereum' },
+  { symbol: 'SOL', name: 'Solana', id: 'solana' },
+  { symbol: 'BNB', name: 'Binance Coin', id: 'binancecoin' },
+  { symbol: 'DOGE', name: 'Dogecoin', id: 'dogecoin' }
+];
 
-// State aktif Saham (Stocks)
-let currentStock = { symbol: 'BBCA', querySym: 'BBCA.JK', name: 'Bank Central Asia', market: 'IDX', curr: 'IDR' };
+const DEFAULT_STOCK_SLOTS = [
+  { symbol: 'BBCA', querySym: 'BBCA.JK', name: 'Bank Central Asia', market: 'IDX', curr: 'IDR' },
+  { symbol: 'BBRI', querySym: 'BBRI.JK', name: 'Bank Rakyat Indonesia', market: 'IDX', curr: 'IDR' },
+  { symbol: 'BMRI', querySym: 'BMRI.JK', name: 'Bank Mandiri', market: 'IDX', curr: 'IDR' },
+  { symbol: 'GOTO', querySym: 'GOTO.JK', name: 'GoTo Gojek Tokopedia', market: 'IDX', curr: 'IDR' },
+  { symbol: 'AAPL', querySym: 'AAPL', name: 'Apple Inc.', market: 'US', curr: 'USD' }
+];
+
+let configuredCryptoCoins = (() => {
+  try {
+    const saved = localStorage.getItem('robot_cfg_crypto_coins_list');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length >= 1 && parsed.length <= 5) return parsed;
+    }
+  } catch (e) {}
+  return [...DEFAULT_CRYPTO_SLOTS];
+})();
+
+let configuredStocks = (() => {
+  try {
+    const saved = localStorage.getItem('robot_cfg_stocks_list');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length >= 1 && parsed.length <= 5) return parsed;
+    }
+  } catch (e) {}
+  return [...DEFAULT_STOCK_SLOTS];
+})();
+
+let activeCryptoSlotIndex = 0;
+let activeStockSlotIndex = 0;
+let currentVirtualRotationIndex = 0; // 0 .. (configuredCryptoCoins.length + configuredStocks.length - 1)
+
+// Backward-compatibility aliases
+let currentCryptoCoin = configuredCryptoCoins[0];
+let currentCryptoCoinIndex = 0;
+let currentStock = configuredStocks[0];
 let currentStockIndex = 0;
 
 // State aktif Mata Uang
@@ -3303,20 +3347,160 @@ let stockSearchTimer = null;
 let cryptoCurrencySearchTimer = null;
 let cryptoActiveAbortController = null;
 let stockActiveAbortController = null;
-let usdToIdrRate = 16200; // Nilai estimasi kurs USD/IDR
+let usdToIdrRate = 16250; // Nilai estimasi kurs USD/IDR
 
 // Cache lokal untuk menyimpan data harga (coin & saham)
 let cryptoPriceCache = {
-  'BTC_USD': { price: 74920, change24h: 3.25, isUp: true },
-  'ETH_USD': { price: 2950, change24h: -1.15, isUp: false },
-  'SOL_USD': { price: 215, change24h: 4.80, isUp: true },
-  'BNB_USD': { price: 620, change24h: 0.85, isUp: true },
-  'DOGE_USD': { price: 0.28, change24h: 2.10, isUp: true },
+  'BTC_USD': { price: 75100, change24h: -1.25, isUp: false },
+  'ETH_USD': { price: 2140, change24h: -4.00, isUp: false },
+  'SOL_USD': { price: 87.0, change24h: -2.80, isUp: false },
+  'BNB_USD': { price: 690, change24h: -1.00, isUp: false },
+  'DOGE_USD': { price: 0.0705, change24h: -1.10, isUp: false },
   'BBCA_IDR': { price: 5325, change24h: 2.40, isUp: true },
-  'BBRI_IDR': { price: 4750, change24h: -0.80, isUp: false },
-  'AAPL_USD': { price: 349.95, change24h: 2.21, isUp: true },
-  'NVDA_USD': { price: 142.50, change24h: 4.15, isUp: true }
+  'BBRI_IDR': { price: 2820, change24h: 0.36, isUp: true },
+  'BMRI_IDR': { price: 3710, change24h: 0.27, isUp: true },
+  'GOTO_IDR': { price: 25, change24h: 4.17, isUp: true },
+  'AAPL_USD': { price: 352.16, change24h: 2.85, isUp: true }
 };
+
+function saveConfiguredAssets() {
+  try {
+    localStorage.setItem('robot_cfg_crypto_coins_list', JSON.stringify(configuredCryptoCoins));
+    localStorage.setItem('robot_cfg_stocks_list', JSON.stringify(configuredStocks));
+  } catch (e) {}
+}
+
+function updateRotationBadgeUI() {
+  const badge = document.getElementById('cryptoRotationBadge');
+  if (badge) {
+    const cCount = configuredCryptoCoins.length;
+    const sCount = configuredStocks.length;
+    const total = cCount + sCount;
+    badge.textContent = `ROTASI OTOMATIS: ${total} ASET (${cCount} COIN + ${sCount} SAHAM) • 6 DETIK`;
+  }
+}
+
+function renderCryptoSlotsUI() {
+  const bar = document.getElementById('cryptoCoinsSlotsBar');
+  if (!bar) return;
+  bar.innerHTML = '';
+  configuredCryptoCoins.forEach((coin, idx) => {
+    const chip = document.createElement('div');
+    chip.className = 'chip-preset' + (idx === activeCryptoSlotIndex ? ' active' : '');
+    chip.textContent = `${idx + 1}: ${coin.symbol}`;
+    chip.onclick = () => selectCryptoSlot(idx);
+    bar.appendChild(chip);
+  });
+  updateRotationBadgeUI();
+}
+
+function selectCryptoSlot(idx) {
+  if (idx < 0 || idx >= configuredCryptoCoins.length) return;
+  activeCryptoSlotIndex = idx;
+  currentActiveAssetType = 'crypto';
+  currentVirtualRotationIndex = idx;
+  currentCryptoCoin = configuredCryptoCoins[idx];
+  selectedCryptoCoin = currentCryptoCoin;
+  const input = document.getElementById('cfgCryptoCoinInput');
+  if (input) input.value = currentCryptoCoin.symbol + ' - ' + currentCryptoCoin.name;
+  renderCryptoSlotsUI();
+  updateOledCryptoPreview();
+  sendCommand({ c: 'crypto_cycle', idx: currentVirtualRotationIndex }, true);
+}
+
+function addCryptoCoinSlot() {
+  if (configuredCryptoCoins.length >= 5) {
+    showNeonToast('Maksimal 5 coin crypto!');
+    return;
+  }
+  const nextCoin = CRYPTO_POPULAR_COINS.find(c => !configuredCryptoCoins.some(item => item.symbol.toUpperCase() === c.symbol.toUpperCase())) || {
+    symbol: 'PEPE', name: 'Pepe', id: 'pepe'
+  };
+  configuredCryptoCoins.push({ ...nextCoin });
+  activeCryptoSlotIndex = configuredCryptoCoins.length - 1;
+  saveConfiguredAssets();
+  renderCryptoSlotsUI();
+  selectCryptoSlot(activeCryptoSlotIndex);
+  debouncedFetchCrypto();
+  showNeonToast('Slot Coin Ditambahkan (' + configuredCryptoCoins.length + '/5)');
+}
+
+function removeCryptoCoinSlot() {
+  if (configuredCryptoCoins.length <= 1) {
+    showNeonToast('Minimal 1 coin crypto harus tetap ada!');
+    return;
+  }
+  configuredCryptoCoins.splice(activeCryptoSlotIndex, 1);
+  if (activeCryptoSlotIndex >= configuredCryptoCoins.length) {
+    activeCryptoSlotIndex = configuredCryptoCoins.length - 1;
+  }
+  saveConfiguredAssets();
+  renderCryptoSlotsUI();
+  selectCryptoSlot(activeCryptoSlotIndex);
+  debouncedFetchCrypto();
+  showNeonToast('Slot Coin Dihapus');
+}
+
+function renderStockSlotsUI() {
+  const bar = document.getElementById('stockSlotsBar');
+  if (!bar) return;
+  bar.innerHTML = '';
+  configuredStocks.forEach((stock, idx) => {
+    const chip = document.createElement('div');
+    chip.className = 'chip-preset' + (idx === activeStockSlotIndex ? ' active' : '');
+    chip.textContent = `${idx + 1}: ${stock.symbol}`;
+    chip.onclick = () => selectStockSlot(idx);
+    bar.appendChild(chip);
+  });
+  updateRotationBadgeUI();
+}
+
+function selectStockSlot(idx) {
+  if (idx < 0 || idx >= configuredStocks.length) return;
+  activeStockSlotIndex = idx;
+  currentActiveAssetType = 'stock';
+  currentVirtualRotationIndex = configuredCryptoCoins.length + idx;
+  currentStock = configuredStocks[idx];
+  selectedStock = currentStock;
+  const input = document.getElementById('cfgStockInput');
+  if (input) input.value = currentStock.symbol + ' - ' + currentStock.name;
+  renderStockSlotsUI();
+  updateOledCryptoPreview();
+  sendCommand({ c: 'crypto_cycle', idx: currentVirtualRotationIndex }, true);
+}
+
+function addStockSlot() {
+  if (configuredStocks.length >= 5) {
+    showNeonToast('Maksimal 5 saham!');
+    return;
+  }
+  const nextStock = STOCK_POPULAR_LIST.find(s => !configuredStocks.some(item => item.symbol.toUpperCase() === s.symbol.toUpperCase())) || {
+    symbol: 'TSLA', querySym: 'TSLA', name: 'Tesla Inc.', market: 'US', curr: 'USD'
+  };
+  configuredStocks.push({ ...nextStock });
+  activeStockSlotIndex = configuredStocks.length - 1;
+  saveConfiguredAssets();
+  renderStockSlotsUI();
+  selectStockSlot(activeStockSlotIndex);
+  debouncedFetchCrypto();
+  showNeonToast('Slot Saham Ditambahkan (' + configuredStocks.length + '/5)');
+}
+
+function removeStockSlot() {
+  if (configuredStocks.length <= 1) {
+    showNeonToast('Minimal 1 saham harus tetap ada!');
+    return;
+  }
+  configuredStocks.splice(activeStockSlotIndex, 1);
+  if (activeStockSlotIndex >= configuredStocks.length) {
+    activeStockSlotIndex = configuredStocks.length - 1;
+  }
+  saveConfiguredAssets();
+  renderStockSlotsUI();
+  selectStockSlot(activeStockSlotIndex);
+  debouncedFetchCrypto();
+  showNeonToast('Slot Saham Dihapus');
+}
 
 function formatCryptoDisplayPrice(price, currCode) {
   if (typeof price !== 'number' || isNaN(price) || price <= 0) return '0';
@@ -3353,20 +3537,36 @@ function formatCryptoDisplayPrice(price, currCode) {
 }
 
 function updateOledCryptoPreview() {
-  const isStock = (currentActiveAssetType === 'stock');
-  const assetSym = isStock
-    ? ((currentStock && currentStock.symbol) ? currentStock.symbol.toUpperCase() : 'BBCA')
-    : ((currentCryptoCoin && currentCryptoCoin.symbol) ? currentCryptoCoin.symbol.toUpperCase() : 'BTC');
-  const currCode = (currentCryptoCurrency && currentCryptoCurrency.code) ? currentCryptoCurrency.code.toUpperCase() : (isStock ? 'IDR' : 'USD');
+  const cCount = configuredCryptoCoins.length;
+  const sCount = configuredStocks.length;
+  const total = cCount + sCount;
+  if (currentVirtualRotationIndex >= total) currentVirtualRotationIndex = 0;
+
+  const isStock = (currentVirtualRotationIndex >= cCount);
+  let assetSym = '';
+  let currCode = '';
+  let headerTitle = '';
+
+  if (isStock) {
+    const stockIdx = currentVirtualRotationIndex - cCount;
+    const curStock = configuredStocks[stockIdx] || configuredStocks[0];
+    assetSym = (curStock && curStock.symbol) ? curStock.symbol.toUpperCase() : 'BBCA';
+    currCode = (curStock && curStock.curr) ? curStock.curr : ((currentCryptoCurrency && currentCryptoCurrency.code) ? currentCryptoCurrency.code.toUpperCase() : 'IDR');
+    headerTitle = 'SAHAM';
+  } else {
+    const curCoin = configuredCryptoCoins[currentVirtualRotationIndex] || configuredCryptoCoins[0];
+    assetSym = (curCoin && curCoin.symbol) ? curCoin.symbol.toUpperCase() : 'BTC';
+    currCode = (currentCryptoCurrency && currentCryptoCurrency.code) ? currentCryptoCurrency.code.toUpperCase() : 'USD';
+    headerTitle = 'CRYPTO';
+  }
+
   const pairKey = assetSym + '_' + currCode;
   const pairSymbol = assetSym + '/' + currCode;
-
-  const data = cryptoPriceCache[pairKey] || { price: (isStock ? 5325 : 74920), change24h: 2.40, isUp: true };
+  const data = cryptoPriceCache[pairKey] || { price: (isStock ? 5325 : 74600), change24h: 2.40, isUp: true };
   const priceStr = formatCryptoDisplayPrice(data.price, currCode);
   const changeNumStr = (data.isUp ? '+' : '') + Math.abs(data.change24h).toFixed(2) + '%';
   const changeFullStr = '24h ' + changeNumStr;
   const arrowStr = data.isUp ? '▲' : '▼';
-  const headerTitle = isStock ? 'SAHAM' : 'CRYPTO';
 
   // 1. Grid Layar OLED Robot (Page 3)
   const prevCoin = document.getElementById('previewCryptoCoin');
@@ -3389,167 +3589,238 @@ function updateOledCryptoPreview() {
   if (stagePrice) stagePrice.textContent = priceStr;
   if (stageArrow) stageArrow.textContent = arrowStr;
   if (stageChange) stageChange.textContent = changeFullStr;
+
+  // Sorot slot chip yang aktif pada baris slot
+  const cryptoChips = document.querySelectorAll('#cryptoCoinsSlotsBar .chip-preset');
+  cryptoChips.forEach((chip, i) => {
+    chip.classList.toggle('active', (!isStock && i === currentVirtualRotationIndex));
+  });
+  const stockChips = document.querySelectorAll('#stockSlotsBar .chip-preset');
+  stockChips.forEach((chip, i) => {
+    chip.classList.toggle('active', (isStock && i === (currentVirtualRotationIndex - cCount)));
+  });
+}
+
+function sendAllTickerItemsToRobot() {
+  const cCount = configuredCryptoCoins.length;
+  const sCount = configuredStocks.length;
+  const total = cCount + sCount;
+  const globalCurr = (currentCryptoCurrency && currentCryptoCurrency.code) ? currentCryptoCurrency.code.toUpperCase() : 'USD';
+
+  // Kirim semua slot Crypto (index 0 .. cCount - 1)
+  configuredCryptoCoins.forEach((coin, idx) => {
+    const assetSym = coin.symbol.toUpperCase();
+    const pairKey = assetSym + '_' + globalCurr;
+    const pairSymbol = assetSym + '/' + globalCurr;
+    const data = cryptoPriceCache[pairKey] || { price: 74600, change24h: 2.40, isUp: true };
+    const priceStr = formatCryptoDisplayPrice(data.price, globalCurr);
+    const changeStr = (data.isUp ? '+' : '') + Math.abs(data.change24h).toFixed(2) + '%';
+    const isCurrentActive = (idx === currentVirtualRotationIndex);
+
+    sendCommand({
+      c: 'crypto',
+      idx: idx,
+      total: total,
+      sym: pairSymbol,
+      price: priceStr,
+      chg: changeStr,
+      is_up: data.isUp,
+      title: 'CRYPTO',
+      force: isCurrentActive
+    }, true);
+  });
+
+  // Kirim semua slot Saham (index cCount .. total - 1)
+  configuredStocks.forEach((stock, sIdx) => {
+    const globalIdx = cCount + sIdx;
+    const assetSym = stock.symbol.toUpperCase();
+    const stockCurr = stock.curr || (stock.market === 'IDX' ? 'IDR' : globalCurr);
+    const pairKey = assetSym + '_' + stockCurr;
+    const pairSymbol = assetSym + '/' + stockCurr;
+    const data = cryptoPriceCache[pairKey] || { price: 5325, change24h: 1.85, isUp: true };
+    const priceStr = formatCryptoDisplayPrice(data.price, stockCurr);
+    const changeStr = (data.isUp ? '+' : '') + Math.abs(data.change24h).toFixed(2) + '%';
+    const isCurrentActive = (globalIdx === currentVirtualRotationIndex);
+
+    sendCommand({
+      c: 'crypto',
+      idx: globalIdx,
+      total: total,
+      sym: pairSymbol,
+      price: priceStr,
+      chg: changeStr,
+      is_up: data.isUp,
+      title: 'SAHAM',
+      force: isCurrentActive
+    }, true);
+  });
 }
 
 function sendCryptoDataToRobot() {
-  const isStock = (currentActiveAssetType === 'stock');
-  const assetSym = isStock
-    ? ((currentStock && currentStock.symbol) ? currentStock.symbol.toUpperCase() : 'BBCA')
-    : ((currentCryptoCoin && currentCryptoCoin.symbol) ? currentCryptoCoin.symbol.toUpperCase() : 'BTC');
-  const currCode = (currentCryptoCurrency && currentCryptoCurrency.code) ? currentCryptoCurrency.code.toUpperCase() : (isStock ? 'IDR' : 'USD');
-  const pairKey = assetSym + '_' + currCode;
-  const pairSymbol = assetSym + '/' + currCode;
+  sendAllTickerItemsToRobot();
+}
 
-  const data = cryptoPriceCache[pairKey] || { price: (isStock ? 5325 : 74920), change24h: 2.40, isUp: true };
-  const priceStr = formatCryptoDisplayPrice(data.price, currCode);
-  const changeStr = (data.isUp ? '+' : '') + Math.abs(data.change24h).toFixed(2) + '%';
-  const headerTitle = isStock ? 'SAHAM' : 'CRYPTO';
-  const assetIdx = isStock ? currentStockIndex : currentCryptoCoinIndex;
+async function fetchSingleCryptoPrice(coin, currCode) {
+  const coinSym = coin.symbol.toUpperCase();
+  const pairKey = coinSym + '_' + currCode;
+  let gotPrice = false;
+  let priceVal = 0;
+  let changeVal = 0;
 
-  sendCommand({
-    c: 'crypto',
-    sym: pairSymbol,
-    price: priceStr,
-    chg: changeStr,
-    is_up: data.isUp,
-    idx: assetIdx,
-    title: headerTitle
-  }, true);
+  // 1. Cek Indodax jika mata uang IDR
+  if (currCode === 'IDR') {
+    try {
+      const idxUrl = 'https://indodax.com/api/ticker/' + coinSym.toLowerCase() + 'idr';
+      const idxData = await fetchGeocoding(idxUrl, 2500);
+      if (idxData && idxData.ticker && idxData.ticker.last) {
+        priceVal = parseFloat(idxData.ticker.last);
+        if (priceVal > 0) gotPrice = true;
+      }
+    } catch (e) {}
+  }
+
+  // 2. Ambil dari Gate.io (Sangat cepat, live, tanpa blokir Kominfo)
+  try {
+    const gateUrl = 'https://api.gateio.ws/api/v4/spot/tickers?currency_pair=' + encodeURIComponent(coinSym + '_USDT');
+    const gateData = await fetchGeocoding(gateUrl, 2500);
+    if (Array.isArray(gateData) && gateData.length > 0 && gateData[0].last) {
+      const usdPrice = parseFloat(gateData[0].last);
+      changeVal = parseFloat(gateData[0].change_percentage) || 0;
+
+      if (!gotPrice) {
+        if (currCode === 'USD' || currCode === 'USDT') {
+          priceVal = usdPrice;
+          gotPrice = true;
+        } else if (currCode === 'IDR') {
+          priceVal = usdPrice * (usdToIdrRate > 0 ? usdToIdrRate : 16250);
+          gotPrice = true;
+        } else {
+          priceVal = usdPrice;
+          gotPrice = true;
+        }
+      }
+    }
+  } catch (e) {}
+
+  // 3. Fallback ke CoinGecko untuk coin langka/DEX
+  if (!gotPrice) {
+    try {
+      const coinId = coin.id || coinSym.toLowerCase();
+      const vsCurrs = currCode.toLowerCase() + ',usd';
+      const cgUrl = 'https://api.coingecko.com/api/v3/simple/price?ids=' + encodeURIComponent(coinId) +
+                    '&vs_currencies=' + vsCurrs + '&include_24hr_change=true';
+      const cgData = await fetchGeocoding(cgUrl, 2500);
+      if (cgData && cgData[coinId]) {
+        const item = cgData[coinId];
+        const cKey = currCode.toLowerCase();
+        if (typeof item[cKey] === 'number') {
+          priceVal = item[cKey];
+          changeVal = item[cKey + '_24h_change'] || item['usd_24h_change'] || 0;
+          gotPrice = true;
+        } else if (typeof item.usd === 'number') {
+          priceVal = (currCode === 'IDR') ? (item.usd * usdToIdrRate) : item.usd;
+          changeVal = item.usd_24h_change || 0;
+          gotPrice = true;
+        }
+      }
+    } catch (e) {}
+  }
+
+  if (gotPrice && priceVal > 0) {
+    cryptoPriceCache[pairKey] = {
+      price: priceVal,
+      change24h: changeVal,
+      isUp: (changeVal >= 0)
+    };
+  }
+}
+
+async function fetchSingleStockPrice(stock, currCode) {
+  const stockSym = stock.symbol.toUpperCase();
+  let qSym = stock.querySym || stockSym;
+
+  if (!qSym.includes('.') && (stock.market === 'IDX' || stockSym.length === 4)) {
+    qSym = stockSym + '.JK';
+  }
+
+  const pairKey = stockSym + '_' + currCode;
+  let gotPrice = false;
+  let priceVal = 0;
+  let changeVal = 0;
+
+  try {
+    let yfUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(qSym) + '?interval=1d';
+    let yfData = await fetchGeocoding(yfUrl, 2500).catch(async () => {
+      return await fetchGeocoding('https://query2.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(qSym) + '?interval=1d', 2500);
+    });
+
+    if (yfData && yfData.chart && Array.isArray(yfData.chart.result) && yfData.chart.result.length > 0) {
+      const meta = yfData.chart.result[0].meta;
+      if (meta && typeof meta.regularMarketPrice === 'number') {
+        const rawPrice = meta.regularMarketPrice;
+        const baseCurr = (meta.currency || 'USD').toUpperCase();
+        changeVal = meta.regularMarketChangePercent || 0;
+        if (changeVal === 0 && typeof meta.chartPreviousClose === 'number' && meta.chartPreviousClose > 0) {
+          changeVal = ((rawPrice - meta.chartPreviousClose) / meta.chartPreviousClose) * 100;
+        }
+
+        if (currCode === baseCurr) {
+          priceVal = rawPrice;
+        } else if (baseCurr === 'IDR' && currCode === 'USD') {
+          priceVal = rawPrice / (usdToIdrRate > 0 ? usdToIdrRate : 16250);
+        } else if (baseCurr === 'USD' && currCode === 'IDR') {
+          priceVal = rawPrice * (usdToIdrRate > 0 ? usdToIdrRate : 16250);
+        } else {
+          priceVal = rawPrice;
+        }
+        gotPrice = true;
+      }
+    }
+  } catch (e) {}
+
+  if (gotPrice && priceVal > 0) {
+    cryptoPriceCache[pairKey] = {
+      price: priceVal,
+      change24h: changeVal,
+      isUp: (changeVal >= 0)
+    };
+  }
 }
 
 async function fetchCryptoLivePrices() {
   if (isCryptoFetching) return;
   isCryptoFetching = true;
 
-  const isStock = (currentActiveAssetType === 'stock');
-  const currCode = (currentCryptoCurrency && currentCryptoCurrency.code) ? currentCryptoCurrency.code.toUpperCase() : (isStock ? 'IDR' : 'USD');
+  const globalCurr = (currentCryptoCurrency && currentCryptoCurrency.code) ? currentCryptoCurrency.code.toUpperCase() : 'USD';
 
   try {
-    let gotPrice = false;
-    let priceVal = 0;
-    let changeVal = 0;
-
-    if (isStock) {
-      // ==========================================
-      // AMBIL HARGA SAHAM LIVE (YAHOO FINANCE API)
-      // ==========================================
-      const stockSym = (currentStock && currentStock.symbol) ? currentStock.symbol.toUpperCase() : 'BBCA';
-      let qSym = (currentStock && currentStock.querySym) ? currentStock.querySym : stockSym;
-
-      // Cek otomatis suffix .JK untuk saham Indonesia jika belum ada
-      if (!qSym.includes('.') && (currentStock?.market === 'IDX' || stockSym.length === 4)) {
-        const foundIdx = STOCK_POPULAR_LIST.find(s => s.symbol === stockSym && s.market === 'IDX');
-        if (foundIdx) qSym = foundIdx.querySym;
-        else if (currCode === 'IDR') qSym = stockSym + '.JK';
+    // 1. Ambil estimasi kurs live USDT/IDR dari Indodax secara non-blocking
+    try {
+      const idrData = await fetchGeocoding('https://indodax.com/api/ticker/usdtidr', 2000);
+      if (idrData && idrData.ticker && idrData.ticker.last) {
+        const r = parseFloat(idrData.ticker.last);
+        if (r > 10000 && r < 25000) usdToIdrRate = r;
       }
+    } catch (e) {}
 
-      const yfUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(qSym) + '?interval=1d';
-      const yfData = await fetchGeocoding(yfUrl);
+    // 2. Fetch parallel semua coin crypto yang dikonfigurasi (maks 5)
+    const cryptoFetches = configuredCryptoCoins.map(coin => fetchSingleCryptoPrice(coin, globalCurr));
 
-      if (yfData && yfData.chart && Array.isArray(yfData.chart.result) && yfData.chart.result.length > 0) {
-        const meta = yfData.chart.result[0].meta;
-        if (meta && typeof meta.regularMarketPrice === 'number') {
-          const rawPrice = meta.regularMarketPrice;
-          const baseCurr = (meta.currency || 'USD').toUpperCase();
-          changeVal = meta.regularMarketChangePercent || 0;
-          if (changeVal === 0 && typeof meta.chartPreviousClose === 'number' && meta.chartPreviousClose > 0) {
-            changeVal = ((rawPrice - meta.chartPreviousClose) / meta.chartPreviousClose) * 100;
-          }
+    // 3. Fetch parallel semua saham yang dikonfigurasi (maks 5)
+    const stockFetches = configuredStocks.map(stock => {
+      const stockCurr = stock.curr || (stock.market === 'IDX' ? 'IDR' : globalCurr);
+      return fetchSingleStockPrice(stock, stockCurr);
+    });
 
-          // Konversi mata uang jika berbeda dari base currency saham
-          if (currCode === baseCurr) {
-            priceVal = rawPrice;
-          } else if (baseCurr === 'IDR' && currCode === 'USD') {
-            priceVal = rawPrice / (usdToIdrRate > 0 ? usdToIdrRate : 16200);
-          } else if (baseCurr === 'USD' && currCode === 'IDR') {
-            priceVal = rawPrice * (usdToIdrRate > 0 ? usdToIdrRate : 16200);
-          } else {
-            priceVal = rawPrice;
-          }
-          gotPrice = true;
-        }
-      }
-
-      if (gotPrice && priceVal > 0) {
-        const pairKey = stockSym + '_' + currCode;
-        cryptoPriceCache[pairKey] = {
-          price: priceVal,
-          change24h: changeVal,
-          isUp: (changeVal >= 0)
-        };
-      }
-    } else {
-      // ==========================================
-      // AMBIL HARGA COIN CRYPTO LIVE (BINANCE & COINGECKO)
-      // ==========================================
-      const coinSym = (currentCryptoCoin && currentCryptoCoin.symbol) ? currentCryptoCoin.symbol.toUpperCase() : 'BTC';
-      const coinId = (currentCryptoCoin && currentCryptoCoin.id) ? currentCryptoCoin.id : coinSym.toLowerCase();
-      const pairKey = coinSym + '_' + currCode;
-
-      // 1. Coba Binance API jika pasangan USDT ada (sangat cepat & stabil)
-      try {
-        const bnUrl = 'https://api.binance.com/api/v3/ticker/24hr?symbol=' + encodeURIComponent(coinSym + 'USDT');
-        const bnData = await fetchGeocoding(bnUrl);
-        if (bnData && bnData.lastPrice) {
-          const usdPrice = parseFloat(bnData.lastPrice);
-          changeVal = parseFloat(bnData.priceChangePercent) || 0;
-
-          if (currCode === 'USD' || currCode === 'USDT') {
-            priceVal = usdPrice;
-            gotPrice = true;
-          } else if (currCode === 'IDR') {
-            try {
-              const idrData = await fetchGeocoding('https://api.binance.com/api/v3/ticker/24hr?symbol=USDTIDR');
-              if (idrData && idrData.lastPrice) {
-                const r = parseFloat(idrData.lastPrice);
-                if (r > 10000 && r < 25000) usdToIdrRate = r;
-              }
-            } catch (e) {}
-            priceVal = usdPrice * usdToIdrRate;
-            gotPrice = true;
-          }
-        }
-      } catch (e) {
-        // Lewati ke CoinGecko jika pasangan tidak ada di Binance
-      }
-
-      // 2. Jika belum dapat, gunakan CoinGecko API (Mendukung SEMUA coin di dunia)
-      if (!gotPrice) {
-        const vsCurrs = currCode.toLowerCase() + ',usd';
-        const cgUrl = 'https://api.coingecko.com/api/v3/simple/price?ids=' + encodeURIComponent(coinId) +
-                      '&vs_currencies=' + vsCurrs + '&include_24hr_change=true';
-        const cgData = await fetchGeocoding(cgUrl);
-        if (cgData && cgData[coinId]) {
-          const item = cgData[coinId];
-          const cKey = currCode.toLowerCase();
-          if (typeof item[cKey] === 'number') {
-            priceVal = item[cKey];
-            changeVal = item[cKey + '_24h_change'] || item['usd_24h_change'] || 0;
-            gotPrice = true;
-          } else if (typeof item.usd === 'number') {
-            priceVal = (currCode === 'IDR') ? (item.usd * usdToIdrRate) : item.usd;
-            changeVal = item.usd_24h_change || 0;
-            gotPrice = true;
-          }
-        }
-      }
-
-      if (gotPrice && priceVal > 0) {
-        cryptoPriceCache[pairKey] = {
-          price: priceVal,
-          change24h: changeVal,
-          isUp: (changeVal >= 0)
-        };
-      }
-    }
+    await Promise.allSettled([...cryptoFetches, ...stockFetches]);
 
     updateOledCryptoPreview();
-    sendCryptoDataToRobot();
+    sendAllTickerItemsToRobot();
 
   } catch (err) {
     console.warn('[TICKER] Gagal mengambil data harga live:', err);
     updateOledCryptoPreview();
-    sendCryptoDataToRobot();
+    sendAllTickerItemsToRobot();
   } finally {
     isCryptoFetching = false;
   }
@@ -4132,24 +4403,24 @@ async function applyCryptoCoin(isFromCycle = false) {
   triggerHaptic(25);
   setCryptoCoinBtnState('loading');
 
-  currentCryptoCoin = targetCoin;
-  const popIdx = CRYPTO_POPULAR_COINS.findIndex(c => c.symbol.toUpperCase() === targetCoin.symbol.toUpperCase());
-  if (popIdx >= 0) currentCryptoCoinIndex = popIdx;
+  // Simpan ke slot yang sedang aktif dipilih (1..5)
+  configuredCryptoCoins[activeCryptoSlotIndex] = { ...targetCoin };
+  currentCryptoCoin = configuredCryptoCoins[activeCryptoSlotIndex];
+  saveConfiguredAssets();
+  renderCryptoSlotsUI();
+
+  currentVirtualRotationIndex = activeCryptoSlotIndex;
+  updateOledCryptoPreview();
 
   try {
-    localStorage.setItem('robot_cfg_crypto_coin_sym', targetCoin.symbol);
-    localStorage.setItem('robot_cfg_crypto_coin_name', targetCoin.name);
-    localStorage.setItem('robot_cfg_crypto_coin_id', targetCoin.id || targetCoin.symbol.toLowerCase());
-    
-    // Perbarui UI dan kirim mode 20 seketika ke OLED fisik robot
-    updateOledCryptoPreview();
+    // Berpindah ke mode 20 di robot dan sinkronkan slot aktif
     sendCommand({ c: 'm', v: 20 }, true);
-    sendCryptoDataToRobot();
+    sendCommand({ c: 'crypto_cycle', idx: currentVirtualRotationIndex }, true);
 
     await fetchCryptoLivePrices();
     triggerHaptic(30);
-    setCryptoCoinBtnState('success', targetCoin.symbol + ' AKTIF');
-    showNeonToast('Coin Crypto diatur: ' + targetCoin.symbol);
+    setCryptoCoinBtnState('success', 'SLOT ' + (activeCryptoSlotIndex + 1) + ': ' + targetCoin.symbol + ' AKTIF');
+    showNeonToast('Slot ' + (activeCryptoSlotIndex + 1) + ' Coin Diatur: ' + targetCoin.symbol);
   } catch (e) {
     setCryptoCoinBtnState('error', 'GAGAL MEMUAT HARGA');
   } finally {
@@ -4189,25 +4460,24 @@ async function applyStock(isFromCycle = false) {
   triggerHaptic(25);
   setStockBtnState('loading');
 
-  currentStock = targetStock;
-  const popIdx = STOCK_POPULAR_LIST.findIndex(s => s.symbol.toUpperCase() === targetStock.symbol.toUpperCase());
-  if (popIdx >= 0) currentStockIndex = popIdx;
+  // Simpan ke slot saham yang sedang aktif dipilih (1..5)
+  configuredStocks[activeStockSlotIndex] = { ...targetStock };
+  currentStock = configuredStocks[activeStockSlotIndex];
+  saveConfiguredAssets();
+  renderStockSlotsUI();
+
+  currentVirtualRotationIndex = configuredCryptoCoins.length + activeStockSlotIndex;
+  updateOledCryptoPreview();
 
   try {
-    localStorage.setItem('robot_cfg_stock_sym', targetStock.symbol);
-    localStorage.setItem('robot_cfg_stock_name', targetStock.name);
-    localStorage.setItem('robot_cfg_stock_qsym', targetStock.querySym || targetStock.symbol);
-    localStorage.setItem('robot_cfg_stock_market', targetStock.market || 'GLOBAL');
-
-    // Perbarui UI dan kirim mode 20 seketika ke OLED fisik robot
-    updateOledCryptoPreview();
+    // Berpindah ke mode 20 di robot dan sinkronkan slot aktif
     sendCommand({ c: 'm', v: 20 }, true);
-    sendCryptoDataToRobot();
+    sendCommand({ c: 'crypto_cycle', idx: currentVirtualRotationIndex }, true);
 
     await fetchCryptoLivePrices();
     triggerHaptic(30);
-    setStockBtnState('success', targetStock.symbol + ' AKTIF');
-    showNeonToast('Saham diatur: ' + targetStock.symbol);
+    setStockBtnState('success', 'SLOT ' + (activeStockSlotIndex + 1) + ': ' + targetStock.symbol + ' AKTIF');
+    showNeonToast('Slot ' + (activeStockSlotIndex + 1) + ' Saham Diatur: ' + targetStock.symbol);
   } catch (e) {
     setStockBtnState('error', 'GAGAL MEMUAT HARGA');
   } finally {
@@ -4260,24 +4530,13 @@ async function applyCryptoCurrency() {
 
 function cycleCryptoCoinApp() {
   triggerHaptic(30);
-  if (currentActiveAssetType === 'stock') {
-    currentStockIndex = (currentStockIndex + 1) % STOCK_POPULAR_LIST.length;
-    currentStock = STOCK_POPULAR_LIST[currentStockIndex];
-    selectedStock = currentStock;
-    const input = document.getElementById('cfgStockInput');
-    if (input) input.value = currentStock.symbol + ' - ' + currentStock.name;
-  } else {
-    currentCryptoCoinIndex = (currentCryptoCoinIndex + 1) % CRYPTO_POPULAR_COINS.length;
-    currentCryptoCoin = CRYPTO_POPULAR_COINS[currentCryptoCoinIndex];
-    selectedCryptoCoin = currentCryptoCoin;
-    const input = document.getElementById('cfgCryptoCoinInput');
-    if (input) input.value = currentCryptoCoin.symbol + ' - ' + currentCryptoCoin.name;
+  const total = configuredCryptoCoins.length + configuredStocks.length;
+  if (total > 1) {
+    currentVirtualRotationIndex = (currentVirtualRotationIndex + 1) % total;
+    updateOledCryptoPreview();
+    sendCommand({ c: 'm', v: 20 }, true);
+    sendCommand({ c: 'crypto_cycle', idx: currentVirtualRotationIndex }, true);
   }
-
-  updateOledCryptoPreview();
-  sendCommand({ c: 'm', v: 20 }, true);
-  sendCryptoDataToRobot();
-  debouncedFetchCrypto();
 }
 
 function startCryptoInterval() {
@@ -4299,38 +4558,12 @@ function initCryptoFeature() {
     currentActiveAssetType = savedType;
   }
 
-  // 2. Muat preferensi Coin Crypto tersimpan
-  const savedSym = localStorage.getItem('robot_cfg_crypto_coin_sym');
-  const savedName = localStorage.getItem('robot_cfg_crypto_coin_name');
-  const savedId = localStorage.getItem('robot_cfg_crypto_coin_id');
-  if (savedSym) {
-    currentCryptoCoin = {
-      symbol: savedSym,
-      name: savedName || savedSym,
-      id: savedId || savedSym.toLowerCase()
-    };
-    const popIdx = CRYPTO_POPULAR_COINS.findIndex(c => c.symbol.toUpperCase() === savedSym.toUpperCase());
-    if (popIdx >= 0) currentCryptoCoinIndex = popIdx;
-  }
+  // 2. Render UI slot chips multi-asset
+  renderCryptoSlotsUI();
+  renderStockSlotsUI();
+  updateRotationBadgeUI();
 
-  // 3. Muat preferensi Saham tersimpan
-  const savedStockSym = localStorage.getItem('robot_cfg_stock_sym');
-  const savedStockName = localStorage.getItem('robot_cfg_stock_name');
-  const savedStockQSym = localStorage.getItem('robot_cfg_stock_qsym');
-  const savedStockMarket = localStorage.getItem('robot_cfg_stock_market');
-  if (savedStockSym) {
-    currentStock = {
-      symbol: savedStockSym,
-      querySym: savedStockQSym || savedStockSym,
-      name: savedStockName || savedStockSym,
-      market: savedStockMarket || 'IDX',
-      curr: (savedStockMarket === 'IDX' || savedStockSym.length === 4) ? 'IDR' : 'USD'
-    };
-    const stockIdx = STOCK_POPULAR_LIST.findIndex(s => s.symbol.toUpperCase() === savedStockSym.toUpperCase());
-    if (stockIdx >= 0) currentStockIndex = stockIdx;
-  }
-
-  // 4. Muat preferensi Mata Uang tersimpan
+  // 3. Muat preferensi Mata Uang tersimpan
   const savedCurrCode = localStorage.getItem('robot_cfg_crypto_curr_code');
   const savedCurrName = localStorage.getItem('robot_cfg_crypto_curr_name');
   const savedCurrSymbol = localStorage.getItem('robot_cfg_crypto_curr_symbol');
@@ -4343,10 +4576,11 @@ function initCryptoFeature() {
     CRYPTO_CURRENCY_SYMBOLS[savedCurrCode] = currentCryptoCurrency.symbol;
   }
 
-  // 5. Inisialisasi Teks di Ketiga Kotak Input
+  // 4. Inisialisasi Teks di Ketiga Kotak Input
   const coinInput = document.getElementById('cfgCryptoCoinInput');
-  if (coinInput && currentCryptoCoin) {
-    coinInput.value = currentCryptoCoin.symbol + ' - ' + currentCryptoCoin.name;
+  if (coinInput) {
+    const curCoin = configuredCryptoCoins[activeCryptoSlotIndex] || configuredCryptoCoins[0];
+    if (curCoin) coinInput.value = curCoin.symbol + ' - ' + curCoin.name;
     coinInput.addEventListener('input', (e) => {
       const q = e.target.value;
       if (cryptoCoinSearchTimer) clearTimeout(cryptoCoinSearchTimer);
@@ -4367,8 +4601,9 @@ function initCryptoFeature() {
   }
 
   const stockInput = document.getElementById('cfgStockInput');
-  if (stockInput && currentStock) {
-    stockInput.value = currentStock.symbol + ' - ' + currentStock.name;
+  if (stockInput) {
+    const curStock = configuredStocks[activeStockSlotIndex] || configuredStocks[0];
+    if (curStock) stockInput.value = curStock.symbol + ' - ' + curStock.name;
     stockInput.addEventListener('input', (e) => {
       const q = e.target.value;
       if (stockSearchTimer) clearTimeout(stockSearchTimer);
