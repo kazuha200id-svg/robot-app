@@ -752,6 +752,18 @@ window.onBLEReceived = function(jsonStr) {
       }
     }
 
+    // Pembaruan kripto ticker real-time dari robot ESP32 (Sinkronisasi Dua Arah)
+    if (data.status === 'crypto_sync' || typeof data.coin === 'number' || (data.crypto && typeof data.crypto.coin === 'number')) {
+      const cIdx = (data.crypto && typeof data.crypto.coin === 'number') ? data.crypto.coin : (typeof data.coin === 'number' ? data.coin : 0);
+      if (typeof CRYPTO_COIN_LIST !== 'undefined' && cIdx >= 0 && cIdx < CRYPTO_COIN_LIST.length) {
+        if (cIdx !== currentCryptoCoinIndex) {
+          currentCryptoCoinIndex = cIdx;
+          if (typeof updateOledCryptoPreview === 'function') updateOledCryptoPreview();
+          if (typeof fetchCryptoLivePrices === 'function') fetchCryptoLivePrices();
+        }
+      }
+    }
+
     // Time sync ACK from robot
     if (data.action === 'time' || data.action === 't' || (data.status === 'ok' && typeof data.epoch === 'number')) {
       clockSyncAckReceived = true;
@@ -1034,6 +1046,14 @@ function openRobotFeatureDetail(featureKey) {
         window._prayerAutoFlipTimer = null;
       }
     }, 4000);
+  } else if (featureKey === 'crypto') {
+    const panel = document.getElementById('detailViewCrypto');
+    if (panel) panel.style.display = 'block';
+    updateOledCryptoPreview();
+    currentRobotMode = 20;
+    sendCommand({ c: 'm', v: 20 });
+    fetchCryptoLivePrices();
+    startCryptoInterval();
   }
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1054,6 +1074,11 @@ function closeRobotFeatureDetail() {
   if (window._gameDetailSyncTimer) {
     clearInterval(window._gameDetailSyncTimer);
     window._gameDetailSyncTimer = null;
+  }
+
+  if (typeof cryptoRefreshTimer !== 'undefined' && cryptoRefreshTimer) {
+    clearInterval(cryptoRefreshTimer);
+    cryptoRefreshTimer = null;
   }
 
   const overview = document.getElementById('robotMainOverview');
@@ -1520,7 +1545,8 @@ function selectRobotMenuFeature(featureKey, btnEl) {
     'alarm': 8,
     'spotify': 17,
     'navigation': 18,
-    'prayer': 19
+    'prayer': 19,
+    'crypto': 20
   };
 
   const targetMode = modeMap[featureKey];
@@ -1530,6 +1556,8 @@ function selectRobotMenuFeature(featureKey, btnEl) {
       if (window.AndroidBLE && typeof window.AndroidBLE.requestMusicSync === 'function') {
         window.AndroidBLE.requestMusicSync();
       }
+    } else if (featureKey === 'crypto') {
+      fetchCryptoLivePrices();
     }
     sendCommand({ c: 'm', v: targetMode });
   }
@@ -3009,6 +3037,250 @@ function initPrayerFeature() {
 }
 
 // =======================================================
+// FITUR KRIPTO TICKER (100% SINKRON REALTIME & CYBER NEON)
+// =======================================================
+const CRYPTO_COIN_LIST = ['BTC', 'ETH', 'SOL', 'BNB', 'DOGE'];
+let currentCryptoCoinIndex = 0;
+let currentCryptoCurrency = 'USD'; // 'USD' atau 'IDR'
+let currentCryptoInterval = 30000; // Default 30 detik
+let cryptoRefreshTimer = null;
+let isCryptoFetching = false;
+let usdToIdrRate = 15900; // Estimasi kurs USD ke IDR
+
+// Cache lokal untuk data instan tanpa jeda
+let cryptoCache = {
+  BTC: { priceUsd: 68420.50, change24h: 3.25, isUp: true },
+  ETH: { priceUsd: 3520.10, change24h: -1.15, isUp: false },
+  SOL: { priceUsd: 185.50, change24h: 4.80, isUp: true },
+  BNB: { priceUsd: 595.00, change24h: 0.85, isUp: true },
+  DOGE: { priceUsd: 0.165, change24h: 2.10, isUp: true }
+};
+
+function formatCryptoUsdPrice(price) {
+  if (typeof price !== 'number' || isNaN(price)) return '$0';
+  if (price >= 1000) {
+    return '$' + Math.round(price).toLocaleString('en-US');
+  } else if (price >= 1) {
+    return '$' + price.toFixed(2);
+  } else {
+    return '$' + price.toFixed(3);
+  }
+}
+
+function formatCryptoIdrPrice(priceUsd) {
+  if (typeof priceUsd !== 'number' || isNaN(priceUsd)) return 'Rp 0';
+  const idr = priceUsd * usdToIdrRate;
+  if (idr >= 1000000000) {
+    return 'Rp ' + (idr / 1000000000).toFixed(2) + ' M';
+  } else if (idr >= 1000000) {
+    return 'Rp ' + (idr / 1000000).toFixed(1) + ' Jt';
+  } else if (idr >= 1000) {
+    return 'Rp ' + Math.round(idr / 1000) + ' Rb';
+  } else {
+    return 'Rp ' + Math.round(idr);
+  }
+}
+
+function updateOledCryptoPreview() {
+  const coin = CRYPTO_COIN_LIST[currentCryptoCoinIndex] || 'BTC';
+  const data = cryptoCache[coin] || { priceUsd: 68420, change24h: 3.25, isUp: true };
+  const pairSymbol = coin + ' / ' + currentCryptoCurrency;
+
+  const priceStr = (currentCryptoCurrency === 'USD') ?
+    formatCryptoUsdPrice(data.priceUsd) :
+    formatCryptoIdrPrice(data.priceUsd);
+
+  const changeNumStr = (data.isUp ? '+' : '') + Math.abs(data.change24h).toFixed(2) + '%';
+  const changeFullStr = '24h ' + changeNumStr;
+  const arrowStr = data.isUp ? '▲' : '▼';
+
+  // 1. Update Preview di Grid Halaman Utama (Page 3)
+  const prevCoin = document.getElementById('previewCryptoCoin');
+  const prevPrice = document.getElementById('previewCryptoPrice');
+  const prevChange = document.getElementById('previewCryptoChange');
+  if (prevCoin) prevCoin.textContent = coin + '/' + currentCryptoCurrency;
+  if (prevPrice) prevPrice.textContent = priceStr;
+  if (prevChange) prevChange.textContent = changeFullStr;
+
+  // 2. Update Virtual OLED Stage (Detail View)
+  const stageSym = document.getElementById('stageCryptoSymbol');
+  const stagePrice = document.getElementById('stageCryptoPrice');
+  const stageArrow = document.getElementById('stageCryptoArrow');
+  const stageChange = document.getElementById('stageCryptoChange');
+  if (stageSym) stageSym.textContent = pairSymbol;
+  if (stagePrice) stagePrice.textContent = priceStr;
+  if (stageArrow) stageArrow.textContent = arrowStr;
+  if (stageChange) stageChange.textContent = changeFullStr;
+
+  // 3. Update Pill Seleksi Koin di Control Panel
+  document.querySelectorAll('.crypto-coin-pill').forEach(pill => {
+    const pCoin = pill.getAttribute('data-coin');
+    pill.classList.toggle('active', pCoin === coin);
+  });
+}
+
+function sendCryptoDataToRobot() {
+  const coin = CRYPTO_COIN_LIST[currentCryptoCoinIndex] || 'BTC';
+  const data = cryptoCache[coin] || { priceUsd: 68420, change24h: 3.25, isUp: true };
+  const pairSymbol = coin + '/' + currentCryptoCurrency;
+
+  const priceStr = (currentCryptoCurrency === 'USD') ?
+    formatCryptoUsdPrice(data.priceUsd) :
+    formatCryptoIdrPrice(data.priceUsd);
+
+  const changeStr = (data.isUp ? '+' : '') + Math.abs(data.change24h).toFixed(2) + '%';
+
+  sendCommand({
+    c: 'crypto',
+    sym: pairSymbol,
+    price: priceStr,
+    chg: changeStr,
+    is_up: data.isUp,
+    idx: currentCryptoCoinIndex
+  });
+}
+
+async function fetchCryptoLivePrices() {
+  if (isCryptoFetching) return;
+  isCryptoFetching = true;
+
+  const spinner = document.getElementById('btnCryptoSpinner');
+  const label = document.getElementById('btnCryptoLabel');
+  if (spinner) spinner.style.display = 'inline-block';
+  if (label) label.textContent = 'MEMPERBARUI...';
+
+  try {
+    // 1. Ambil harga live 24hr dari API Binance
+    const url = 'https://api.binance.com/api/v3/ticker/24hr?symbols=[%22BTCUSDT%22,%22ETHUSDT%22,%22SOLUSDT%22,%22BNBUSDT%22,%22DOGEUSDT%22,%22USDTIDR%22]';
+    const res = await fetchGeocoding(url);
+
+    if (Array.isArray(res)) {
+      res.forEach(item => {
+        if (item.symbol === 'USDTIDR') {
+          const idrPrice = parseFloat(item.lastPrice);
+          if (idrPrice > 10000 && idrPrice < 25000) {
+            usdToIdrRate = idrPrice;
+          }
+          return;
+        }
+
+        const coin = item.symbol.replace('USDT', '');
+        if (cryptoCache[coin]) {
+          const price = parseFloat(item.lastPrice);
+          const change = parseFloat(item.priceChangePercent);
+          cryptoCache[coin].priceUsd = price;
+          cryptoCache[coin].change24h = change;
+          cryptoCache[coin].isUp = (change >= 0);
+        }
+      });
+    }
+
+    // 2. Perbarui tampilan preview di aplikasi
+    updateOledCryptoPreview();
+
+    // 3. Kirim data terbaru ke robot via BLE (100% sinkron instan)
+    sendCryptoDataToRobot();
+
+    // 4. Update status waktu
+    const now = new Date();
+    const timeStr = String(now.getHours()).padStart(2, '0') + ':' +
+                    String(now.getMinutes()).padStart(2, '0') + ':' +
+                    String(now.getSeconds()).padStart(2, '0');
+    const updateEl = document.getElementById('txtCryptoLastUpdate');
+    if (updateEl) updateEl.textContent = 'Sinkron Realtime (' + timeStr + ')';
+
+  } catch (err) {
+    console.warn('[CRYPTO] Gagal fetch Binance live, mencoba fallback CoinGecko:', err);
+    try {
+      const cgUrl = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,binancecoin,dogecoin&vs_currencies=usd,idr&include_24hr_change=true';
+      const cgRes = await fetchGeocoding(cgUrl);
+      if (cgRes) {
+        if (cgRes.bitcoin) {
+          cryptoCache.BTC.priceUsd = cgRes.bitcoin.usd;
+          cryptoCache.BTC.change24h = cgRes.bitcoin.usd_24h_change || 0;
+          cryptoCache.BTC.isUp = (cgRes.bitcoin.usd_24h_change >= 0);
+        }
+        if (cgRes.ethereum) {
+          cryptoCache.ETH.priceUsd = cgRes.ethereum.usd;
+          cryptoCache.ETH.change24h = cgRes.ethereum.usd_24h_change || 0;
+          cryptoCache.ETH.isUp = (cgRes.ethereum.usd_24h_change >= 0);
+        }
+        if (cgRes.solana) {
+          cryptoCache.SOL.priceUsd = cgRes.solana.usd;
+          cryptoCache.SOL.change24h = cgRes.solana.usd_24h_change || 0;
+          cryptoCache.SOL.isUp = (cgRes.solana.usd_24h_change >= 0);
+        }
+        if (cgRes.binancecoin) {
+          cryptoCache.BNB.priceUsd = cgRes.binancecoin.usd;
+          cryptoCache.BNB.change24h = cgRes.binancecoin.usd_24h_change || 0;
+          cryptoCache.BNB.isUp = (cgRes.binancecoin.usd_24h_change >= 0);
+        }
+        if (cgRes.dogecoin) {
+          cryptoCache.DOGE.priceUsd = cgRes.dogecoin.usd;
+          cryptoCache.DOGE.change24h = cgRes.dogecoin.usd_24h_change || 0;
+          cryptoCache.DOGE.isUp = (cgRes.dogecoin.usd_24h_change >= 0);
+        }
+        updateOledCryptoPreview();
+        sendCryptoDataToRobot();
+      }
+    } catch (cgErr) {
+      console.warn('[CRYPTO] CoinGecko fallback juga error:', cgErr);
+      updateOledCryptoPreview();
+      sendCryptoDataToRobot();
+    }
+  } finally {
+    isCryptoFetching = false;
+    if (spinner) spinner.style.display = 'none';
+    if (label) label.textContent = 'PERBARUI SEKARANG';
+  }
+}
+
+function selectCryptoCoinApp(coinIndex, coinName) {
+  triggerHaptic(25);
+  currentCryptoCoinIndex = coinIndex;
+  updateOledCryptoPreview();
+  sendCryptoDataToRobot();
+  sendCommand({ c: 'crypto_coin', idx: coinIndex });
+  fetchCryptoLivePrices();
+}
+
+function cycleCryptoCoinApp() {
+  triggerHaptic(30);
+  const nextIdx = (currentCryptoCoinIndex + 1) % CRYPTO_COIN_LIST.length;
+  selectCryptoCoinApp(nextIdx, CRYPTO_COIN_LIST[nextIdx]);
+}
+
+function changeCryptoCurrency(currency) {
+  triggerHaptic(20);
+  currentCryptoCurrency = currency || 'USD';
+  updateOledCryptoPreview();
+  sendCryptoDataToRobot();
+}
+
+function changeCryptoInterval(intervalMs) {
+  triggerHaptic(20);
+  currentCryptoInterval = parseInt(intervalMs, 10) || 30000;
+  startCryptoInterval();
+}
+
+function manualRefreshCrypto() {
+  triggerHaptic(30);
+  fetchCryptoLivePrices();
+}
+
+function startCryptoInterval() {
+  if (cryptoRefreshTimer) clearInterval(cryptoRefreshTimer);
+  cryptoRefreshTimer = setInterval(() => {
+    if (currentOpenDetailFeature === 'crypto' || currentRobotMode === 20) {
+      fetchCryptoLivePrices();
+    } else {
+      clearInterval(cryptoRefreshTimer);
+      cryptoRefreshTimer = null;
+    }
+  }, currentCryptoInterval);
+}
+
+// =======================================================
 // PENGATURAN HARDWARE ROBOT (CYBER NEON)
 // =======================================================
 
@@ -3434,6 +3706,7 @@ window.addEventListener('DOMContentLoaded', () => {
   syncClockQuiet();
   initSpotifyFeature();
   initPrayerFeature();
+  updateOledCryptoPreview();
 
   const gate = document.getElementById('setupGate');
   const hasSaved = hasSavedRobot();

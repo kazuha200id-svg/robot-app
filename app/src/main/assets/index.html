@@ -270,6 +270,17 @@
             </div>
             <span class="card-title">NAVIGASI</span>
           </button>
+
+          <!-- BARIS 6 KIRI: KRIPTO TICKER -->
+          <button id="btnMenuCrypto" type="button" class="menu-action-card"
+            onclick="selectRobotMenuFeature('crypto', this)">
+            <div class="card-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
+                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+              </svg>
+            </div>
+            <span class="card-title">KRIPTO TICKER</span>
+          </button>
         </div>
       </section>
 
@@ -484,6 +495,23 @@
               </div>
               <div class="screen-card-meta">
                 <span class="screen-title">NAVIGASI</span>
+              </div>
+            </div>
+
+            <!-- 11. BARIS 6 KIRI: KRIPTO TICKER (1:1) -->
+            <div class="oled-screen-card" onclick="openRobotFeatureDetail('crypto')">
+              <div class="oled-display-bezel">
+                <div class="oled-screen-content oled-crypto-preview-view">
+                  <div class="oled-header-tiny">
+                    <span>KRIPTO</span>
+                    <span id="previewCryptoCoin">BTC/USD</span>
+                  </div>
+                  <div class="oled-crypto-prev-price" id="previewCryptoPrice">$68,420</div>
+                  <div class="oled-crypto-prev-change" id="previewCryptoChange">24h +3.25%</div>
+                </div>
+              </div>
+              <div class="screen-card-meta">
+                <span class="screen-title">KRIPTO TICKER</span>
               </div>
             </div>
           </div>
@@ -1139,6 +1167,110 @@
                     onclick="applyPrayerCity(false)" onpointerup="this.blur()" ontouchend="this.blur()">
                     <span class="weather-btn-label" id="txtSearchPrayerCityBtn">TERAPKAN KOTA SHOLAT</span>
                   </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 11. DETAIL: KRIPTO TICKER (100% PERSIS OLED FISIK DENGAN STATUS BAR) -->
+          <div id="detailViewCrypto" class="detail-feature-panel" style="display: none;">
+            <div class="main-oled-stage-wrap">
+              <div class="oled-display-bezel stage-bezel">
+                <div class="oled-screen-content stage-screen-content">
+                  <div class="oled-status-bar">
+                    <div class="oled-status-left">
+                      <svg viewBox="0 0 9 9" class="oled-status-wifi">
+                        <path
+                          d="M0 1.5C2.5 -0.5 6.5 -0.5 9 1.5l-1 1C6.2 0.8 2.8 0.8 1 2.5L0 1.5zm2 2.5c1.4 -1.2 3.6 -1.2 5 0l-1 1c-0.8 -0.7 -2.2 -0.7 -3 0l-1 -1zm2.5 3a1 1 0 1 1 0 2 1 1 0 0 1 0 -2z" />
+                      </svg>
+                      <svg viewBox="0 0 7 9" class="oled-status-ble">
+                        <path d="M1.5 2.5L5.5 6.5L3.5 8.5L3.5 0.5L5.5 2.5L1.5 6.5" />
+                      </svg>
+                    </div>
+                    <div class="oled-status-title">KRIPTO</div>
+                    <div class="oled-status-right">
+                      <svg viewBox="0 0 5 8" class="oled-status-lightning">
+                        <path d="M2 0h1v3h2L1 8l1-4H0z" />
+                      </svg>
+                      <div class="oled-battery-vert">
+                        <div class="oled-batt-pip"></div>
+                        <div class="oled-batt-body">
+                          <div class="oled-batt-fill" style="height: 100%;"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- KONTEN 100% PERSIS LAYAR FISIK ROBOT -->
+                  <div class="oled-mode-layer active oled-crypto-stage-layer" onclick="cycleCryptoCoinApp()">
+                    <div class="oled-crypto-symbol" id="stageCryptoSymbol">BTC / USD</div>
+                    <div class="oled-crypto-price oled-mono" id="stageCryptoPrice">$68,420</div>
+                    <div class="oled-crypto-badge" id="stageCryptoBadge">
+                      <span id="stageCryptoArrow">▲</span>
+                      <span id="stageCryptoChange">24h +3.25%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- KONTROL PENGATURAN KRIPTO (TEMA 100% CYBER NEON CYAN) -->
+            <div class="feature-ctrl-panel">
+              <div class="config-card crypto-ctrl-card">
+                <div class="config-header">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                  </svg>
+                  <span class="config-title">PILIH KOIN &amp; MATA UANG</span>
+                </div>
+
+                <!-- Pill Seleksi Koin (BTC, ETH, SOL, BNB, DOGE) -->
+                <div class="crypto-coin-selector-wrap">
+                  <label class="config-sub-label">PILIH KOIN AKTIF:</label>
+                  <div class="crypto-coins-grid" id="cryptoCoinsGrid">
+                    <button type="button" class="crypto-coin-pill active" data-coin="BTC" onclick="selectCryptoCoinApp(0, 'BTC')">BTC</button>
+                    <button type="button" class="crypto-coin-pill" data-coin="ETH" onclick="selectCryptoCoinApp(1, 'ETH')">ETH</button>
+                    <button type="button" class="crypto-coin-pill" data-coin="SOL" onclick="selectCryptoCoinApp(2, 'SOL')">SOL</button>
+                    <button type="button" class="crypto-coin-pill" data-coin="BNB" onclick="selectCryptoCoinApp(3, 'BNB')">BNB</button>
+                    <button type="button" class="crypto-coin-pill" data-coin="DOGE" onclick="selectCryptoCoinApp(4, 'DOGE')">DOGE</button>
+                  </div>
+                </div>
+
+                <!-- Pengaturan Mata Uang & Interval -->
+                <div class="crypto-settings-row">
+                  <div class="crypto-field-group">
+                    <label class="config-sub-label" for="selCryptoCurrency">MATA UANG:</label>
+                    <div class="custom-select-wrap">
+                      <select id="selCryptoCurrency" class="neon-select" onchange="changeCryptoCurrency(this.value)">
+                        <option value="USD" selected>USD ($)</option>
+                        <option value="IDR">IDR (Rp)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="crypto-field-group">
+                    <label class="config-sub-label" for="selCryptoInterval">REFRESH:</label>
+                    <div class="custom-select-wrap">
+                      <select id="selCryptoInterval" class="neon-select" onchange="changeCryptoInterval(this.value)">
+                        <option value="15000">15 Detik</option>
+                        <option value="30000" selected>30 Detik</option>
+                        <option value="60000">1 Menit</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Action Button: Perbarui Sekarang -->
+                <div class="crypto-action-wrap">
+                  <button id="btnRefreshCrypto" type="button" class="neon-btn-action full" onclick="manualRefreshCrypto()">
+                    <span id="btnCryptoSpinner" class="neon-btn-spinner" style="display: none;"></span>
+                    <span id="btnCryptoLabel">PERBARUI SEKARANG</span>
+                  </button>
+                </div>
+
+                <div class="crypto-sync-status">
+                  <span class="crypto-status-dot"></span>
+                  <span id="txtCryptoLastUpdate">Sinkron Otomatis Realtime</span>
                 </div>
               </div>
             </div>
