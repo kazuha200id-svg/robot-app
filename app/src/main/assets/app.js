@@ -3093,7 +3093,7 @@ function onBuzzerVolumeChange(val) {
   if (s_buzzerVolDebounce) clearTimeout(s_buzzerVolDebounce);
   s_buzzerVolDebounce = setTimeout(() => {
     sendCommand({ c: 'buzz_vol', v: intVal });
-    showNeonToast('Volume Buzzer: ' + val + '%');
+    showNeonToast('Volume: ' + val + '%');
     triggerHaptic(15);
   }, 60);
 }
@@ -3141,29 +3141,135 @@ function closeRebootConfirmModal() {
   if (modal) modal.style.display = 'none';
 }
 
-let s_rebootCountdownTimer = null;
+let s_rebootTimer = null;
 function executeRebootCommand() {
   closeRebootConfirmModal();
   const overlay = document.getElementById('overlayRebootProgress');
+  const title = document.querySelector('.reboot-overlay-title');
   const sub = document.getElementById('txtRebootCountdown');
-  if (overlay) overlay.style.display = 'flex';
 
+  if (overlay) {
+    overlay.classList.remove('failed');
+    overlay.style.display = 'flex';
+  }
+  if (title) title.textContent = 'MEMULAI ULANG...';
+
+  // Kirim perintah reboot ke robot
   sendCommand({ c: 'reboot' });
   triggerHaptic(40);
 
-  let remaining = 6;
-  if (sub) sub.textContent = `Menghubungkan kembali (${remaining}s)...`;
+  if (s_rebootTimer) clearInterval(s_rebootTimer);
 
-  if (s_rebootCountdownTimer) clearInterval(s_rebootCountdownTimer);
-  s_rebootCountdownTimer = setInterval(() => {
-    remaining--;
-    if (remaining > 0) {
-      if (sub) sub.textContent = `Menghubungkan kembali (${remaining}s)...`;
+  // FASE 1: Hitung mundur restart hardware robot (6 detik)
+  let restartCount = 6;
+  if (sub) sub.textContent = `Memulai ulang robot (${restartCount}s)...`;
+
+  s_rebootTimer = setInterval(() => {
+    restartCount--;
+    if (restartCount > 0) {
+      if (sub) sub.textContent = `Memulai ulang robot (${restartCount}s)...`;
     } else {
-      clearInterval(s_rebootCountdownTimer);
-      s_rebootCountdownTimer = null;
+      clearInterval(s_rebootTimer);
+      s_rebootTimer = null;
+      // FASE 2: Coba hubungkan kembali otomatis ke robot
+      attemptReconnectAfterReboot();
+    }
+  }, 1000);
+}
+
+function attemptReconnectAfterReboot() {
+  const overlay = document.getElementById('overlayRebootProgress');
+  const title = document.querySelector('.reboot-overlay-title');
+  const sub = document.getElementById('txtRebootCountdown');
+
+  if (title) title.textContent = 'MENGHUBUNGKAN KEMBALI...';
+  if (sub) sub.textContent = 'Mencari koneksi robot...';
+
+  // Panggil perintah connect native AndroidBLE jika tersedia
+  if (window.AndroidBLE && typeof window.AndroidBLE.connect === 'function') {
+    window.AndroidBLE.connect();
+  }
+
+  let attemptSeconds = 4;
+  if (s_rebootTimer) clearInterval(s_rebootTimer);
+
+  s_rebootTimer = setInterval(() => {
+    // Jika sudah berhasil tersambung
+    if (isBleConnected) {
+      clearInterval(s_rebootTimer);
+      s_rebootTimer = null;
       if (overlay) overlay.style.display = 'none';
-      showNeonToast('Robot dimulai ulang');
+      showNeonToast('Robot berhasil terhubung kembali');
+      triggerHaptic(40);
+      return;
+    }
+
+    attemptSeconds--;
+    if (attemptSeconds > 0) {
+      if (sub) sub.textContent = `Mencoba tersambung (${attemptSeconds}s)...`;
+    } else {
+      clearInterval(s_rebootTimer);
+      s_rebootTimer = null;
+
+      // Cek sekali lagi apakah tersambung
+      if (isBleConnected) {
+        if (overlay) overlay.style.display = 'none';
+        showNeonToast('Robot berhasil terhubung kembali');
+        triggerHaptic(40);
+        return;
+      }
+
+      // FASE 3: Gagal Menghubungkan -> Tampilkan status gagal selama 5 detik, lalu pindah ke halaman Bluetooth
+      showRebootFailAndRedirect();
+    }
+  }, 1000);
+}
+
+function showRebootFailAndRedirect() {
+  const overlay = document.getElementById('overlayRebootProgress');
+  const title = document.querySelector('.reboot-overlay-title');
+  const sub = document.getElementById('txtRebootCountdown');
+
+  if (overlay) overlay.classList.add('failed');
+  if (title) title.textContent = 'GAGAL MENGHUBUNGKAN';
+
+  let failCountdown = 5;
+  if (sub) sub.textContent = `Mengalihkan ke halaman Bluetooth dalam (${failCountdown}s)...`;
+
+  if (s_rebootTimer) clearInterval(s_rebootTimer);
+  s_rebootTimer = setInterval(() => {
+    // Jika secara tiba-tiba tersambung saat fase ini
+    if (isBleConnected) {
+      clearInterval(s_rebootTimer);
+      s_rebootTimer = null;
+      if (overlay) {
+        overlay.classList.remove('failed');
+        overlay.style.display = 'none';
+      }
+      showNeonToast('Robot berhasil terhubung');
+      triggerHaptic(40);
+      return;
+    }
+
+    failCountdown--;
+    if (failCountdown > 0) {
+      if (sub) sub.textContent = `Mengalihkan ke halaman Bluetooth dalam (${failCountdown}s)...`;
+    } else {
+      clearInterval(s_rebootTimer);
+      s_rebootTimer = null;
+      if (overlay) {
+        overlay.classList.remove('failed');
+        overlay.style.display = 'none';
+      }
+
+      // Alihkan ke Gate Setup Bluetooth
+      const gate = document.getElementById('setupGate');
+      if (gate) {
+        gate.classList.add('active');
+      }
+      // Mulai scan ulang perangkat secara otomatis
+      retryAutoScan();
+      showNeonToast('Silakan pilih perangkat');
     }
   }, 1000);
 }

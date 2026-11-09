@@ -3997,3 +3997,22 @@ input[type="range"]::-webkit-slider-thumb {
   line-height: 1.4;
 }
 
+.cyber-reboot-overlay.failed .reboot-neon-ring {
+  border-top-color: #ff3366;
+  border-color: rgba(255, 51, 102, 0.2);
+  box-shadow: 0 0 14px rgba(255, 51, 102, 0.4);
+}
+
+.cyber-reboot-overlay.failed .reboot-center-icon {
+  stroke: #ff3366;
+}
+
+.cyber-reboot-overlay.failed .reboot-overlay-title {
+  color: #ff3366;
+  text-shadow: 0 0 12px rgba(255, 51, 102, 0.6);
+}
+
+.cyber-reboot-overlay.failed .reboot-overlay-sub {
+  color: rgba(255, 120, 150, 0.9);
+}
+
