@@ -58,7 +58,7 @@ button, .neon-btn-action, .neon-btn-compact, .neon-btn-subtle, .nav-tab,
 .weather-action-btn, .connect-action-btn, .card-title, 
 .section-title-bar h2, .stage-screen-content div, .stage-screen-content span,
 .stage-screen-content, .brand-name, .oled-header-tiny span {
-  color: var(--neon-cyan) !important;
+  color: var(--neon-cyan);
 }
 
 /* EFEK PRESS-HOVER RESPON SENTUHAN (SESUAI BENTUK MASING-MASING TOMBOL) */
@@ -3527,9 +3527,9 @@ input[type="range"]::-webkit-slider-thumb {
 .setting-val-badge {
   font-family: var(--font-mono);
   font-size: 0.65rem;
-  font-weight: 900;
-  color: #050811;
-  background: var(--neon-cyan);
+  font-weight: 900 !important;
+  color: #050811 !important;
+  background: var(--neon-cyan) !important;
   padding: 2px 7px;
   border-radius: 4px;
   letter-spacing: 0.5px;
@@ -3593,11 +3593,11 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .setting-pill-btn.active {
-  background: var(--neon-cyan);
-  color: #050811;
-  border-color: var(--neon-cyan);
-  box-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
-  font-weight: 900;
+  background: var(--neon-cyan) !important;
+  color: #050811 !important;
+  border-color: var(--neon-cyan) !important;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+  font-weight: 900 !important;
 }
 
 .setting-pill-btn:active {
@@ -3635,14 +3635,14 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .setting-action-btn {
-  background: var(--neon-cyan);
-  color: #050811;
+  background: var(--neon-cyan) !important;
+  color: #050811 !important;
   border: none;
   border-radius: var(--radius-sm);
   padding: 0 14px;
   font-family: var(--font-mono);
   font-size: 0.70rem;
-  font-weight: 900;
+  font-weight: 900 !important;
   letter-spacing: 0.5px;
   cursor: pointer;
   transition: all 0.12s ease;
@@ -3687,8 +3687,8 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .setting-control-btn:active {
-  background: var(--neon-cyan);
-  color: #050811;
+  background: var(--neon-cyan) !important;
+  color: #050811 !important;
   transform: scale(0.96);
 }
 
@@ -3751,8 +3751,8 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .setting-test-btn:active {
-  background: var(--neon-cyan);
-  color: #050811;
+  background: var(--neon-cyan) !important;
+  color: #050811 !important;
   transform: scale(0.94);
 }
 
@@ -3818,8 +3818,8 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .setting-btn-action:active {
-  background: var(--neon-cyan);
-  color: #050811;
+  background: var(--neon-cyan) !important;
+  color: #050811 !important;
   transform: scale(0.95);
 }
 
@@ -3906,14 +3906,14 @@ input[type="range"]::-webkit-slider-thumb {
 
 .modal-btn-confirm {
   flex: 1.2;
-  background: var(--neon-cyan);
+  background: var(--neon-cyan) !important;
   border: none;
-  color: #050811;
+  color: #050811 !important;
   border-radius: var(--radius-sm);
   padding: 9px;
   font-family: var(--font-mono);
   font-size: 0.72rem;
-  font-weight: 900;
+  font-weight: 900 !important;
   cursor: pointer;
   box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
   touch-action: manipulation;

@@ -110,13 +110,8 @@ function processNextBleCommand() {
 
 function sendCommand(cmdObject, priority = false) {
   if (!cmdObject) return false;
-  // Jangan menumpuk antrean saat Bluetooth belum terhubung
-  if (!isBleConnected) {
-    console.log('[BLE] Lewati perintah karena belum terhubung:', cmdObject);
-    return false;
-  }
-  // Cegah penumpukan antrean agar tidak terjadi delay
-  if (bleCommandQueue.length >= 3) {
+  // Cegah penumpukan antrean berlebih agar performa tetap cepat
+  if (bleCommandQueue.length >= 6) {
     bleCommandQueue.shift();
   }
   if (priority) {
@@ -3088,15 +3083,9 @@ function testHardwareBuzzer() {
 }
 
 function testHardwareVibrate() {
-  sendCommand({ c: 'vibrate', dur: 150 });
+  sendCommand({ c: 'vibrate', dur: 400 });
   showNeonToast('Menguji getar...');
-  triggerHaptic(30);
-}
-
-function testHardwareTouch() {
-  sendCommand({ c: 'btn_tap' });
-  showNeonToast('Menguji sentuh...');
-  triggerHaptic(20);
+  triggerHaptic(40);
 }
 
 // 6. Modal Konfirmasi & Eksekusi Reboot
