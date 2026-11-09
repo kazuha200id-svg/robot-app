@@ -198,18 +198,7 @@
             <span class="card-title">STOPWATCH</span>
           </button>
 
-          <!-- BARIS 3 KIRI: INFO CUACA -->
-          <button id="btnMenuWeather" type="button" class="menu-action-card"
-            onclick="selectRobotMenuFeature('weather', this)">
-            <div class="card-icon-wrap">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
-                <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
-              </svg>
-            </div>
-            <span class="card-title">INFO CUACA</span>
-          </button>
-
-          <!-- BARIS 3 KANAN: JADWAL SHOLAT -->
+          <!-- BARIS 3 KIRI: JADWAL SHOLAT -->
           <button id="btnMenuPrayer" type="button" class="menu-action-card"
             onclick="selectRobotMenuFeature('prayer', this)">
             <div class="card-icon-wrap">
@@ -218,6 +207,17 @@
               </svg>
             </div>
             <span class="card-title">JADWAL SHOLAT</span>
+          </button>
+
+          <!-- BARIS 3 KANAN: INFO CUACA -->
+          <button id="btnMenuWeather" type="button" class="menu-action-card"
+            onclick="selectRobotMenuFeature('weather', this)">
+            <div class="card-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
+                <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
+              </svg>
+            </div>
+            <span class="card-title">INFO CUACA</span>
           </button>
 
           <!-- BARIS 4 KIRI: SUBTITLE -->
@@ -372,33 +372,7 @@
               </div>
             </div>
 
-            <!-- 5. BARIS 3 KIRI: INFO CUACA (1:1) -->
-            <div class="oled-screen-card" onclick="openRobotFeatureDetail('weather')">
-              <div class="oled-display-bezel">
-                <div class="oled-screen-content oled-weather-view">
-                  <div class="oled-weather-layout">
-                    <div class="oled-weather-city-top" id="oledCityPreview">BANDUNG</div>
-                    <div class="oled-weather-body">
-                      <div class="oled-weather-col-left">
-                        <div class="oled-weather-temp" id="oledTempPreview">28<span class="oled-deg-circle"></span>
-                        </div>
-                        <div class="oled-weather-cond" id="oledWeatherCondPreview">CERAH</div>
-                      </div>
-                      <div class="oled-weather-dotted-divider"></div>
-                      <div class="oled-weather-col-right">
-                        <div class="oled-weather-sub" id="oledWeatherHumPreview">Lembap: 75</div>
-                        <div class="oled-weather-sub" id="oledWeatherWindPreview">Angin: 4 km</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="screen-card-meta">
-                <span class="screen-title">INFO CUACA</span>
-              </div>
-            </div>
-
-            <!-- 6. BARIS 3 KANAN: JADWAL SHOLAT -->
+            <!-- 5. BARIS 3 KIRI: JADWAL SHOLAT (1:1) -->
             <div class="oled-screen-card" onclick="openRobotFeatureDetail('prayer')">
               <div class="oled-display-bezel">
                 <div class="oled-screen-content oled-prayer-preview-view">
@@ -422,6 +396,32 @@
               </div>
               <div class="screen-card-meta">
                 <span class="screen-title">JADWAL SHOLAT</span>
+              </div>
+            </div>
+
+            <!-- 6. BARIS 3 KANAN: INFO CUACA -->
+            <div class="oled-screen-card" onclick="openRobotFeatureDetail('weather')">
+              <div class="oled-display-bezel">
+                <div class="oled-screen-content oled-weather-view">
+                  <div class="oled-weather-layout">
+                    <div class="oled-weather-city-top" id="oledCityPreview">BANDUNG</div>
+                    <div class="oled-weather-body">
+                      <div class="oled-weather-col-left">
+                        <div class="oled-weather-temp" id="oledTempPreview">28<span class="oled-deg-circle"></span>
+                        </div>
+                        <div class="oled-weather-cond" id="oledWeatherCondPreview">CERAH</div>
+                      </div>
+                      <div class="oled-weather-dotted-divider"></div>
+                      <div class="oled-weather-col-right">
+                        <div class="oled-weather-sub" id="oledWeatherHumPreview">Lembap: 75</div>
+                        <div class="oled-weather-sub" id="oledWeatherWindPreview">Angin: 4 km</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="screen-card-meta">
+                <span class="screen-title">INFO CUACA</span>
               </div>
             </div>
 
