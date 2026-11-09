@@ -15,10 +15,18 @@ let esp32TimeBaseMs = 0;
 let localTimeAtSyncMs = 0;
 let hasEsp32TimeSync = false;
 
-// ================= 1. TOAST NOTIFICATION (SEMUA NOTIFIKASI DINONAKTIFKAN) =================
+// ================= 1. TOAST NOTIFICATION =================
 function showNeonToast(message) {
-  // Seluruh notifikasi toast dinonaktifkan sesuai permintaan pengguna ("hilangkan semua notfikasi")
-  return;
+  if (!message) return;
+  const toast = document.getElementById('neonToast');
+  const txt = document.getElementById('toastText');
+  if (!toast || !txt) return;
+  txt.textContent = message;
+  toast.classList.add('show');
+  if (toastTimeout) clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => {
+    toast.classList.remove('show');
+  }, 2200);
 }
 
 // HAPTIC FEEDBACK
@@ -690,6 +698,41 @@ window.onBLEReceived = function(jsonStr) {
     if (typeof data.asleep === 'boolean') {
       const sleepEl = document.getElementById('teleSleepState');
       if (sleepEl) sleepEl.textContent = data.asleep ? 'Robot Tidur' : 'Robot Aktif (Bangun)';
+
+      const scrEl = document.getElementById('txtTelemetryScreenState');
+      if (scrEl) {
+        scrEl.textContent = data.asleep ? 'TIDUR / SLEEP' : 'AKTIF';
+        scrEl.style.color = data.asleep ? 'rgba(0, 240, 255, 0.5)' : 'var(--neon-cyan)';
+      }
+    }
+    if (typeof data.uptime_sec === 'number') {
+      const upEl = document.getElementById('txtTelemetryUptime');
+      if (upEl) {
+        const h = Math.floor(data.uptime_sec / 3600);
+        const m = Math.floor((data.uptime_sec % 3600) / 60);
+        const s = data.uptime_sec % 60;
+        upEl.textContent = h > 0 ? `${h}j ${m}m` : `${m}m ${s}d`;
+      }
+    }
+    if (data.ram && typeof data.ram.heap_free === 'number') {
+      const ramEl = document.getElementById('txtTelemetryHeap');
+      if (ramEl) {
+        const freeKb = Math.round(data.ram.heap_free / 1024);
+        const freePct = Math.round(data.ram.free_pct || 0);
+        ramEl.textContent = `${freeKb} KB (${freePct}%)`;
+      }
+    }
+    if (typeof data.sleep_to === 'number') {
+      const sleepToEl = document.getElementById('txtTelemetrySleepTo');
+      const activeSleepBadge = document.getElementById('txtActiveSleepBadge');
+      const textVal = data.sleep_to === 0 ? 'Selalu Nyala' : `${Math.round(data.sleep_to / 60)} Menit`;
+      if (sleepToEl) sleepToEl.textContent = textVal;
+      if (activeSleepBadge) activeSleepBadge.textContent = textVal.toUpperCase();
+
+      document.querySelectorAll('.setting-pill-btn').forEach(btn => {
+        const sec = parseInt(btn.getAttribute('data-sec'));
+        btn.classList.toggle('active', sec === data.sleep_to);
+      });
     }
 
     // Pembaruan navigasi real-time dari robot ESP32
@@ -2964,48 +3007,182 @@ function initPrayerFeature() {
   });
 }
 
-// Kecerahan Layar OLED
-let brightnessDebounce = null;
-function changeOledBrightness(val) {
+// =======================================================
+// PENGATURAN HARDWARE ROBOT (CYBER NEON)
+// =======================================================
+
+// 1. Slider Kecerahan Layar OLED
+let s_brightnessDebounce = null;
+function onBrightnessSliderInput(val) {
+  const badge = document.getElementById('txtOledBrightnessVal');
+  if (badge) badge.textContent = val + '%';
+}
+
+function onBrightnessSliderChange(val) {
+  const badge = document.getElementById('txtOledBrightnessVal');
+  if (badge) badge.textContent = val + '%';
+
   const intVal = parseInt(val, 10);
-  const pct = Math.round((intVal / 255) * 100) + '%';
-  const txt = document.getElementById('txtOledBrightness');
-  if (txt) txt.textContent = pct;
+  const rawByte = Math.round((intVal * 255) / 100);
 
-  if (brightnessDebounce) clearTimeout(brightnessDebounce);
-  brightnessDebounce = setTimeout(() => {
-    sendCommand({ cmd: 'bright', val: intVal });
-  }, 200);
+  if (s_brightnessDebounce) clearTimeout(s_brightnessDebounce);
+  s_brightnessDebounce = setTimeout(() => {
+    sendCommand({ c: 'bright', v: rawByte });
+    showNeonToast('Kecerahan diatur: ' + val + '%');
+    triggerHaptic(20);
+  }, 100);
 }
 
-// Auto Sleep Timeout Chips
-function setAutoSleep(seconds, btn) {
-  document.querySelectorAll('.chips-control-box .chip-preset').forEach(c => c.classList.remove('active'));
-  if (btn) btn.classList.add('active');
+// 2. Preset Auto-Sleep
+function selectSleepPreset(sec, btnEl) {
+  document.querySelectorAll('.setting-pill-btn').forEach(b => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
 
-  const ok = sendCommand({ cmd: 'sleep_to', val: seconds });
-  if (ok) {
-    showNeonToast(seconds === 0 ? 'Mode Selalu Nyala' : (seconds / 60) + ' Menit Istirahat');
-    triggerHaptic(30);
+  const badge = document.getElementById('txtActiveSleepBadge');
+  const teleBadge = document.getElementById('txtTelemetrySleepTo');
+  const textVal = sec === 0 ? 'SELALU NYALA' : (sec / 60) + ' MENIT';
+  if (badge) badge.textContent = textVal;
+  if (teleBadge) teleBadge.textContent = sec === 0 ? 'Selalu Nyala' : (sec / 60) + ' Menit';
+
+  sendCommand({ c: 'sleep_to', sec: sec });
+  if (sec === 0) {
+    showNeonToast('Mode layar selalu menyala diaktifkan');
+  } else {
+    showNeonToast('Auto-sleep disetel ke ' + (sec / 60) + ' menit');
   }
+  triggerHaptic(25);
 }
 
-// Tes Suara Buzzer
-function testBuzzerSound() {
-  const ok = sendCommand({ cmd: 'buzzer', freq: 2400, dur: 120 });
-  if (ok) {
-    showNeonToast('Bunyi Nada Buzzer');
-    triggerHaptic(30);
+// 3. Custom Auto-Sleep Input (Validasi Ketat Minimal 5 Menit)
+function applyCustomSleepSetting() {
+  const input = document.getElementById('inputCustomSleepMin');
+  if (!input) return;
+  let min = parseInt(input.value, 10);
+  if (isNaN(min) || min <= 0) {
+    showNeonToast('Ketik angka menit yang valid!');
+    return;
   }
+
+  // Proteksi & Validasi Ketat Minimal 5 Menit
+  if (min < 5) {
+    input.value = 5;
+    min = 5;
+    showNeonToast('Batas minimal auto-sleep adalah 5 menit!');
+  }
+
+  const sec = min * 60;
+
+  // Sesuaikan status pill
+  document.querySelectorAll('.setting-pill-btn').forEach(b => {
+    const bSec = parseInt(b.getAttribute('data-sec'), 10);
+    b.classList.toggle('active', bSec === sec);
+  });
+
+  const badge = document.getElementById('txtActiveSleepBadge');
+  const teleBadge = document.getElementById('txtTelemetrySleepTo');
+  if (badge) badge.textContent = min + ' MENIT';
+  if (teleBadge) teleBadge.textContent = min + ' Menit';
+
+  sendCommand({ c: 'sleep_to', sec: sec });
+  showNeonToast('Auto-sleep kustom disetel ke ' + min + ' menit');
+  triggerHaptic(30);
 }
 
-// Restart Robot Desk
-function restartRobot() {
-  if (confirm('Restart Robot Desk sekarang?')) {
-    sendCommand({ cmd: 'reboot' });
-    showNeonToast('Robot Restart...');
-    triggerHaptic(60);
-  }
+// 4. Tombol Layar Cepat (Tidur / Bangun)
+function triggerQuickScreenSleep() {
+  sendCommand({ c: 'sleep' });
+  showNeonToast('Layar robot dimatikan (Mode Tidur)');
+  triggerHaptic(30);
+}
+
+function triggerQuickScreenWake() {
+  sendCommand({ c: 'wake' });
+  showNeonToast('Layar robot diaktifkan kembali');
+  triggerHaptic(30);
+}
+
+// 5. Diagnostik Perangkat Keras
+function testHardwareBuzzer() {
+  sendCommand({ c: 'buzzer', freq: 2000, dur: 150 });
+  showNeonToast('Menguji suara buzzer robot...');
+  triggerHaptic(30);
+}
+
+function testHardwareVibrate() {
+  sendCommand({ c: 'vibrate', dur: 150 });
+  showNeonToast('Menguji getaran haptic robot...');
+  triggerHaptic(40);
+}
+
+function testHardwareTouch() {
+  sendCommand({ c: 'btn_tap' });
+  showNeonToast('Sentuhan virtual terkirim ke robot');
+  triggerHaptic(25);
+}
+
+function refreshSystemHealthStatus() {
+  sendCommand({ c: 's' });
+  showNeonToast('Status sistem diperbarui');
+  triggerHaptic(20);
+}
+
+// 6. Modal Konfirmasi & Eksekusi Reboot
+function openRebootConfirmModal() {
+  const modal = document.getElementById('modalRebootConfirm');
+  if (modal) modal.style.display = 'flex';
+  triggerHaptic(25);
+}
+
+function closeRebootConfirmModal() {
+  const modal = document.getElementById('modalRebootConfirm');
+  if (modal) modal.style.display = 'none';
+}
+
+let s_rebootCountdownTimer = null;
+function executeRebootCommand() {
+  closeRebootConfirmModal();
+  const overlay = document.getElementById('overlayRebootProgress');
+  const sub = document.getElementById('txtRebootCountdown');
+  if (overlay) overlay.style.display = 'flex';
+
+  sendCommand({ c: 'reboot' });
+  triggerHaptic(50);
+
+  let remaining = 6;
+  if (sub) sub.textContent = `Menunggu robot menyala kembali (${remaining}s)...`;
+
+  if (s_rebootCountdownTimer) clearInterval(s_rebootCountdownTimer);
+  s_rebootCountdownTimer = setInterval(() => {
+    remaining--;
+    if (remaining > 0) {
+      if (sub) sub.textContent = `Menunggu robot menyala kembali (${remaining}s)...`;
+    } else {
+      clearInterval(s_rebootCountdownTimer);
+      s_rebootCountdownTimer = null;
+      if (overlay) overlay.style.display = 'none';
+      showNeonToast('Robot Desk berhasil dimulai ulang!');
+      setTimeout(() => sendCommand({ c: 's' }), 1200);
+    }
+  }, 1000);
+}
+
+// 7. Modal Konfirmasi & Eksekusi Reset Jaringan WiFi
+function openResetWiFiConfirmModal() {
+  const modal = document.getElementById('modalResetWiFiConfirm');
+  if (modal) modal.style.display = 'flex';
+  triggerHaptic(30);
+}
+
+function closeResetWiFiConfirmModal() {
+  const modal = document.getElementById('modalResetWiFiConfirm');
+  if (modal) modal.style.display = 'none';
+}
+
+function executeResetWiFiCommand() {
+  closeResetWiFiConfirmModal();
+  sendCommand({ c: 'reset_wifi' });
+  showNeonToast('Jaringan WiFi robot berhasil dihapus');
+  triggerHaptic(60);
 }
 
 // Restore saved preferences on startup & trigger auto check

@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Robot Desk</title>
   <link rel="stylesheet" href="app.css">
 </head>
+
 <body>
   <div class="app-shell">
 
@@ -26,7 +29,7 @@
     <!-- STRICT BLUETOOTH SETUP GATE (LOCK SCREEN) -->
     <div id="setupGate" class="setup-gate">
       <div class="setup-modal-box">
-        
+
         <div class="setup-radar-wrap">
           <div class="radar-wave"></div>
           <div class="radar-wave wave-2"></div>
@@ -72,7 +75,8 @@
             </div>
           </div>
 
-          <button id="btnManualReconnect" class="neon-btn-action full mt-8" onclick="manualReconnectSaved()" style="display: none;">
+          <button id="btnManualReconnect" class="neon-btn-action full mt-8" onclick="manualReconnectSaved()"
+            style="display: none;">
             SAMBUNGKAN KEMBALI
           </button>
         </div>
@@ -82,7 +86,8 @@
           <div class="status-card-header-row">
             <span class="status-card-label">PERANGKAT TERDETEKSI</span>
             <!-- Tombol Pindai Ulang di Pojok Kanan Atas (Murni Teks tanpa Icon) -->
-            <button id="btnManualScan" class="neon-btn-corner scanning disabled" onclick="retryAutoScan()" title="Pindai Ulang" disabled>
+            <button id="btnManualScan" class="neon-btn-corner scanning disabled" onclick="retryAutoScan()"
+              title="Pindai Ulang" disabled>
               <span id="scanCornerSpinner" class="corner-spinner" style="display: inline-block;"></span>
               <span id="scanCornerLabel">PINDAI ULANG</span>
             </button>
@@ -120,7 +125,8 @@
           </div>
 
           <!-- Tombol Hubungkan murni teks tanpa icon emoji/salin -->
-          <button id="btnConnectRobot" class="neon-btn-action full connect-action-btn disabled" onclick="connectToFoundRobot()" disabled>
+          <button id="btnConnectRobot" class="neon-btn-action full connect-action-btn disabled"
+            onclick="connectToFoundRobot()" disabled>
             <span id="btnConnectSpinner" class="neon-btn-spinner" style="display: none;"></span>
             <span id="btnConnectLabel">HUBUNGKAN</span>
           </button>
@@ -142,7 +148,8 @@
         <!-- 7 TOMBOL KOTAK FITUR UTAMA (SESUAI URUTAN KIRI KE KANAN BAWAH) -->
         <div id="menuFeatureGrid" class="menu-feature-grid">
           <!-- BARIS 1 KIRI: EXPRESI WAJAH -->
-          <button id="btnMenuFace" type="button" class="menu-action-card" onclick="selectRobotMenuFeature('face', this)">
+          <button id="btnMenuFace" type="button" class="menu-action-card"
+            onclick="selectRobotMenuFeature('face', this)">
             <div class="card-icon-wrap">
               <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
                 <circle cx="12" cy="12" r="10"></circle>
@@ -155,7 +162,8 @@
           </button>
 
           <!-- BARIS 1 KANAN: JAM DIGITAL -->
-          <button id="btnMenuClock" type="button" class="menu-action-card" onclick="selectRobotMenuFeature('clock', this)">
+          <button id="btnMenuClock" type="button" class="menu-action-card"
+            onclick="selectRobotMenuFeature('clock', this)">
             <div class="card-icon-wrap">
               <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
                 <circle cx="12" cy="12" r="10"></circle>
@@ -166,7 +174,8 @@
           </button>
 
           <!-- BARIS 2 KIRI: ALARM -->
-          <button id="btnMenuAlarm" type="button" class="menu-action-card" onclick="selectRobotMenuFeature('alarm', this)">
+          <button id="btnMenuAlarm" type="button" class="menu-action-card"
+            onclick="selectRobotMenuFeature('alarm', this)">
             <div class="card-icon-wrap">
               <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
                 <circle cx="12" cy="13" r="8"></circle>
@@ -177,7 +186,8 @@
           </button>
 
           <!-- BARIS 2 KANAN: STOPWATCH -->
-          <button id="btnMenuStopwatch" type="button" class="menu-action-card" onclick="selectRobotMenuFeature('stopwatch', this)">
+          <button id="btnMenuStopwatch" type="button" class="menu-action-card"
+            onclick="selectRobotMenuFeature('stopwatch', this)">
             <div class="card-icon-wrap">
               <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
                 <circle cx="12" cy="14" r="8"></circle>
@@ -189,7 +199,8 @@
           </button>
 
           <!-- BARIS 3 KIRI: INFO CUACA -->
-          <button id="btnMenuWeather" type="button" class="menu-action-card" onclick="selectRobotMenuFeature('weather', this)">
+          <button id="btnMenuWeather" type="button" class="menu-action-card"
+            onclick="selectRobotMenuFeature('weather', this)">
             <div class="card-icon-wrap">
               <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
                 <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
@@ -199,7 +210,8 @@
           </button>
 
           <!-- BARIS 3 KANAN: JADWAL SHOLAT -->
-          <button id="btnMenuPrayer" type="button" class="menu-action-card" onclick="selectRobotMenuFeature('prayer', this)">
+          <button id="btnMenuPrayer" type="button" class="menu-action-card"
+            onclick="selectRobotMenuFeature('prayer', this)">
             <div class="card-icon-wrap">
               <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
                 <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
@@ -209,7 +221,8 @@
           </button>
 
           <!-- BARIS 4 KIRI: SUBTITLE -->
-          <button id="btnMenuSubtitle" type="button" class="menu-action-card" onclick="selectRobotMenuFeature('subtitle', this)">
+          <button id="btnMenuSubtitle" type="button" class="menu-action-card"
+            onclick="selectRobotMenuFeature('subtitle', this)">
             <div class="card-icon-wrap">
               <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
                 <rect x="2" y="6" width="20" height="12" rx="2"></rect>
@@ -220,7 +233,8 @@
           </button>
 
           <!-- BARIS 4 KANAN: SPOTIFY -->
-          <button id="btnMenuSpotify" type="button" class="menu-action-card" onclick="selectRobotMenuFeature('spotify', this)">
+          <button id="btnMenuSpotify" type="button" class="menu-action-card"
+            onclick="selectRobotMenuFeature('spotify', this)">
             <div class="card-icon-wrap">
               <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
                 <circle cx="12" cy="12" r="10"></circle>
@@ -233,7 +247,8 @@
           </button>
 
           <!-- BARIS 5 KIRI: MENU GAME -->
-          <button id="btnMenuGame" type="button" class="menu-action-card" onclick="selectRobotMenuFeature('game', this)">
+          <button id="btnMenuGame" type="button" class="menu-action-card"
+            onclick="selectRobotMenuFeature('game', this)">
             <div class="card-icon-wrap">
               <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
                 <rect x="2" y="6" width="20" height="12" rx="3"></rect>
@@ -246,7 +261,8 @@
           </button>
 
           <!-- BARIS 5 KANAN: NAVIGASI -->
-          <button id="btnMenuNavigation" type="button" class="menu-action-card" onclick="selectRobotMenuFeature('navigation', this)">
+          <button id="btnMenuNavigation" type="button" class="menu-action-card"
+            onclick="selectRobotMenuFeature('navigation', this)">
             <div class="card-icon-wrap">
               <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
                 <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
@@ -275,8 +291,10 @@
                 <div class="oled-screen-content oled-face-view">
                   <div class="oled-face-wrap" id="oledFaceSvgWrap">
                     <svg viewBox="0 0 100 50" class="oled-face-svg">
-                      <rect x="15" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3"></rect>
-                      <rect x="57" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3"></rect>
+                      <rect x="15" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3">
+                      </rect>
+                      <rect x="57" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3">
+                      </rect>
                     </svg>
                   </div>
                   <div class="oled-mood-label" id="oledFaceMoodLabel">MOOD: SENANG</div>
@@ -316,7 +334,8 @@
                     </svg>
                   </div>
                   <div class="oled-big-time" id="oledAlarmTimePreview">06:30</div>
-                  <div class="oled-alarm-badge" id="oledAlarmBadgePreview" style="opacity: 0.45;">OFF &bull; TIAP HARI</div>
+                  <div class="oled-alarm-badge" id="oledAlarmBadgePreview" style="opacity: 0.45;">OFF &bull; TIAP HARI
+                  </div>
                 </div>
               </div>
               <div class="screen-card-meta">
@@ -350,7 +369,8 @@
                     <div class="oled-weather-city-top" id="oledCityPreview">BANDUNG</div>
                     <div class="oled-weather-body">
                       <div class="oled-weather-col-left">
-                        <div class="oled-weather-temp" id="oledTempPreview">28<span class="oled-deg-circle"></span></div>
+                        <div class="oled-weather-temp" id="oledTempPreview">28<span class="oled-deg-circle"></span>
+                        </div>
                         <div class="oled-weather-cond" id="oledWeatherCondPreview">CERAH</div>
                       </div>
                       <div class="oled-weather-dotted-divider"></div>
@@ -479,8 +499,10 @@
                 <div class="oled-screen-content stage-screen-content">
                   <div class="oled-live-face-wrap" id="detailFaceSvgWrap">
                     <svg viewBox="0 0 100 50" class="oled-face-svg">
-                      <rect x="15" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3"></rect>
-                      <rect x="57" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3"></rect>
+                      <rect x="15" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3">
+                      </rect>
+                      <rect x="57" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3">
+                      </rect>
                     </svg>
                   </div>
                 </div>
@@ -503,14 +525,28 @@
                 <div class="oled-screen-content stage-screen-content">
                   <div class="oled-status-bar">
                     <div class="oled-status-left">
-                      <svg viewBox="0 0 9 9" class="oled-status-wifi"><path d="M0 1.5C2.5 -0.5 6.5 -0.5 9 1.5l-1 1C6.2 0.8 2.8 0.8 1 2.5L0 1.5zm2 2.5c1.4 -1.2 3.6 -1.2 5 0l-1 1c-0.8 -0.7 -2.2 -0.7 -3 0l-1 -1zm2.5 3a1 1 0 1 1 0 2 1 1 0 0 1 0 -2z"/></svg>
-                      <svg viewBox="0 0 7 9" class="oled-status-ble"><path d="M1.5 2.5L5.5 6.5L3.5 8.5L3.5 0.5L5.5 2.5L1.5 6.5"/></svg>
-                      <svg viewBox="0 0 8 8" class="oled-status-alarm detail-status-alarm-icon"><path d="M3 0h2v1H3zM2 1h4v1H2zM2 2h4v1H2zM1 3h6v1H1zM0 4h8v2H0zM3 6h2v2H3z"/></svg>
+                      <svg viewBox="0 0 9 9" class="oled-status-wifi">
+                        <path
+                          d="M0 1.5C2.5 -0.5 6.5 -0.5 9 1.5l-1 1C6.2 0.8 2.8 0.8 1 2.5L0 1.5zm2 2.5c1.4 -1.2 3.6 -1.2 5 0l-1 1c-0.8 -0.7 -2.2 -0.7 -3 0l-1 -1zm2.5 3a1 1 0 1 1 0 2 1 1 0 0 1 0 -2z" />
+                      </svg>
+                      <svg viewBox="0 0 7 9" class="oled-status-ble">
+                        <path d="M1.5 2.5L5.5 6.5L3.5 8.5L3.5 0.5L5.5 2.5L1.5 6.5" />
+                      </svg>
+                      <svg viewBox="0 0 8 8" class="oled-status-alarm detail-status-alarm-icon">
+                        <path d="M3 0h2v1H3zM2 1h4v1H2zM2 2h4v1H2zM1 3h6v1H1zM0 4h8v2H0zM3 6h2v2H3z" />
+                      </svg>
                     </div>
                     <div class="oled-status-title">JAM</div>
                     <div class="oled-status-right">
-                      <svg viewBox="0 0 5 8" class="oled-status-lightning"><path d="M2 0h1v3h2L1 8l1-4H0z"/></svg>
-                      <div class="oled-battery-vert"><div class="oled-batt-pip"></div><div class="oled-batt-body"><div class="oled-batt-fill" style="height: 100%;"></div></div></div>
+                      <svg viewBox="0 0 5 8" class="oled-status-lightning">
+                        <path d="M2 0h1v3h2L1 8l1-4H0z" />
+                      </svg>
+                      <div class="oled-battery-vert">
+                        <div class="oled-batt-pip"></div>
+                        <div class="oled-batt-body">
+                          <div class="oled-batt-fill" style="height: 100%;"></div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <div class="oled-mode-layer active">
@@ -548,7 +584,8 @@
               <!-- 3. FORMAT TAMPILAN 24 JAM vs 12 JAM (INSTANT AUTO-APPLY) -->
               <div class="clock-ctrl-block">
                 <div class="clock-fmt-btn-row">
-                  <button type="button" class="btn-fmt-pill active" id="btnClockFmt24" onclick="selectClockFormat(false, this)">
+                  <button type="button" class="btn-fmt-pill active" id="btnClockFmt24"
+                    onclick="selectClockFormat(false, this)">
                     <span class="fmt-pill-name">24 JAM</span>
                   </button>
                   <button type="button" class="btn-fmt-pill" id="btnClockFmt12" onclick="selectClockFormat(true, this)">
@@ -567,14 +604,28 @@
                 <div class="oled-screen-content stage-screen-content">
                   <div class="oled-status-bar">
                     <div class="oled-status-left">
-                      <svg viewBox="0 0 9 9" class="oled-status-wifi"><path d="M0 1.5C2.5 -0.5 6.5 -0.5 9 1.5l-1 1C6.2 0.8 2.8 0.8 1 2.5L0 1.5zm2 2.5c1.4 -1.2 3.6 -1.2 5 0l-1 1c-0.8 -0.7 -2.2 -0.7 -3 0l-1 -1zm2.5 3a1 1 0 1 1 0 2 1 1 0 0 1 0 -2z"/></svg>
-                      <svg viewBox="0 0 7 9" class="oled-status-ble"><path d="M1.5 2.5L5.5 6.5L3.5 8.5L3.5 0.5L5.5 2.5L1.5 6.5"/></svg>
-                      <svg viewBox="0 0 8 8" class="oled-status-alarm detail-status-alarm-icon"><path d="M3 0h2v1H3zM2 1h4v1H2zM2 2h4v1H2zM1 3h6v1H1zM0 4h8v2H0zM3 6h2v2H3z"/></svg>
+                      <svg viewBox="0 0 9 9" class="oled-status-wifi">
+                        <path
+                          d="M0 1.5C2.5 -0.5 6.5 -0.5 9 1.5l-1 1C6.2 0.8 2.8 0.8 1 2.5L0 1.5zm2 2.5c1.4 -1.2 3.6 -1.2 5 0l-1 1c-0.8 -0.7 -2.2 -0.7 -3 0l-1 -1zm2.5 3a1 1 0 1 1 0 2 1 1 0 0 1 0 -2z" />
+                      </svg>
+                      <svg viewBox="0 0 7 9" class="oled-status-ble">
+                        <path d="M1.5 2.5L5.5 6.5L3.5 8.5L3.5 0.5L5.5 2.5L1.5 6.5" />
+                      </svg>
+                      <svg viewBox="0 0 8 8" class="oled-status-alarm detail-status-alarm-icon">
+                        <path d="M3 0h2v1H3zM2 1h4v1H2zM2 2h4v1H2zM1 3h6v1H1zM0 4h8v2H0zM3 6h2v2H3z" />
+                      </svg>
                     </div>
                     <div class="oled-status-title">ALARM</div>
                     <div class="oled-status-right">
-                      <svg viewBox="0 0 5 8" class="oled-status-lightning"><path d="M2 0h1v3h2L1 8l1-4H0z"/></svg>
-                      <div class="oled-battery-vert"><div class="oled-batt-pip"></div><div class="oled-batt-body"><div class="oled-batt-fill" style="height: 100%;"></div></div></div>
+                      <svg viewBox="0 0 5 8" class="oled-status-lightning">
+                        <path d="M2 0h1v3h2L1 8l1-4H0z" />
+                      </svg>
+                      <div class="oled-battery-vert">
+                        <div class="oled-batt-pip"></div>
+                        <div class="oled-batt-body">
+                          <div class="oled-batt-fill" style="height: 100%;"></div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <div class="oled-mode-layer active">
@@ -602,10 +653,12 @@
                   </div>
                 </div>
                 <div class="toggles-block">
-                  <button type="button" id="btnToggleAlarmEn" class="neon-btn-action" onclick="toggleAlarmPowerFromApp()">
+                  <button type="button" id="btnToggleAlarmEn" class="neon-btn-action"
+                    onclick="toggleAlarmPowerFromApp()">
                     ALARM: OFF
                   </button>
-                  <button type="button" id="btnToggleAlarmRepeat" class="neon-btn-action" onclick="toggleAlarmRepeatFromApp()">
+                  <button type="button" id="btnToggleAlarmRepeat" class="neon-btn-action"
+                    onclick="toggleAlarmRepeatFromApp()">
                     TIAP HARI
                   </button>
                 </div>
@@ -620,19 +673,35 @@
                 <div class="oled-screen-content stage-screen-content">
                   <div class="oled-status-bar">
                     <div class="oled-status-left">
-                      <svg viewBox="0 0 9 9" class="oled-status-wifi"><path d="M0 1.5C2.5 -0.5 6.5 -0.5 9 1.5l-1 1C6.2 0.8 2.8 0.8 1 2.5L0 1.5zm2 2.5c1.4 -1.2 3.6 -1.2 5 0l-1 1c-0.8 -0.7 -2.2 -0.7 -3 0l-1 -1zm2.5 3a1 1 0 1 1 0 2 1 1 0 0 1 0 -2z"/></svg>
-                      <svg viewBox="0 0 7 9" class="oled-status-ble"><path d="M1.5 2.5L5.5 6.5L3.5 8.5L3.5 0.5L5.5 2.5L1.5 6.5"/></svg>
-                      <svg viewBox="0 0 8 8" class="oled-status-alarm detail-status-alarm-icon"><path d="M3 0h2v1H3zM2 1h4v1H2zM2 2h4v1H2zM1 3h6v1H1zM0 4h8v2H0zM3 6h2v2H3z"/></svg>
+                      <svg viewBox="0 0 9 9" class="oled-status-wifi">
+                        <path
+                          d="M0 1.5C2.5 -0.5 6.5 -0.5 9 1.5l-1 1C6.2 0.8 2.8 0.8 1 2.5L0 1.5zm2 2.5c1.4 -1.2 3.6 -1.2 5 0l-1 1c-0.8 -0.7 -2.2 -0.7 -3 0l-1 -1zm2.5 3a1 1 0 1 1 0 2 1 1 0 0 1 0 -2z" />
+                      </svg>
+                      <svg viewBox="0 0 7 9" class="oled-status-ble">
+                        <path d="M1.5 2.5L5.5 6.5L3.5 8.5L3.5 0.5L5.5 2.5L1.5 6.5" />
+                      </svg>
+                      <svg viewBox="0 0 8 8" class="oled-status-alarm detail-status-alarm-icon">
+                        <path d="M3 0h2v1H3zM2 1h4v1H2zM2 2h4v1H2zM1 3h6v1H1zM0 4h8v2H0zM3 6h2v2H3z" />
+                      </svg>
                     </div>
                     <div class="oled-status-title">STOPWATCH</div>
                     <div class="oled-status-right">
-                      <svg viewBox="0 0 5 8" class="oled-status-lightning"><path d="M2 0h1v3h2L1 8l1-4H0z"/></svg>
-                      <div class="oled-battery-vert"><div class="oled-batt-pip"></div><div class="oled-batt-body"><div class="oled-batt-fill" style="height: 100%;"></div></div></div>
+                      <svg viewBox="0 0 5 8" class="oled-status-lightning">
+                        <path d="M2 0h1v3h2L1 8l1-4H0z" />
+                      </svg>
+                      <div class="oled-battery-vert">
+                        <div class="oled-batt-pip"></div>
+                        <div class="oled-batt-body">
+                          <div class="oled-batt-fill" style="height: 100%;"></div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <div class="oled-mode-layer active">
                     <div class="oled-big-time oled-mono" id="detailSwDigits">00:00:00</div>
-                    <div class="oled-sw-bar-track"><div class="oled-sw-bar-fill" id="detailSwBarFill" style="width: 0%;"></div></div>
+                    <div class="oled-sw-bar-track">
+                      <div class="oled-sw-bar-fill" id="detailSwBarFill" style="width: 0%;"></div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -641,10 +710,12 @@
             <!-- KONTROL STOPWATCH: MULAI, STOP, RESET -->
             <div class="feature-ctrl-panel">
               <div class="dual-btn-row">
-                <button type="button" id="btnSwStartStop" class="neon-btn-action flex-1" onclick="toggleStopwatchStartStop()">
+                <button type="button" id="btnSwStartStop" class="neon-btn-action flex-1"
+                  onclick="toggleStopwatchStartStop()">
                   MULAI
                 </button>
-                <button type="button" id="btnSwReset" class="neon-btn-action flex-1 danger disabled" disabled onclick="resetStopwatchFromApp()">
+                <button type="button" id="btnSwReset" class="neon-btn-action flex-1 danger disabled" disabled
+                  onclick="resetStopwatchFromApp()">
                   RESET
                 </button>
               </div>
@@ -658,14 +729,28 @@
                 <div class="oled-screen-content stage-screen-content">
                   <div class="oled-status-bar">
                     <div class="oled-status-left">
-                      <svg viewBox="0 0 9 9" class="oled-status-wifi"><path d="M0 1.5C2.5 -0.5 6.5 -0.5 9 1.5l-1 1C6.2 0.8 2.8 0.8 1 2.5L0 1.5zm2 2.5c1.4 -1.2 3.6 -1.2 5 0l-1 1c-0.8 -0.7 -2.2 -0.7 -3 0l-1 -1zm2.5 3a1 1 0 1 1 0 2 1 1 0 0 1 0 -2z"/></svg>
-                      <svg viewBox="0 0 7 9" class="oled-status-ble"><path d="M1.5 2.5L5.5 6.5L3.5 8.5L3.5 0.5L5.5 2.5L1.5 6.5"/></svg>
-                      <svg viewBox="0 0 8 8" class="oled-status-alarm detail-status-alarm-icon"><path d="M3 0h2v1H3zM2 1h4v1H2zM2 2h4v1H2zM1 3h6v1H1zM0 4h8v2H0zM3 6h2v2H3z"/></svg>
+                      <svg viewBox="0 0 9 9" class="oled-status-wifi">
+                        <path
+                          d="M0 1.5C2.5 -0.5 6.5 -0.5 9 1.5l-1 1C6.2 0.8 2.8 0.8 1 2.5L0 1.5zm2 2.5c1.4 -1.2 3.6 -1.2 5 0l-1 1c-0.8 -0.7 -2.2 -0.7 -3 0l-1 -1zm2.5 3a1 1 0 1 1 0 2 1 1 0 0 1 0 -2z" />
+                      </svg>
+                      <svg viewBox="0 0 7 9" class="oled-status-ble">
+                        <path d="M1.5 2.5L5.5 6.5L3.5 8.5L3.5 0.5L5.5 2.5L1.5 6.5" />
+                      </svg>
+                      <svg viewBox="0 0 8 8" class="oled-status-alarm detail-status-alarm-icon">
+                        <path d="M3 0h2v1H3zM2 1h4v1H2zM2 2h4v1H2zM1 3h6v1H1zM0 4h8v2H0zM3 6h2v2H3z" />
+                      </svg>
                     </div>
                     <div class="oled-status-title">CUACA</div>
                     <div class="oled-status-right">
-                      <svg viewBox="0 0 5 8" class="oled-status-lightning"><path d="M2 0h1v3h2L1 8l1-4H0z"/></svg>
-                      <div class="oled-battery-vert"><div class="oled-batt-pip"></div><div class="oled-batt-body"><div class="oled-batt-fill" style="height: 100%;"></div></div></div>
+                      <svg viewBox="0 0 5 8" class="oled-status-lightning">
+                        <path d="M2 0h1v3h2L1 8l1-4H0z" />
+                      </svg>
+                      <div class="oled-battery-vert">
+                        <div class="oled-batt-pip"></div>
+                        <div class="oled-batt-body">
+                          <div class="oled-batt-fill" style="height: 100%;"></div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <div class="oled-mode-layer active">
@@ -673,7 +758,8 @@
                       <div class="oled-weather-city-top" id="detailWeatherCity">BANDUNG</div>
                       <div class="oled-weather-body">
                         <div class="oled-weather-col-left">
-                          <div class="oled-weather-temp" id="detailWeatherTemp">28<span class="oled-deg-circle"></span></div>
+                          <div class="oled-weather-temp" id="detailWeatherTemp">28<span class="oled-deg-circle"></span>
+                          </div>
                           <div class="oled-weather-cond" id="detailWeatherCond">CERAH</div>
                         </div>
                         <div class="oled-weather-dotted-divider"></div>
@@ -692,16 +778,20 @@
             <div class="feature-ctrl-panel">
               <div class="config-card weather-ctrl-card">
                 <div class="config-header">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
+                    <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
+                  </svg>
                   <span class="config-title">PENGATURAN KOTA CUACA</span>
                 </div>
 
                 <div class="weather-form-group">
                   <div class="weather-input-container">
-                    <input type="text" id="cfgCityInput" class="weather-city-input" placeholder="Ketik nama kota..." autocomplete="off">
+                    <input type="text" id="cfgCityInput" class="weather-city-input" placeholder="Ketik nama kota..."
+                      autocomplete="off">
                     <div id="cityDropdown" class="city-autocomplete-dropdown" style="display: none;"></div>
                   </div>
-                  <button type="button" id="btnSearchCity" class="weather-action-btn" onclick="applyWeatherCity(false)" onpointerup="this.blur()" ontouchend="this.blur()">
+                  <button type="button" id="btnSearchCity" class="weather-action-btn" onclick="applyWeatherCity(false)"
+                    onpointerup="this.blur()" ontouchend="this.blur()">
                     <span class="weather-btn-label" id="txtSearchCityBtn">TERAPKAN CUACA</span>
                   </button>
                 </div>
@@ -716,14 +806,28 @@
                 <div class="oled-screen-content stage-screen-content">
                   <div class="oled-status-bar">
                     <div class="oled-status-left">
-                      <svg viewBox="0 0 9 9" class="oled-status-wifi"><path d="M0 1.5C2.5 -0.5 6.5 -0.5 9 1.5l-1 1C6.2 0.8 2.8 0.8 1 2.5L0 1.5zm2 2.5c1.4 -1.2 3.6 -1.2 5 0l-1 1c-0.8 -0.7 -2.2 -0.7 -3 0l-1 -1zm2.5 3a1 1 0 1 1 0 2 1 1 0 0 1 0 -2z"/></svg>
-                      <svg viewBox="0 0 7 9" class="oled-status-ble"><path d="M1.5 2.5L5.5 6.5L3.5 8.5L3.5 0.5L5.5 2.5L1.5 6.5"/></svg>
-                      <svg viewBox="0 0 8 8" class="oled-status-alarm detail-status-alarm-icon"><path d="M3 0h2v1H3zM2 1h4v1H2zM2 2h4v1H2zM1 3h6v1H1zM0 4h8v2H0zM3 6h2v2H3z"/></svg>
+                      <svg viewBox="0 0 9 9" class="oled-status-wifi">
+                        <path
+                          d="M0 1.5C2.5 -0.5 6.5 -0.5 9 1.5l-1 1C6.2 0.8 2.8 0.8 1 2.5L0 1.5zm2 2.5c1.4 -1.2 3.6 -1.2 5 0l-1 1c-0.8 -0.7 -2.2 -0.7 -3 0l-1 -1zm2.5 3a1 1 0 1 1 0 2 1 1 0 0 1 0 -2z" />
+                      </svg>
+                      <svg viewBox="0 0 7 9" class="oled-status-ble">
+                        <path d="M1.5 2.5L5.5 6.5L3.5 8.5L3.5 0.5L5.5 2.5L1.5 6.5" />
+                      </svg>
+                      <svg viewBox="0 0 8 8" class="oled-status-alarm detail-status-alarm-icon">
+                        <path d="M3 0h2v1H3zM2 1h4v1H2zM2 2h4v1H2zM1 3h6v1H1zM0 4h8v2H0zM3 6h2v2H3z" />
+                      </svg>
                     </div>
                     <div class="oled-status-title">SUBTITLE</div>
                     <div class="oled-status-right">
-                      <svg viewBox="0 0 5 8" class="oled-status-lightning"><path d="M2 0h1v3h2L1 8l1-4H0z"/></svg>
-                      <div class="oled-battery-vert"><div class="oled-batt-pip"></div><div class="oled-batt-body"><div class="oled-batt-fill" style="height: 100%;"></div></div></div>
+                      <svg viewBox="0 0 5 8" class="oled-status-lightning">
+                        <path d="M2 0h1v3h2L1 8l1-4H0z" />
+                      </svg>
+                      <div class="oled-battery-vert">
+                        <div class="oled-batt-pip"></div>
+                        <div class="oled-batt-body">
+                          <div class="oled-batt-fill" style="height: 100%;"></div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <div class="oled-mode-layer active oled-subtitle-layer">
@@ -741,14 +845,28 @@
                 <div class="oled-screen-content stage-screen-content">
                   <div class="oled-status-bar">
                     <div class="oled-status-left">
-                      <svg viewBox="0 0 9 9" class="oled-status-wifi"><path d="M0 1.5C2.5 -0.5 6.5 -0.5 9 1.5l-1 1C6.2 0.8 2.8 0.8 1 2.5L0 1.5zm2 2.5c1.4 -1.2 3.6 -1.2 5 0l-1 1c-0.8 -0.7 -2.2 -0.7 -3 0l-1 -1zm2.5 3a1 1 0 1 1 0 2 1 1 0 0 1 0 -2z"/></svg>
-                      <svg viewBox="0 0 7 9" class="oled-status-ble"><path d="M1.5 2.5L5.5 6.5L3.5 8.5L3.5 0.5L5.5 2.5L1.5 6.5"/></svg>
-                      <svg viewBox="0 0 8 8" class="oled-status-alarm detail-status-alarm-icon"><path d="M3 0h2v1H3zM2 1h4v1H2zM2 2h4v1H2zM1 3h6v1H1zM0 4h8v2H0zM3 6h2v2H3z"/></svg>
+                      <svg viewBox="0 0 9 9" class="oled-status-wifi">
+                        <path
+                          d="M0 1.5C2.5 -0.5 6.5 -0.5 9 1.5l-1 1C6.2 0.8 2.8 0.8 1 2.5L0 1.5zm2 2.5c1.4 -1.2 3.6 -1.2 5 0l-1 1c-0.8 -0.7 -2.2 -0.7 -3 0l-1 -1zm2.5 3a1 1 0 1 1 0 2 1 1 0 0 1 0 -2z" />
+                      </svg>
+                      <svg viewBox="0 0 7 9" class="oled-status-ble">
+                        <path d="M1.5 2.5L5.5 6.5L3.5 8.5L3.5 0.5L5.5 2.5L1.5 6.5" />
+                      </svg>
+                      <svg viewBox="0 0 8 8" class="oled-status-alarm detail-status-alarm-icon">
+                        <path d="M3 0h2v1H3zM2 1h4v1H2zM2 2h4v1H2zM1 3h6v1H1zM0 4h8v2H0zM3 6h2v2H3z" />
+                      </svg>
                     </div>
                     <div class="oled-status-title">GAME</div>
                     <div class="oled-status-right">
-                      <svg viewBox="0 0 5 8" class="oled-status-lightning"><path d="M2 0h1v3h2L1 8l1-4H0z"/></svg>
-                      <div class="oled-battery-vert"><div class="oled-batt-pip"></div><div class="oled-batt-body"><div class="oled-batt-fill" style="height: 100%;"></div></div></div>
+                      <svg viewBox="0 0 5 8" class="oled-status-lightning">
+                        <path d="M2 0h1v3h2L1 8l1-4H0z" />
+                      </svg>
+                      <div class="oled-battery-vert">
+                        <div class="oled-batt-pip"></div>
+                        <div class="oled-batt-body">
+                          <div class="oled-batt-fill" style="height: 100%;"></div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <div class="oled-mode-layer active">
@@ -829,13 +947,15 @@
 
               <!-- Tombol Kontrol Media Tema Neon Cyan -->
               <div class="spotify-media-controls">
-                <button type="button" class="btn-media-round" onclick="mediaControlAction('prev')" title="Lagu Sebelumnya">
+                <button type="button" class="btn-media-round" onclick="mediaControlAction('prev')"
+                  title="Lagu Sebelumnya">
                   <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2.5">
                     <polygon points="19 20 9 12 19 4 19 20" fill="#00F0FF"></polygon>
                     <line x1="5" y1="19" x2="5" y2="5"></line>
                   </svg>
                 </button>
-                <button type="button" class="btn-media-round btn-play-pause" id="btnMediaPlayPause" onclick="mediaControlAction('play_pause')" title="Putar / Jeda">
+                <button type="button" class="btn-media-round btn-play-pause" id="btnMediaPlayPause"
+                  onclick="mediaControlAction('play_pause')" title="Putar / Jeda">
                   <svg id="iconMediaPlay" viewBox="0 0 24 24">
                     <polygon points="6 4 20 12 6 20 6 4" fill="#051016"></polygon>
                   </svg>
@@ -844,7 +964,8 @@
                     <rect x="14" y="4" width="4" height="16" rx="1" fill="#051016"></rect>
                   </svg>
                 </button>
-                <button type="button" class="btn-media-round" onclick="mediaControlAction('next')" title="Lagu Berikutnya">
+                <button type="button" class="btn-media-round" onclick="mediaControlAction('next')"
+                  title="Lagu Berikutnya">
                   <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2.5">
                     <polygon points="5 4 15 12 5 20 5 4" fill="#00F0FF"></polygon>
                     <line x1="19" y1="5" x2="19" y2="19"></line>
@@ -859,41 +980,61 @@
             <!-- Panggung OLED 128x64 Persis Robot Fisik -->
             <div class="main-oled-stage-wrap">
               <div class="oled-display-bezel stage-bezel">
-                <div class="oled-screen-content stage-screen-content" style="padding: 4px 6px; justify-content: flex-start;">
-                  
+                <div class="oled-screen-content stage-screen-content"
+                  style="padding: 4px 6px; justify-content: flex-start;">
+
                   <!-- KONDISI STANDBY: Status Bar Resmi Aktif -->
                   <div id="stageNavStandby" style="width: 100%; height: 100%; display: flex; flex-direction: column;">
-                    <div class="oled-header-tiny" style="border-bottom: 1px solid #00F0FF; padding-bottom: 2px; margin-bottom: 3px;">
+                    <div class="oled-header-tiny"
+                      style="border-bottom: 1px solid #00F0FF; padding-bottom: 2px; margin-bottom: 4px;">
                       <span>WIFI</span>
                       <span style="font-weight: 700;">NAVIGASI</span>
                       <span>BAT 100%</span>
                     </div>
-                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 1px;">
-                      <div id="stageNavStandbySpeed" style="font-size: 1.15rem; font-weight: 800; color: #00F0FF; letter-spacing: 1px;">0 km/h</div>
-                      <div style="font-size: 0.62rem; color: #00F0FF; letter-spacing: 0.5px; margin-top: 1px;">SIAP NAVIGASI</div>
+                    <div
+                      style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 4px;">
+                      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#00F0FF" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="#00F0FF">
+                        </polygon>
+                      </svg>
+                      <div style="text-align: left;">
+                        <div id="stageNavStandbySpeed" style="font-size: 0.95rem; font-weight: 800; color: #00F0FF;">0
+                          km/h</div>
+                        <div style="font-size: 0.62rem; color: rgba(0,240,255,0.7);">SIAP NAVIGASI</div>
+                      </div>
                     </div>
-                    <div style="border-top: 1px solid #00F0FF; margin-top: 5px; padding-top: 2px; font-size: 0.60rem; text-align: center; color: #00F0FF; font-weight: 700; letter-spacing: 0.5px;">Mulai Rute di Maps</div>
+                    <div style="font-size: 0.60rem; text-align: center; margin-top: 6px; color: #00F0FF;">Setel Rute
+                      Tujuan di HP</div>
                   </div>
 
                   <!-- KONDISI AKTIF: Full Screen Lega Tanpa Status Bar -->
-                  <div id="stageNavActive" style="width: 100%; height: 100%; display: none; flex-direction: column; justify-content: space-between;">
+                  <div id="stageNavActive"
+                    style="width: 100%; height: 100%; display: none; flex-direction: column; justify-content: space-between;">
                     <div style="display: flex; align-items: center; width: 100%; gap: 6px;">
                       <!-- Panah Vektor Belokan -->
-                      <div id="stageNavArrowWrap" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-right: 1px solid rgba(0,240,255,0.4); padding-right: 4px;">
-                        <svg id="stageNavArrowSvg" viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#00F0FF" stroke-width="2.5">
+                      <div id="stageNavArrowWrap"
+                        style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-right: 1px solid rgba(0,240,255,0.4); padding-right: 4px;">
+                        <svg id="stageNavArrowSvg" viewBox="0 0 24 24" width="30" height="30" fill="none"
+                          stroke="#00F0FF" stroke-width="2.5">
                           <line x1="12" y1="19" x2="12" y2="5"></line>
                           <polyline points="5 12 12 5 19 12"></polyline>
                         </svg>
                       </div>
                       <!-- Detail Meteran & Jalan -->
                       <div style="flex: 1; text-align: left; padding-left: 2px;">
-                        <div id="stageNavDistance" style="font-size: 1.15rem; font-weight: 900; color: #00F0FF; line-height: 1.1;">180 m</div>
-                        <div id="stageNavInstruction" style="font-size: 0.68rem; font-weight: 700; color: #00F0FF;">Belok Kanan</div>
-                        <div id="stageNavStreet" style="font-size: 0.62rem; color: #00F0FF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 78px;">Jl. Diponegoro</div>
+                        <div id="stageNavDistance"
+                          style="font-size: 1.15rem; font-weight: 900; color: #00F0FF; line-height: 1.1;">180 m</div>
+                        <div id="stageNavInstruction" style="font-size: 0.68rem; font-weight: 700; color: #00F0FF;">
+                          Belok Kanan</div>
+                        <div id="stageNavStreet"
+                          style="font-size: 0.62rem; color: #00F0FF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 78px;">
+                          Jl. Diponegoro</div>
                       </div>
                     </div>
                     <!-- Garis Bawah & Info Trip Ringkas (Center Sempurna) -->
-                    <div style="width: 100%; border-top: 1px solid #00F0FF; padding-top: 2px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.62rem; color: #00F0FF; font-weight: 700;">
+                    <div
+                      style="width: 100%; border-top: 1px solid #00F0FF; padding-top: 2px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.62rem; color: #00F0FF; font-weight: 700;">
                       <span id="stageNavBottomRem">3.4 km</span>
                       <span style="font-size: 0.5rem; opacity: 0.8;">•</span>
                       <span id="stageNavBottomTime">15m</span>
@@ -913,14 +1054,28 @@
                 <div class="oled-screen-content stage-screen-content">
                   <div class="oled-status-bar">
                     <div class="oled-status-left">
-                      <svg viewBox="0 0 9 9" class="oled-status-wifi"><path d="M0 1.5C2.5 -0.5 6.5 -0.5 9 1.5l-1 1C6.2 0.8 2.8 0.8 1 2.5L0 1.5zm2 2.5c1.4 -1.2 3.6 -1.2 5 0l-1 1c-0.8 -0.7 -2.2 -0.7 -3 0l-1 -1zm2.5 3a1 1 0 1 1 0 2 1 1 0 0 1 0 -2z"/></svg>
-                      <svg viewBox="0 0 7 9" class="oled-status-ble"><path d="M1.5 2.5L5.5 6.5L3.5 8.5L3.5 0.5L5.5 2.5L1.5 6.5"/></svg>
-                      <svg viewBox="0 0 8 8" class="oled-status-alarm detail-status-alarm-icon"><path d="M3 0h2v1H3zM2 1h4v1H2zM2 2h4v1H2zM1 3h6v1H1zM0 4h8v2H0zM3 6h2v2H3z"/></svg>
+                      <svg viewBox="0 0 9 9" class="oled-status-wifi">
+                        <path
+                          d="M0 1.5C2.5 -0.5 6.5 -0.5 9 1.5l-1 1C6.2 0.8 2.8 0.8 1 2.5L0 1.5zm2 2.5c1.4 -1.2 3.6 -1.2 5 0l-1 1c-0.8 -0.7 -2.2 -0.7 -3 0l-1 -1zm2.5 3a1 1 0 1 1 0 2 1 1 0 0 1 0 -2z" />
+                      </svg>
+                      <svg viewBox="0 0 7 9" class="oled-status-ble">
+                        <path d="M1.5 2.5L5.5 6.5L3.5 8.5L3.5 0.5L5.5 2.5L1.5 6.5" />
+                      </svg>
+                      <svg viewBox="0 0 8 8" class="oled-status-alarm detail-status-alarm-icon">
+                        <path d="M3 0h2v1H3zM2 1h4v1H2zM2 2h4v1H2zM1 3h6v1H1zM0 4h8v2H0zM3 6h2v2H3z" />
+                      </svg>
                     </div>
                     <div class="oled-status-title">SHOLAT</div>
                     <div class="oled-status-right">
-                      <svg viewBox="0 0 5 8" class="oled-status-lightning"><path d="M2 0h1v3h2L1 8l1-4H0z"/></svg>
-                      <div class="oled-battery-vert"><div class="oled-batt-pip"></div><div class="oled-batt-body"><div class="oled-batt-fill" style="height: 100%;"></div></div></div>
+                      <svg viewBox="0 0 5 8" class="oled-status-lightning">
+                        <path d="M2 0h1v3h2L1 8l1-4H0z" />
+                      </svg>
+                      <div class="oled-battery-vert">
+                        <div class="oled-batt-pip"></div>
+                        <div class="oled-batt-body">
+                          <div class="oled-batt-fill" style="height: 100%;"></div>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -976,10 +1131,12 @@
 
                 <div class="weather-form-group">
                   <div class="weather-input-container">
-                    <input type="text" id="cfgPrayerCityInput" class="weather-city-input" placeholder="Ketik nama kota..." autocomplete="off">
+                    <input type="text" id="cfgPrayerCityInput" class="weather-city-input"
+                      placeholder="Ketik nama kota..." autocomplete="off">
                     <div id="prayerCityDropdown" class="city-autocomplete-dropdown" style="display: none;"></div>
                   </div>
-                  <button type="button" id="btnSearchPrayerCity" class="weather-action-btn" onclick="applyPrayerCity(false)" onpointerup="this.blur()" ontouchend="this.blur()">
+                  <button type="button" id="btnSearchPrayerCity" class="weather-action-btn"
+                    onclick="applyPrayerCity(false)" onpointerup="this.blur()" ontouchend="this.blur()">
                     <span class="weather-btn-label" id="txtSearchPrayerCityBtn">TERAPKAN KOTA SHOLAT</span>
                   </button>
                 </div>
@@ -993,6 +1150,185 @@
       <section id="pageSetting" class="page">
         <div class="section-title-bar">
           <h2>PENGATURAN</h2>
+        </div>
+
+        <div class="settings-scroll-container">
+
+          <!-- KARTU 1: LAYAR OLED & AUTO-SLEEP -->
+          <div class="setting-card">
+            <div class="setting-card-header">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
+                <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+              </svg>
+              <span class="setting-card-title">LAYAR OLED & AUTO-SLEEP</span>
+            </div>
+
+            <!-- Slider Kecerahan -->
+            <div class="setting-item-block">
+              <div class="setting-item-header">
+                <span class="setting-item-label">Kecerahan Layar OLED</span>
+                <span id="txtOledBrightnessVal" class="setting-val-badge">80%</span>
+              </div>
+              <div class="setting-slider-wrap">
+                <input type="range" id="sliderOledBrightness" min="10" max="100" value="80" class="neon-range-slider" oninput="onBrightnessSliderInput(this.value)" onchange="onBrightnessSliderChange(this.value)">
+              </div>
+            </div>
+
+            <!-- Preset Auto-Sleep -->
+            <div class="setting-item-block">
+              <div class="setting-item-header">
+                <span class="setting-item-label">Waktu Layar Mati (Auto-Sleep)</span>
+                <span id="txtActiveSleepBadge" class="setting-val-badge">5 MENIT</span>
+              </div>
+              <div class="setting-pills-row">
+                <button type="button" class="setting-pill-btn active" data-sec="300" onclick="selectSleepPreset(300, this)">5 Menit</button>
+                <button type="button" class="setting-pill-btn" data-sec="600" onclick="selectSleepPreset(600, this)">10 Menit</button>
+                <button type="button" class="setting-pill-btn" data-sec="900" onclick="selectSleepPreset(900, this)">15 Menit</button>
+                <button type="button" class="setting-pill-btn" data-sec="0" onclick="selectSleepPreset(0, this)">Selalu Nyala</button>
+              </div>
+
+              <!-- Input Kustom Menit -->
+              <div class="setting-custom-sleep-row">
+                <div class="custom-input-wrap">
+                  <input type="number" id="inputCustomSleepMin" min="5" max="1440" placeholder="Kustom (menit)" class="neon-number-input">
+                </div>
+                <button type="button" id="btnApplyCustomSleep" class="setting-action-btn" onclick="applyCustomSleepSetting()">TERAPKAN</button>
+              </div>
+              <div class="setting-field-hint">*Batas minimal auto-sleep adalah 5 menit untuk proteksi layar.</div>
+            </div>
+
+            <!-- Tombol Layar Cepat -->
+            <div class="setting-actions-grid">
+              <button type="button" class="setting-control-btn" onclick="triggerQuickScreenSleep()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                <span>Tidurkan Layar</span>
+              </button>
+              <button type="button" class="setting-control-btn" onclick="triggerQuickScreenWake()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                <span>Bangunkan Layar</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- KARTU 2: DIAGNOSTIK & UJI PERANGKAT KERAS -->
+          <div class="setting-card">
+            <div class="setting-card-header">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
+                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+              </svg>
+              <span class="setting-card-title">DIAGNOSTIK & UJI PERANGKAT KERAS</span>
+            </div>
+
+            <div class="setting-diag-list">
+              <!-- Uji Buzzer -->
+              <div class="setting-diag-item">
+                <div class="diag-item-info">
+                  <span class="diag-title">Tes Suara Buzzer</span>
+                  <span class="diag-sub">Membunyikan nada uji 2000Hz (GPIO 4)</span>
+                </div>
+                <button type="button" class="setting-test-btn" onclick="testHardwareBuzzer()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                  <span>UJI</span>
+                </button>
+              </div>
+
+              <!-- Uji Motor Getar -->
+              <div class="setting-diag-item">
+                <div class="diag-item-info">
+                  <span class="diag-title">Tes Motor Getar</span>
+                  <span class="diag-sub">Memicu getaran haptic 150ms (GPIO 10)</span>
+                </div>
+                <button type="button" class="setting-test-btn" onclick="testHardwareVibrate()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M12 2v20M2 12h20M5 5l14 14M19 5L5 19"></path></svg>
+                  <span>UJI</span>
+                </button>
+              </div>
+
+              <!-- Uji Sentuh Virtual -->
+              <div class="setting-diag-item">
+                <div class="diag-item-info">
+                  <span class="diag-title">Simulasi Sentuh Kepala</span>
+                  <span class="diag-sub">Memicu respon sensor sentuh (GPIO 7)</span>
+                </div>
+                <button type="button" class="setting-test-btn" onclick="testHardwareTouch()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8M18 11a4 4 0 0 1 4 4v2a6 6 0 0 1-6 6h-2a6 6 0 0 1-6-6v-2"></path></svg>
+                  <span>UJI</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- KARTU 3: STATUS & KESEHATAN SISTEM -->
+          <div class="setting-card">
+            <div class="setting-card-header">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+              </svg>
+              <span class="setting-card-title">STATUS & KESEHATAN SISTEM</span>
+              <button type="button" class="setting-refresh-icon-btn" onclick="refreshSystemHealthStatus()" title="Segarkan Data">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+              </button>
+            </div>
+
+            <div class="setting-telemetry-grid">
+              <div class="telemetry-box">
+                <span class="telemetry-label">Kondisi Layar</span>
+                <span id="txtTelemetryScreenState" class="telemetry-val">AKTIF</span>
+              </div>
+              <div class="telemetry-box">
+                <span class="telemetry-label">Waktu Beroperasi</span>
+                <span id="txtTelemetryUptime" class="telemetry-val">0m</span>
+              </div>
+              <div class="telemetry-box">
+                <span class="telemetry-label">Sisa RAM ESP32</span>
+                <span id="txtTelemetryHeap" class="telemetry-val">Memuat...</span>
+              </div>
+              <div class="telemetry-box">
+                <span class="telemetry-label">Timer Sleep Aktif</span>
+                <span id="txtTelemetrySleepTo" class="telemetry-val">5 Menit</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- KARTU 4: PEMELIHARAAN SISTEM & DAYA -->
+          <div class="setting-card">
+            <div class="setting-card-header">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
+                <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+                <line x1="12" y1="2" x2="12" y2="12"></line>
+              </svg>
+              <span class="setting-card-title">PEMELIHARAAN SISTEM & DAYA</span>
+            </div>
+
+            <div class="setting-maintenance-actions">
+              <!-- Tombol Restart Robot -->
+              <div class="maintenance-item">
+                <div class="maintenance-item-text">
+                  <span class="maintenance-title">Restart Robot (Reboot)</span>
+                  <span class="maintenance-desc">Memulai ulang sistem ESP32 secara aman tanpa menghapus data apapun</span>
+                </div>
+                <button type="button" class="setting-btn-danger-outline" onclick="openRebootConfirmModal()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                  <span>RESTART</span>
+                </button>
+              </div>
+
+              <!-- Tombol Reset Jaringan WiFi -->
+              <div class="maintenance-item">
+                <div class="maintenance-item-text">
+                  <span class="maintenance-title">Reset Jaringan WiFi</span>
+                  <span class="maintenance-desc">Menghapus SSID & Password WiFi tersimpan di memori Flash robot</span>
+                </div>
+                <button type="button" class="setting-btn-danger-solid" onclick="openResetWiFiConfirmModal()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#FF2E63" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"></line><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path><path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
+                  <span>HAPUS WIFI</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
         </div>
       </section>
 
@@ -1029,7 +1365,9 @@
       <button id="tabBtnSetting" class="nav-tab" data-page="pageSetting" onclick="switchMainTab('pageSetting', this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"></circle>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+          </path>
         </svg>
         <span>SETTING</span>
       </button>
@@ -1040,8 +1378,54 @@
       <span id="toastText">Robot Tersambung</span>
     </div>
 
+    <!-- MODAL 1: KONFIRMASI RESTART ROBOT -->
+    <div id="modalRebootConfirm" class="cyber-modal-backdrop" style="display: none;">
+      <div class="cyber-modal-content">
+        <div class="cyber-modal-header">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2.5" class="modal-header-icon"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+          <h3>Restart Robot Desk?</h3>
+        </div>
+        <div class="cyber-modal-body">
+          <p>Robot akan mematikan layar dan periferal sejenak, lalu menyala kembali. Sambungan Bluetooth akan terputus sementara saat proses reboot berlangsung.</p>
+        </div>
+        <div class="cyber-modal-actions">
+          <button type="button" class="modal-btn-cancel" onclick="closeRebootConfirmModal()">Batal</button>
+          <button type="button" class="modal-btn-confirm" onclick="executeRebootCommand()">Ya, Restart</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 2: KONFIRMASI RESET JARINGAN WIFI -->
+    <div id="modalResetWiFiConfirm" class="cyber-modal-backdrop" style="display: none;">
+      <div class="cyber-modal-content warning-border">
+        <div class="cyber-modal-header">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#FF2E63" stroke-width="2.5" class="modal-header-icon"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          <h3 style="color: #FF2E63 !important;">Hapus Jaringan WiFi?</h3>
+        </div>
+        <div class="cyber-modal-body">
+          <p>Nama (SSID) dan kata sandi WiFi yang tersimpan di robot akan <strong>dihapus permanen</strong> dari memori Flash.</p>
+          <p style="margin-top: 8px; font-size: 0.78rem; opacity: 0.85;">Robot akan terputus dari internet dan fitur cuaca tidak dapat diperbarui otomatis sampai Anda menyambungkan WiFi kembali.</p>
+        </div>
+        <div class="cyber-modal-actions">
+          <button type="button" class="modal-btn-cancel" onclick="closeResetWiFiConfirmModal()">Batal</button>
+          <button type="button" class="modal-btn-danger" onclick="executeResetWiFiCommand()">Ya, Hapus WiFi</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- OVERLAY LAYAR PENUH: ANIMASI REBOOTING ROBOT -->
+    <div id="overlayRebootProgress" class="cyber-reboot-overlay" style="display: none;">
+      <div class="reboot-spinner-wrap">
+        <div class="reboot-neon-ring"></div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2" class="reboot-center-icon"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+      </div>
+      <div class="reboot-overlay-title">MEMULAI ULANG ROBOT...</div>
+      <div id="txtRebootCountdown" class="reboot-overlay-sub">Menunggu robot menyala kembali & menyambung ulang...</div>
+    </div>
+
   </div>
 
   <script src="app.js"></script>
 </body>
+
 </html>
