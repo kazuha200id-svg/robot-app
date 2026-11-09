@@ -1167,17 +1167,17 @@
           <div class="setting-item-block">
             <div class="setting-item-header">
               <span class="setting-item-label">Kecerahan Layar</span>
-              <span id="txtOledBrightnessVal" class="setting-val-badge">80%</span>
+              <span id="txtOledBrightnessVal" class="setting-val-badge">100%</span>
             </div>
             <div class="setting-slider-wrap">
-              <input type="range" id="sliderOledBrightness" min="10" max="100" value="80" class="neon-range-slider" oninput="onBrightnessSliderInput(this.value)" onchange="onBrightnessSliderChange(this.value)">
+              <input type="range" id="sliderOledBrightness" min="10" max="100" value="100" class="neon-range-slider" oninput="onBrightnessSliderInput(this.value)" onchange="onBrightnessSliderChange(this.value)">
             </div>
           </div>
 
           <!-- Preset Auto-Sleep -->
           <div class="setting-item-block">
             <div class="setting-item-header">
-              <span class="setting-item-label">Waktu Layar Mati (Auto-Sleep)</span>
+              <span class="setting-item-label">Waktu Mode Sleep</span>
               <span id="txtActiveSleepBadge" class="setting-val-badge">5 MENIT</span>
             </div>
             <div class="setting-pills-row">
@@ -1190,7 +1190,7 @@
             <!-- Input Kustom Menit -->
             <div class="setting-custom-sleep-row">
               <div class="custom-input-wrap">
-                <input type="number" id="inputCustomSleepMin" min="5" max="1440" placeholder="Kustom menit" class="neon-number-input">
+                <input type="number" id="inputCustomSleepMin" min="5" max="60" placeholder="5 - 60 menit" class="neon-number-input">
               </div>
               <button type="button" id="btnApplyCustomSleep" class="setting-action-btn" onclick="applyCustomSleepSetting()">TERAPKAN</button>
             </div>
@@ -1200,11 +1200,11 @@
           <div class="setting-actions-grid">
             <button type="button" class="setting-control-btn" onclick="triggerQuickScreenSleep()">
               <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-              <span>Tidurkan Layar</span>
+              <span>Tidur</span>
             </button>
             <button type="button" class="setting-control-btn" onclick="triggerQuickScreenWake()">
               <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-              <span>Bangunkan Layar</span>
+              <span>Bangunkan</span>
             </button>
           </div>
         </div>
@@ -1218,30 +1218,38 @@
             <span class="setting-card-title">DIAGNOSTIK PERANGKAT KERAS</span>
           </div>
 
-          <div class="setting-diag-list">
-            <!-- Uji Buzzer -->
-            <div class="setting-diag-item">
-              <div class="diag-item-info">
-                <span class="diag-title">Buzzer</span>
-                <span class="diag-sub">Uji speaker buzzer</span>
-              </div>
-              <button type="button" class="setting-test-btn" onclick="testHardwareBuzzer()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
-                <span>UJI</span>
-              </button>
+          <!-- Slider Volume Buzzer -->
+          <div class="setting-item-block">
+            <div class="setting-item-header">
+              <span class="setting-item-label">Volume Buzzer</span>
+              <span id="txtBuzzerVolumeVal" class="setting-val-badge">100%</span>
             </div>
+            <div class="setting-slider-wrap">
+              <input type="range" id="sliderBuzzerVolume" min="0" max="100" value="100" class="neon-range-slider" oninput="onBuzzerVolumeInput(this.value)" onchange="onBuzzerVolumeChange(this.value)">
+            </div>
+          </div>
 
-            <!-- Uji Motor Getar -->
-            <div class="setting-diag-item">
-              <div class="diag-item-info">
-                <span class="diag-title">Getar</span>
-                <span class="diag-sub">Uji motor getar</span>
-              </div>
-              <button type="button" class="setting-test-btn" onclick="testHardwareVibrate()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M12 2v20M2 12h20M5 5l14 14M19 5L5 19"></path></svg>
-                <span>UJI</span>
-              </button>
+          <!-- Slider Kekuatan Getaran -->
+          <div class="setting-item-block">
+            <div class="setting-item-header">
+              <span class="setting-item-label">Getaran</span>
+              <span id="txtVibrationStrengthVal" class="setting-val-badge">100%</span>
             </div>
+            <div class="setting-slider-wrap">
+              <input type="range" id="sliderVibrationStrength" min="0" max="100" value="100" class="neon-range-slider" oninput="onVibrationStrengthInput(this.value)" onchange="onVibrationStrengthChange(this.value)">
+            </div>
+          </div>
+
+          <!-- Tombol Uji Kontrol Cepat -->
+          <div class="setting-actions-grid">
+            <button type="button" class="setting-control-btn" onclick="testHardwareBuzzer()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+              <span>Uji Buzzer</span>
+            </button>
+            <button type="button" class="setting-control-btn" onclick="testHardwareVibrate()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2"><path d="M12 2v20M2 12h20M5 5l14 14M19 5L5 19"></path></svg>
+              <span>Uji Getar</span>
+            </button>
           </div>
         </div>
 

@@ -3011,10 +3011,10 @@ function onBrightnessSliderChange(val) {
 
   if (s_brightnessDebounce) clearTimeout(s_brightnessDebounce);
   s_brightnessDebounce = setTimeout(() => {
-    sendCommand({ c: 'bright', v: rawByte });
+    sendCommand({ c: 'bright', p: intVal, v: rawByte });
     showNeonToast('Kecerahan: ' + val + '%');
     triggerHaptic(15);
-  }, 80);
+  }, 60);
 }
 
 // 2. Preset Auto-Sleep
@@ -3027,11 +3027,11 @@ function selectSleepPreset(sec, btnEl) {
   if (badge) badge.textContent = textVal;
 
   sendCommand({ c: 'sleep_to', sec: sec });
-  showNeonToast(sec === 0 ? 'Selalu Nyala' : 'Auto-sleep: ' + (sec / 60) + ' Menit');
+  showNeonToast(sec === 0 ? 'Selalu Nyala' : 'Mode sleep: ' + (sec / 60) + ' Menit');
   triggerHaptic(20);
 }
 
-// 3. Custom Auto-Sleep Input (Validasi Ketat Minimal 5 Menit)
+// 3. Custom Auto-Sleep Input (Validasi Ketat Minimal 5 Menit, Maksimal 60 Menit)
 function applyCustomSleepSetting() {
   const input = document.getElementById('inputCustomSleepMin');
   if (!input) return;
@@ -3045,6 +3045,10 @@ function applyCustomSleepSetting() {
     input.value = 5;
     min = 5;
     showNeonToast('Minimal 5 menit!');
+  } else if (min > 60) {
+    input.value = 60;
+    min = 60;
+    showNeonToast('Maksimal 60 menit!');
   }
 
   const sec = min * 60;
@@ -3058,24 +3062,61 @@ function applyCustomSleepSetting() {
   if (badge) badge.textContent = min + ' MENIT';
 
   sendCommand({ c: 'sleep_to', sec: sec });
-  showNeonToast('Auto-sleep: ' + min + ' Menit');
+  showNeonToast('Mode sleep: ' + min + ' Menit');
   triggerHaptic(20);
 }
 
 // 4. Tombol Layar Cepat (Tidur / Bangun)
 function triggerQuickScreenSleep() {
   sendCommand({ c: 'sleep' });
-  showNeonToast('Layar dimatikan');
+  showNeonToast('Layar ditidurkan');
   triggerHaptic(20);
 }
 
 function triggerQuickScreenWake() {
   sendCommand({ c: 'wake' });
-  showNeonToast('Layar dinyalakan');
+  showNeonToast('Layar dibangunkan');
   triggerHaptic(20);
 }
 
-// 5. Diagnostik Perangkat Keras
+// 5. Volume Buzzer & Getaran
+let s_buzzerVolDebounce = null;
+function onBuzzerVolumeInput(val) {
+  const badge = document.getElementById('txtBuzzerVolumeVal');
+  if (badge) badge.textContent = val + '%';
+}
+
+function onBuzzerVolumeChange(val) {
+  const badge = document.getElementById('txtBuzzerVolumeVal');
+  if (badge) badge.textContent = val + '%';
+  const intVal = parseInt(val, 10);
+  if (s_buzzerVolDebounce) clearTimeout(s_buzzerVolDebounce);
+  s_buzzerVolDebounce = setTimeout(() => {
+    sendCommand({ c: 'buzz_vol', v: intVal });
+    showNeonToast('Volume Buzzer: ' + val + '%');
+    triggerHaptic(15);
+  }, 60);
+}
+
+let s_vibStrDebounce = null;
+function onVibrationStrengthInput(val) {
+  const badge = document.getElementById('txtVibrationStrengthVal');
+  if (badge) badge.textContent = val + '%';
+}
+
+function onVibrationStrengthChange(val) {
+  const badge = document.getElementById('txtVibrationStrengthVal');
+  if (badge) badge.textContent = val + '%';
+  const intVal = parseInt(val, 10);
+  if (s_vibStrDebounce) clearTimeout(s_vibStrDebounce);
+  s_vibStrDebounce = setTimeout(() => {
+    sendCommand({ c: 'vib_str', v: intVal });
+    showNeonToast('Getaran: ' + val + '%');
+    triggerHaptic(25);
+  }, 60);
+}
+
+// 6. Diagnostik Perangkat Keras
 function testHardwareBuzzer() {
   sendCommand({ c: 'buzzer', freq: 2000, dur: 150 });
   showNeonToast('Menguji buzzer...');
