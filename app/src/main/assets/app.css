@@ -193,7 +193,8 @@ button {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background-color: #555;
+  background-color: rgba(0, 240, 255, 0.25);
+  border: 1px solid rgba(0, 240, 255, 0.4);
   transition: all 0.3s ease;
 }
 
@@ -761,7 +762,7 @@ button {
   width: 12px;
   left: 2px;
   bottom: 2px;
-  background-color: #778;
+  background-color: rgba(0, 240, 255, 0.45);
   border-radius: 50%;
   transition: all 0.2s ease;
 }
@@ -850,7 +851,7 @@ button {
 
 .neon-btn-subtle.danger:active {
   background: var(--neon-red);
-  color: #fff;
+  color: #000;
 }
 
 /* Slider Controls */
@@ -1199,7 +1200,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .status-card-state.warning {
-  color: #5A7B99;
+  color: rgba(0, 240, 255, 0.7);
 }
 
 .status-card-state.success {
@@ -1328,7 +1329,7 @@ input[type="range"]::-webkit-slider-thumb {
   font-size: 0.8rem;
   font-weight: 800;
   letter-spacing: 0.5px;
-  color: #fff;
+  color: var(--neon-cyan);
 }
 
 .device-select-item.selected .device-item-name {
@@ -1493,7 +1494,7 @@ input[type="range"]::-webkit-slider-thumb {
   align-items: center;
   font-size: 0.5rem;
   letter-spacing: 0.5px;
-  color: #5A7B99;
+  color: var(--neon-cyan);
 }
 
 .oled-tiny-icon {
@@ -1515,7 +1516,7 @@ input[type="range"]::-webkit-slider-thumb {
 
 .oled-sub-date {
   font-size: 0.52rem;
-  color: #8EA9C7;
+  color: var(--neon-cyan);
   letter-spacing: 0.5px;
 }
 
@@ -1539,7 +1540,7 @@ input[type="range"]::-webkit-slider-thumb {
 .oled-mood-label {
   font-size: 0.48rem;
   letter-spacing: 0.5px;
-  color: #8EA9C7;
+  color: var(--neon-cyan);
   text-transform: uppercase;
 }
 
@@ -1892,7 +1893,7 @@ input[type="range"]::-webkit-slider-thumb {
 .oled-score-line {
   font-size: 0.46rem;
   margin-top: 3px;
-  color: #8EA9C7;
+  color: var(--neon-cyan);
   letter-spacing: 0.5px;
 }
 
@@ -2117,7 +2118,7 @@ input[type="range"]::-webkit-slider-thumb {
   font-family: var(--font-mono);
   font-size: 0.62rem;
   letter-spacing: 0.5px;
-  color: #8EA9C7;
+  color: rgba(0, 240, 255, 0.55);
 }
 
 .oled-game-menu-row.selected,
@@ -2235,7 +2236,7 @@ input[type="range"]::-webkit-slider-thumb {
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.5px;
-  color: #8EA9C7;
+  color: var(--neon-cyan);
 }
 
 .oled-weather-temp {
@@ -2259,7 +2260,7 @@ input[type="range"]::-webkit-slider-thumb {
 
 .oled-weather-sub {
   font-size: 0.5rem;
-  color: #8EA9C7;
+  color: var(--neon-cyan);
 }
 
 /* OLED Subtitle Marquee in Main Stage */
@@ -2312,7 +2313,7 @@ input[type="range"]::-webkit-slider-thumb {
 .oled-score-line {
   font-size: 0.55rem;
   letter-spacing: 0.5px;
-  color: #8EA9C7;
+  color: var(--neon-cyan);
 }
 
 /* Stage Mode Indicator Pill */
@@ -2589,11 +2590,11 @@ input[type="range"]::-webkit-slider-thumb {
   font-family: var(--font-mono);
   font-size: 0.65rem;
   font-weight: 700;
-  color: #FFB300;
+  color: var(--neon-cyan);
   text-align: center;
   padding: 6px;
-  background: rgba(255, 179, 0, 0.12);
-  border: 1px dashed #FFB300;
+  background: var(--neon-cyan-dim);
+  border: 1px dashed var(--neon-cyan-border);
   border-radius: var(--radius-sm);
 }
 
@@ -3227,7 +3228,7 @@ input[type="range"]::-webkit-slider-thumb {
 
 .oled-sp-lyric-line {
   font-size: 11px;
-  color: #FFFFFF;
+  color: var(--neon-cyan);
   line-height: 1.35;
   font-family: var(--font-mono);
 }
@@ -3242,7 +3243,7 @@ input[type="range"]::-webkit-slider-thumb {
 .oled-sp-progress-bar {
   flex: 1;
   height: 5px;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(0, 240, 255, 0.15);
   border-radius: 3px;
   overflow: hidden;
 }
@@ -3258,7 +3259,7 @@ input[type="range"]::-webkit-slider-thumb {
 .oled-sp-time {
   font-size: 9.5px;
   font-family: var(--font-mono);
-  color: #8EA9C7;
+  color: var(--neon-cyan);
   white-space: nowrap;
 }
 
@@ -3318,7 +3319,7 @@ input[type="range"]::-webkit-slider-thumb {
 
 .oled-sp-lyrics-expanded .oled-sp-lyric-line {
   font-size: 12.5px;
-  color: #FFFFFF;
+  color: var(--neon-cyan);
   text-shadow: 0 0 6px rgba(0, 240, 255, 0.4);
   line-height: 1.4;
   font-family: var(--font-mono);
@@ -3363,7 +3364,7 @@ input[type="range"]::-webkit-slider-thumb {
 .spotify-track-name {
   font-size: 13px;
   font-weight: 700;
-  color: #FFFFFF;
+  color: var(--neon-cyan);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3371,7 +3372,7 @@ input[type="range"]::-webkit-slider-thumb {
 
 .spotify-artist-name {
   font-size: 11.5px;
-  color: #8EA9C7;
+  color: rgba(0, 240, 255, 0.7);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3465,7 +3466,7 @@ input[type="range"]::-webkit-slider-thumb {
 .oled-sp-mini-lyric {
   font-size: 8px;
   font-family: var(--font-mono);
-  color: #FFFFFF;
+  color: var(--neon-cyan);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
