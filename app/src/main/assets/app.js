@@ -565,8 +565,6 @@ function disconnectBluetooth() {
 // BLE CONNECTION STATUS CALLBACK FROM NATIVE ANDROID
 window.onBLEStatus = function(connected, message) {
   isBleConnected = connected;
-  const dot = document.getElementById('bleDot');
-  const label = document.getElementById('bleStatusLabel');
   const gate = document.getElementById('setupGate');
 
   document.querySelectorAll('.oled-status-ble').forEach(el => {
@@ -578,9 +576,6 @@ window.onBLEStatus = function(connected, message) {
   });
 
   if (connected) {
-    if (dot) dot.className = 'pulse-dot online';
-    if (label) label.textContent = 'BLE TERHUBUNG';
-
     localStorage.setItem('robot_saved_mac', 'connected');
     localStorage.setItem('robot_saved_name', 'Robot Desk');
 
@@ -603,9 +598,6 @@ window.onBLEStatus = function(connected, message) {
       }, 300);
     }
   } else {
-    if (dot) dot.className = 'pulse-dot';
-    if (label) label.textContent = 'BLE TERPUTUS';
-
     if (!isConnecting && gate) {
       if (!hasSavedRobot()) {
         gate.classList.add('active');

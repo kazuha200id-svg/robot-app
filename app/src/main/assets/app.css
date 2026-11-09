@@ -55,7 +55,7 @@ p, span, label, h1, h2, h3, h4, h5, h6, div, a, input, button, select, textarea 
 
 button, .neon-btn-action, .neon-btn-compact, .neon-btn-subtle, .nav-tab, 
 .menu-action-card, .btn-clock-sync, .btn-fmt-pill, .stepper-btn, 
-.weather-action-btn, .connect-action-btn, .card-title, .status-txt, 
+.weather-action-btn, .connect-action-btn, .card-title, 
 .section-title-bar h2, .stage-screen-content div, .stage-screen-content span,
 .stage-screen-content, .brand-name, .oled-header-tiny span {
   color: var(--neon-cyan) !important;
@@ -180,41 +180,6 @@ button {
   color: var(--neon-cyan);
   text-shadow: 0 0 8px var(--neon-cyan-glow);
   line-height: 1.1;
-}
-
-.status-indicator {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 2px;
-}
-
-.pulse-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background-color: rgba(0, 240, 255, 0.25);
-  border: 1px solid rgba(0, 240, 255, 0.4);
-  transition: all 0.3s ease;
-}
-
-.pulse-dot.online {
-  background-color: var(--neon-cyan);
-  box-shadow: 0 0 8px var(--neon-cyan);
-  animation: pulseNeon 1.6s infinite ease-in-out;
-}
-
-@keyframes pulseNeon {
-  0% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.3); opacity: 0.7; }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-.status-txt {
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.5px;
-  color: var(--text-secondary);
 }
 
 .neon-btn-compact {
