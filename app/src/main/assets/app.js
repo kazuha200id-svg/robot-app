@@ -926,9 +926,37 @@ function selectFaceFromDetail(index, elem) {
   }
 }
 
+// RESET POSISI SCROLL SEMUA KONTAINER KE PALING ATAS (ANTI-TERPOTONG / TER-SCROLL KE BAWAH)
+function scrollToPageTop() {
+  const pageRobot = document.getElementById('pageRobot');
+  if (pageRobot) pageRobot.scrollTop = 0;
+  document.querySelectorAll('.page').forEach(p => { p.scrollTop = 0; });
+  const detailViewEl = document.getElementById('robotFeatureDetailView');
+  if (detailViewEl) detailViewEl.scrollTop = 0;
+  const overview = document.getElementById('robotMainOverview');
+  if (overview) overview.scrollTop = 0;
+  window.scrollTo(0, 0);
+  document.body.scrollTop = 0;
+  document.documentElement.scrollTop = 0;
+
+  requestAnimationFrame(() => {
+    if (pageRobot) pageRobot.scrollTop = 0;
+    const dv = document.getElementById('robotFeatureDetailView');
+    if (dv) dv.scrollTop = 0;
+    window.scrollTo(0, 0);
+  });
+  setTimeout(() => {
+    if (pageRobot) pageRobot.scrollTop = 0;
+    const dv = document.getElementById('robotFeatureDetailView');
+    if (dv) dv.scrollTop = 0;
+    window.scrollTo(0, 0);
+  }, 40);
+}
+
 // BUKA TAMPILAN DETAIL FITUR ROBOT (HALAMAN BARU - LAYAR OLED 100% PERSIS FISIK)
 function openRobotFeatureDetail(featureKey) {
   triggerHaptic(25);
+  scrollToPageTop();
 
   // Pastikan tab aktif berpindah ke tab Robot (pageRobot) agar layar tidak tertahan di tab menu
   currentMainTab = 'pageRobot';
@@ -1073,7 +1101,7 @@ function openRobotFeatureDetail(featureKey) {
     startCryptoInterval();
   }
 
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  scrollToPageTop();
 }
 
 // TUTUP DETAIL FITUR & KEMBALI KE OVERVIEW LAYAR OLED ROBOT
@@ -1105,6 +1133,7 @@ function closeRobotFeatureDetail() {
   if (overview) overview.style.display = 'block';
 
   document.querySelectorAll('.detail-feature-panel').forEach(p => p.style.display = 'none');
+  scrollToPageTop();
 }
 
 // HANDLER TOMBOL KEMBALI NAVIGASI ANDROID (HARDWARE / GESTURE BACK)
@@ -1576,6 +1605,7 @@ function selectRobotMenuFeature(featureKey, btnEl) {
     } else if (featureKey === 'crypto') {
       sendCryptoDataToRobot();
       fetchCryptoLivePrices();
+      return;
     }
     sendCommand({ c: 'm', v: targetMode }, true);
   }
@@ -5423,7 +5453,7 @@ window.onNavPermissionsGranted = function() {
     sendCommand({ c: 'm', v: 18 });
   }
   sendCommand({ c: 'nav_req' });
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  scrollToPageTop();
 };
 
 // UPDATE TAMPILAN PANGGUNG OLED (STANDBY vs AKTIF) - REALTIME
