@@ -3371,13 +3371,7 @@ function saveConfiguredAssets() {
 }
 
 function updateRotationBadgeUI() {
-  const badge = document.getElementById('cryptoRotationBadge');
-  if (badge) {
-    const cCount = configuredCryptoCoins.length;
-    const sCount = configuredStocks.length;
-    const total = cCount + sCount;
-    badge.textContent = `ROTASI OTOMATIS: ${total} ASET (${cCount} COIN + ${sCount} SAHAM) • 6 DETIK`;
-  }
+  // Rotasi badge dinonaktifkan sesuai permintaan pengguna
 }
 
 function renderCryptoSlotsUI() {
