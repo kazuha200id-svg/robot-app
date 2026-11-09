@@ -4105,4 +4105,53 @@ input[type="range"]::-webkit-slider-thumb {
   box-shadow: 0 0 8px rgba(0, 240, 255, 0.25);
 }
 
+/* Tab Segmented Kategori: KOIN CRYPTO vs SAHAM (STOCKS) */
+.asset-category-tabs {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  margin-bottom: 2px;
+  width: 100%;
+}
+
+.asset-tab-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 40px;
+  background: rgba(0, 240, 255, 0.05);
+  border: 1px solid var(--neon-cyan-border);
+  border-radius: var(--radius-sm);
+  color: rgba(0, 240, 255, 0.65);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.asset-tab-btn:hover {
+  border-color: var(--neon-cyan);
+  color: var(--neon-cyan);
+  background: rgba(0, 240, 255, 0.12);
+}
+
+.asset-tab-btn.active {
+  background: rgba(0, 240, 255, 0.22);
+  border-color: var(--neon-cyan);
+  color: var(--neon-cyan);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.35);
+}
+
+/* Optimasi Kecepatan Sentuh Global (Hilangkan Jeda 300ms Mobile Tap) */
+button, input, select, .menu-action-card, .oled-screen-card, .weather-action-btn, .asset-tab-btn, .btn-media-round, [role="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
 

@@ -627,9 +627,9 @@ public class MainActivity extends AppCompatActivity implements BleManager.BleLis
                 java.net.URL url = new java.net.URL(urlString);
                 conn = (java.net.HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
-                conn.setConnectTimeout(8000);
-                conn.setReadTimeout(8000);
-                conn.setRequestProperty("User-Agent", "RobotDeskApp/1.0");
+                conn.setConnectTimeout(3500);
+                conn.setReadTimeout(3500);
+                conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
                 int responseCode = conn.getResponseCode();
                 if (responseCode >= 200 && responseCode < 300) {
                     java.io.InputStream is = conn.getInputStream();

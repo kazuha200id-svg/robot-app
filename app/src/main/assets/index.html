@@ -271,7 +271,7 @@
             <span class="card-title">NAVIGASI</span>
           </button>
 
-          <!-- BARIS 6: CRYPTO TICKER (FULL WIDTH) -->
+          <!-- BARIS 6: CRYPTO & SAHAM (FULL WIDTH) -->
           <button id="btnMenuCrypto" type="button" class="menu-action-card full-width"
             onclick="selectRobotMenuFeature('crypto', this)">
             <div class="card-icon-wrap">
@@ -279,7 +279,7 @@
                 <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
               </svg>
             </div>
-            <span class="card-title">CRYPTO TICKER</span>
+            <span class="card-title">CRYPTO &amp; SAHAM</span>
           </button>
         </div>
       </section>
@@ -498,12 +498,12 @@
               </div>
             </div>
 
-            <!-- 11. BARIS 6: CRYPTO TICKER (1:1 FULL WIDTH) -->
+            <!-- 11. BARIS 6: CRYPTO & SAHAM (1:1 FULL WIDTH) -->
             <div class="oled-screen-card full-width" onclick="openRobotFeatureDetail('crypto')">
               <div class="oled-display-bezel">
                 <div class="oled-screen-content oled-crypto-preview-view">
                   <div class="oled-header-tiny">
-                    <span>CRYPTO</span>
+                    <span id="previewCryptoHeaderTitle">CRYPTO</span>
                     <span id="previewCryptoCoin">BTC/USD</span>
                   </div>
                   <div class="oled-crypto-prev-price" id="previewCryptoPrice">$68,420</div>
@@ -511,7 +511,7 @@
                 </div>
               </div>
               <div class="screen-card-meta">
-                <span class="screen-title">CRYPTO TICKER</span>
+                <span class="screen-title">CRYPTO &amp; SAHAM</span>
               </div>
             </div>
           </div>
@@ -1172,7 +1172,7 @@
             </div>
           </div>
 
-          <!-- 11. DETAIL: CRYPTO TICKER (100% PERSIS OLED FISIK DENGAN STATUS BAR) -->
+          <!-- 11. DETAIL: CRYPTO & SAHAM (100% PERSIS OLED FISIK DENGAN STATUS BAR) -->
           <div id="detailViewCrypto" class="detail-feature-panel" style="display: none;">
             <div class="main-oled-stage-wrap">
               <div class="oled-display-bezel stage-bezel">
@@ -1187,7 +1187,7 @@
                         <path d="M1.5 2.5L5.5 6.5L3.5 8.5L3.5 0.5L5.5 2.5L1.5 6.5" />
                       </svg>
                     </div>
-                    <div class="oled-status-title">CRYPTO</div>
+                    <div class="oled-status-title" id="stageCryptoHeaderTitle">CRYPTO</div>
                     <div class="oled-status-right">
                       <svg viewBox="0 0 5 8" class="oled-status-lightning">
                         <path d="M2 0h1v3h2L1 8l1-4H0z" />
@@ -1214,16 +1214,34 @@
               </div>
             </div>
 
-            <!-- KONTROL PENGATURAN CRYPTO (TEMA CYBER NEON CYAN - PERSIS FITUR CUACA & SHOLAT) -->
+            <!-- KONTROL PENGATURAN CRYPTO & SAHAM (TEMA CYBER NEON CYAN - PERSIS FITUR CUACA & SHOLAT) -->
             <div class="feature-ctrl-panel">
-              <!-- KARTU 1: PENGATURAN KOIN CRYPTO -->
-              <div class="config-card weather-ctrl-card">
-                <div class="config-header">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
+              <!-- SEGMENTED TABS: PILIH KATEGORI ASET (CRYPTO ATAU SAHAM) -->
+              <div class="asset-category-tabs">
+                <button type="button" id="tabAssetCrypto" class="asset-tab-btn active" onclick="switchAssetCategory('crypto')">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="10"></circle>
                     <path d="M12 6v12M15 9.5H10a2.5 2.5 0 0 0 0 5h4a2.5 2.5 0 0 1 0 5H9"></path>
                   </svg>
-                  <span class="config-title">PENGATURAN KOIN CRYPTO</span>
+                  <span>KOIN CRYPTO</span>
+                </button>
+                <button type="button" id="tabAssetStock" class="asset-tab-btn" onclick="switchAssetCategory('stock')">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                    <polyline points="17 6 23 6 23 12"></polyline>
+                  </svg>
+                  <span>SAHAM (STOCKS)</span>
+                </button>
+              </div>
+
+              <!-- KARTU 1: PENGATURAN KOIN / SAHAM -->
+              <div class="config-card weather-ctrl-card">
+                <div class="config-header">
+                  <svg id="iconCryptoAssetCard" viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M12 6v12M15 9.5H10a2.5 2.5 0 0 0 0 5h4a2.5 2.5 0 0 1 0 5H9"></path>
+                  </svg>
+                  <span class="config-title" id="txtCryptoAssetCardTitle">PENGATURAN KOIN CRYPTO</span>
                 </div>
 
                 <div class="weather-form-group">
@@ -1233,25 +1251,25 @@
                     <div id="cryptoCoinDropdown" class="city-autocomplete-dropdown" style="display: none;"></div>
                   </div>
                   <button type="button" id="btnSearchCryptoCoin" class="weather-action-btn"
-                    onclick="applyCryptoCoin(false)" onpointerup="this.blur()" ontouchend="this.blur()">
+                    onclick="applyCryptoAsset(false)" onpointerup="this.blur()" ontouchend="this.blur()">
                     <span class="weather-btn-label" id="txtSearchCryptoCoinBtn">TERAPKAN KOIN CRYPTO</span>
                   </button>
                 </div>
               </div>
 
-              <!-- KARTU 2: PENGATURAN MATA UANG CRYPTO -->
+              <!-- KARTU 2: PENGATURAN MATA UANG -->
               <div class="config-card weather-ctrl-card">
                 <div class="config-header">
                   <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
                     <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
                   </svg>
-                  <span class="config-title">PENGATURAN MATA UANG CRYPTO</span>
+                  <span class="config-title">PENGATURAN MATA UANG</span>
                 </div>
 
                 <div class="weather-form-group">
                   <div class="weather-input-container">
                     <input type="text" id="cfgCryptoCurrencyInput" class="weather-city-input"
-                      placeholder="Cari mata uang (misal: USD, IDR, EUR, JPY)..." autocomplete="off">
+                      placeholder="Cari mata uang (misal: IDR, USD, EUR, JPY)..." autocomplete="off">
                     <div id="cryptoCurrencyDropdown" class="city-autocomplete-dropdown" style="display: none;"></div>
                   </div>
                   <button type="button" id="btnSearchCryptoCurrency" class="weather-action-btn"
