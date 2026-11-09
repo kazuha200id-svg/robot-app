@@ -111,8 +111,8 @@ function processNextBleCommand() {
 
 function sendCommand(cmdObject, priority = false) {
   if (!cmdObject) return false;
-  // Cegah penumpukan antrean berlebih agar performa tetap cepat
-  if (bleCommandQueue.length >= 6) {
+  // Kapasitas antrean BLE hingga 32 agar batch paket crypto & kurs tidak terpotong
+  if (bleCommandQueue.length >= 32) {
     bleCommandQueue.shift();
   }
   if (priority) {
@@ -1095,10 +1095,9 @@ function openRobotFeatureDetail(featureKey) {
 
     updateOledCryptoPreview();
     currentRobotMode = 20;
-    // Beralih ke layar OLED mode 20 seketika dengan prioritas tinggi & kirim data
+    // Beralih ke layar OLED mode 20 seketika dengan prioritas tinggi & sinkronkan data
     sendCommand({ c: 'm', v: 20 }, true);
     sendCryptoDataToRobot();
-    fetchCryptoLivePrices();
     startCryptoInterval();
   } else if (featureKey === 'kurs') {
     const panel = document.getElementById('detailViewKurs');
@@ -1117,7 +1116,6 @@ function openRobotFeatureDetail(featureKey) {
     currentRobotMode = 21;
     sendCommand({ c: 'm', v: 21 }, true);
     sendKursDataToRobot();
-    fetchKursLiveRates();
     startKursInterval();
   }
 
@@ -3658,7 +3656,7 @@ function sendAllTickerItemsToRobot() {
       is_up: data.isUp,
       title: 'CRYPTO',
       force: isCurrentActive
-    }, true);
+    }, false);
   });
 
   // Kirim semua slot Saham (index cCount .. total - 1) menggunakan globalCurr (USD)
@@ -3682,7 +3680,7 @@ function sendAllTickerItemsToRobot() {
       is_up: data.isUp,
       title: 'SAHAM',
       force: isCurrentActive
-    }, true);
+    }, false);
   });
 }
 
@@ -5959,7 +5957,7 @@ function sendKursDataToRobot() {
       price: priceStr,
       chg: chgStr,
       is_up: data.isUp
-    }, true);
+    }, false);
   });
 }
 
