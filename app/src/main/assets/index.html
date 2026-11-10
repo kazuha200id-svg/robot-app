@@ -147,18 +147,19 @@
 
         <!-- 7 TOMBOL KOTAK FITUR UTAMA (SESUAI URUTAN KIRI KE KANAN BAWAH) -->
         <div id="menuFeatureGrid" class="menu-feature-grid">
-          <!-- BARIS 1 KIRI: EXPRESI WAJAH -->
+          <!-- BARIS 1 KIRI: ANIMASI (ROBOT FACE) -->
           <button id="btnMenuFace" type="button" class="menu-action-card"
             onclick="selectRobotMenuFeature('face', this)">
             <div class="card-icon-wrap">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="9" y1="10" x2="9.01" y2="10" stroke-width="3"></line>
-                <line x1="15" y1="10" x2="15.01" y2="10" stroke-width="3"></line>
-                <path d="M8 15h8"></path>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="3"></rect>
+                <rect x="5" y="7" width="5" height="6" rx="1.5" fill="#00F0FF"></rect>
+                <rect x="14" y="7" width="5" height="6" rx="1.5" fill="#00F0FF"></rect>
+                <line x1="9" y1="21" x2="15" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
               </svg>
             </div>
-            <span class="card-title">EXPRESI WAJAH</span>
+            <span class="card-title">ANIMASI</span>
           </button>
 
           <!-- BARIS 1 KANAN: JAM DIGITAL -->
@@ -308,23 +309,24 @@
 
           <!-- GRID 7 LAYAR FITUR ROBOT -->
           <div class="robot-screens-grid" id="robotScreensGrid">
-            <!-- 1. BARIS 1 KIRI: EXPRESI WAJAH (1:1) -->
+            <!-- 1. BARIS 1 KIRI: ANIMASI (1:1) -->
             <div class="oled-screen-card" onclick="openRobotFeatureDetail('face')">
               <div class="oled-display-bezel">
                 <div class="oled-screen-content oled-face-view">
                   <div class="oled-face-wrap" id="oledFaceSvgWrap">
-                    <svg viewBox="0 0 100 50" class="oled-face-svg">
-                      <rect x="15" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3">
-                      </rect>
-                      <rect x="57" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3">
-                      </rect>
+                    <svg viewBox="0 0 128 64" class="oled-face-svg">
+                      <rect x="24" y="6" width="32" height="34" rx="8" fill="#00F0FF" stroke="none"></rect>
+                      <circle cx="48" cy="14" r="3" fill="#02060c" stroke="none"></circle>
+                      <rect x="72" y="6" width="32" height="34" rx="8" fill="#00F0FF" stroke="none"></rect>
+                      <circle cx="80" cy="14" r="3" fill="#02060c" stroke="none"></circle>
+                      <path d="M54 46 Q64 54 74 46" fill="none" stroke="#00F0FF" stroke-width="2.5" stroke-linecap="round"></path>
                     </svg>
                   </div>
-                  <div class="oled-mood-label" id="oledFaceMoodLabel">MOOD: SENANG</div>
+                  <div class="oled-mood-label" id="oledFaceMoodLabel">ANIMASI: KEDIP</div>
                 </div>
               </div>
               <div class="screen-card-meta">
-                <span class="screen-title">EXPRESI WAJAH</span>
+                <span class="screen-title">ANIMASI</span>
               </div>
             </div>
 
@@ -552,17 +554,18 @@
         <!-- DETAIL FITUR ROBOT (HALAMAN BARU - LAYAR OLED 100% PERSIS FISIK ESP32 TANPA TOMBOL TAMBAHAN) -->
         <div id="robotFeatureDetailView" class="robot-feature-detail-view" style="display: none;">
 
-          <!-- 1. DETAIL: EXPRESI WAJAH (128x64 MURNI PERSIS OLED FISIK ROBOT TANPA STATUS BAR) -->
+          <!-- 1. DETAIL: ANIMASI (128x64 MURNI PERSIS OLED FISIK ROBOT TANPA STATUS BAR) -->
           <div id="detailViewFace" class="detail-feature-panel" style="display: none;">
             <div class="main-oled-stage-wrap">
               <div class="oled-display-bezel stage-bezel">
                 <div class="oled-screen-content stage-screen-content">
                   <div class="oled-live-face-wrap" id="detailFaceSvgWrap">
-                    <svg viewBox="0 0 100 50" class="oled-face-svg">
-                      <rect x="15" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3">
-                      </rect>
-                      <rect x="57" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3">
-                      </rect>
+                    <svg viewBox="0 0 128 64" class="oled-face-svg">
+                      <rect x="24" y="6" width="32" height="34" rx="8" fill="#00F0FF" stroke="none"></rect>
+                      <circle cx="48" cy="14" r="3" fill="#02060c" stroke="none"></circle>
+                      <rect x="72" y="6" width="32" height="34" rx="8" fill="#00F0FF" stroke="none"></rect>
+                      <circle cx="80" cy="14" r="3" fill="#02060c" stroke="none"></circle>
+                      <path d="M54 46 Q64 54 74 46" fill="none" stroke="#00F0FF" stroke-width="2.5" stroke-linecap="round"></path>
                     </svg>
                   </div>
                 </div>
@@ -570,10 +573,10 @@
             </div>
             <div class="faces-selector-section">
               <div class="faces-section-header">
-                <span class="status-card-label" id="detailFaceMoodLabel">PILIH DARI 13 EXPRESI WAJAH OLED</span>
+                <span class="status-card-label" id="detailFaceMoodLabel">PILIH DARI 20 ANIMASI OLED</span>
               </div>
               <div class="faces-grid" id="detailFacesGrid">
-                <!-- 13 Kartu Ekspresi di-render secara dinamis oleh JavaScript -->
+                <!-- 20 Kartu Animasi di-render secara dinamis oleh JavaScript -->
               </div>
             </div>
           </div>

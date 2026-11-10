@@ -833,21 +833,115 @@ window.onBLEReceived = function(jsonStr) {
 
 // ================= 5. FEATURE ACTION HANDLERS =================
 
-// Definisi 13 Grafis & Mood Wajah OLED Robot
+// Definisi 20 Grafis & Mood Wajah OLED Robot (100% Sesuai Layar OLED SSD1306 & TASK.md)
 const OLED_FACES = [
-  { name: 'SENANG', svg: '<rect x="15" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3"></rect><rect x="57" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3"></rect>' },
-  { name: 'KEDIP', svg: '<rect x="15" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="3"></rect><line x1="57" y1="25" x2="85" y2="25" stroke="#00F0FF" stroke-width="4" stroke-linecap="round"></line>' },
-  { name: 'NGANTUK', svg: '<path d="M15 28 Q29 38 43 28" fill="none" stroke="#00F0FF" stroke-width="3.5"></path><path d="M57 28 Q71 38 85 28" fill="none" stroke="#00F0FF" stroke-width="3.5"></path><text x="75" y="15" fill="#00F0FF" font-size="11" font-weight="bold">Z</text>' },
-  { name: 'SEDIH', svg: '<path d="M15 25 Q29 15 43 25" fill="none" stroke="#00F0FF" stroke-width="3.5"></path><path d="M57 25 Q71 15 85 25" fill="none" stroke="#00F0FF" stroke-width="3.5"></path><path d="M29 32 Q25 40 29 45 Q33 40 29 32" fill="#00F0FF"></path><path d="M71 32 Q67 40 71 45 Q75 40 71 32" fill="#00F0FF"></path>' },
-  { name: 'CEMBURU', svg: '<line x1="15" y1="20" x2="43" y2="28" stroke="#00F0FF" stroke-width="3.5"></line><line x1="85" y1="20" x2="57" y2="28" stroke="#00F0FF" stroke-width="3.5"></line>' },
-  { name: 'IMUT', svg: '<path d="M15 30 Q29 12 43 30" fill="none" stroke="#00F0FF" stroke-width="3.5"></path><path d="M57 30 Q71 12 85 30" fill="none" stroke="#00F0FF" stroke-width="3.5"></path>' },
-  { name: 'CIUM', svg: '<line x1="15" y1="25" x2="43" y2="25" stroke="#00F0FF" stroke-width="3.5"></line><path d="M57 30 Q71 14 85 30" fill="none" stroke="#00F0FF" stroke-width="3.5"></path><path d="M48 36 Q52 32 48 28" fill="none" stroke="#00F0FF" stroke-width="2.5"></path>' },
-  { name: 'CINTA', svg: '<path d="M29 18 A 6 6 0 0 0 20 22 Q 29 36 29 36 Q 29 36 38 22 A 6 6 0 0 0 29 18" fill="none" stroke="#00F0FF" stroke-width="2.5"></path><path d="M71 18 A 6 6 0 0 0 62 22 Q 71 36 71 36 Q 71 36 80 22 A 6 6 0 0 0 71 18" fill="none" stroke="#00F0FF" stroke-width="2.5"></path>' },
-  { name: 'BINTANG', svg: '<rect x="15" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="2.5"></rect><rect x="57" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="2.5"></rect><polygon points="29,18 31,23 36,25 31,27 29,32 27,27 22,25 27,23" fill="#00F0FF"></polygon><polygon points="71,18 73,23 78,25 73,27 71,32 69,27 64,25 69,23" fill="#00F0FF"></polygon>' },
-  { name: 'PUSING', svg: '<line x1="20" y1="15" x2="38" y2="35" stroke="#00F0FF" stroke-width="3.5"></line><line x1="38" y1="15" x2="20" y2="35" stroke="#00F0FF" stroke-width="3.5"></line><line x1="62" y1="15" x2="80" y2="35" stroke="#00F0FF" stroke-width="3.5"></line><line x1="80" y1="15" x2="62" y2="35" stroke="#00F0FF" stroke-width="3.5"></line>' },
-  { name: 'MARAH', svg: '<line x1="14" y1="14" x2="43" y2="24" stroke="#00F0FF" stroke-width="4"></line><line x1="86" y1="14" x2="57" y2="24" stroke="#00F0FF" stroke-width="4"></line><rect x="18" y="26" width="22" height="14" rx="4" fill="none" stroke="#00F0FF" stroke-width="2.5"></rect><rect x="60" y="26" width="22" height="14" rx="4" fill="none" stroke="#00F0FF" stroke-width="2.5"></rect>' },
-  { name: 'MELIRIK', svg: '<rect x="15" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="2.5"></rect><rect x="57" y="10" width="28" height="30" rx="8" fill="none" stroke="#00F0FF" stroke-width="2.5"></rect><rect x="17" y="16" width="12" height="18" rx="4" fill="#00F0FF"></rect><rect x="59" y="16" width="12" height="18" rx="4" fill="#00F0FF"></rect>' },
-  { name: 'HATI', svg: '<path d="M29 14 A 8 8 0 0 0 17 22 Q 29 40 29 40 Q 29 40 41 22 A 8 8 0 0 0 29 14" fill="#00F0FF"></path><path d="M71 14 A 8 8 0 0 0 59 22 Q 71 40 71 40 Q 71 40 83 22 A 8 8 0 0 0 71 14" fill="#00F0FF"></path>' }
+  // --- KATEGORI 1: STANDBY (0..4) ---
+  {
+    name: 'Kedip',
+    cat: 'STANDBY',
+    svg: '<rect x="24" y="6" width="32" height="34" rx="8" fill="#00F0FF" stroke="none"/><circle cx="48" cy="14" r="3" fill="#02060c" stroke="none"/><rect x="72" y="6" width="32" height="34" rx="8" fill="#00F0FF" stroke="none"/><circle cx="80" cy="14" r="3" fill="#02060c" stroke="none"/><path d="M54 46 Q64 54 74 46" fill="none" stroke="#00F0FF" stroke-width="2.5" stroke-linecap="round"/>'
+  },
+  {
+    name: 'Lirik',
+    cat: 'STANDBY',
+    svg: '<rect x="18" y="6" width="32" height="34" rx="8" fill="#00F0FF" stroke="none"/><circle cx="42" cy="14" r="3" fill="#02060c" stroke="none"/><rect x="66" y="6" width="32" height="34" rx="8" fill="#00F0FF" stroke="none"/><circle cx="74" cy="14" r="3" fill="#02060c" stroke="none"/><path d="M54 46 Q64 54 74 46" fill="none" stroke="#00F0FF" stroke-width="2.5" stroke-linecap="round"/>'
+  },
+  {
+    name: 'Sedih',
+    cat: 'STANDBY',
+    svg: '<path d="M24 18 L56 10 Q56 40 48 40 L32 40 Q24 40 24 32 Z" fill="#00F0FF" stroke="none"/><path d="M72 10 L104 18 Q104 32 104 40 L80 40 Q72 40 72 32 Z" fill="#00F0FF" stroke="none"/><ellipse cx="52" cy="34" rx="2.5" ry="3.5" fill="#00F0FF" stroke="none"/><path d="M54 52 Q64 45 74 52" fill="none" stroke="#00F0FF" stroke-width="2.5" stroke-linecap="round"/>'
+  },
+  {
+    name: 'Cemberut',
+    cat: 'STANDBY',
+    svg: '<rect x="32" y="14" width="32" height="20" rx="5" fill="#00F0FF" stroke="none"/><rect x="54" y="18" width="6" height="12" fill="#02060c" stroke="none"/><rect x="80" y="14" width="32" height="20" rx="5" fill="#00F0FF" stroke="none"/><rect x="102" y="18" width="6" height="12" fill="#02060c" stroke="none"/><circle cx="22" cy="28" r="6.5" fill="#00F0FF" stroke="none"/><circle cx="11" cy="36" r="2.5" fill="#00F0FF" stroke="none"/><circle cx="7" cy="39" r="1.8" fill="#00F0FF" stroke="none"/><ellipse cx="68" cy="47" rx="6" ry="3.5" fill="#00F0FF" stroke="none"/><ellipse cx="68" cy="47" rx="3" ry="1.5" fill="#02060c" stroke="none"/>'
+  },
+  {
+    name: 'Tidur',
+    cat: 'STANDBY',
+    svg: '<path d="M27 28 Q40 41 53 28" fill="none" stroke="#00F0FF" stroke-width="3.5" stroke-linecap="round"/><path d="M75 28 Q88 41 101 28" fill="none" stroke="#00F0FF" stroke-width="3.5" stroke-linecap="round"/><text x="102" y="20" fill="#00F0FF" stroke="none" font-family="monospace" font-size="10" font-weight="bold">z</text><text x="113" y="14" fill="#00F0FF" stroke="none" font-family="monospace" font-size="14" font-weight="bold">Z</text><line x1="58" y1="47" x2="70" y2="47" stroke="#00F0FF" stroke-width="2.5" stroke-linecap="round"/>'
+  },
+
+  // --- KATEGORI 2: TAP SENSOR (5..9) ---
+  {
+    name: 'Mikir',
+    cat: 'TAP',
+    svg: '<rect x="28" y="5" width="28" height="28" rx="7" fill="#00F0FF" stroke="none"/><circle cx="50" cy="11" r="2.5" fill="#02060c" stroke="none"/><rect x="76" y="5" width="30" height="30" rx="7" fill="#00F0FF" stroke="none"/><circle cx="98" cy="11" r="2.5" fill="#02060c" stroke="none"/><text x="110" y="16" fill="#00F0FF" stroke="none" font-family="monospace" font-size="15" font-weight="bold">?</text><path d="M56 49 Q64 49 72 45" fill="none" stroke="#00F0FF" stroke-width="2.5" stroke-linecap="round"/>'
+  },
+  {
+    name: 'Serius',
+    cat: 'TAP',
+    svg: '<rect x="24" y="12" width="32" height="22" fill="#00F0FF" stroke="none"/><rect x="42" y="16" width="7" height="14" fill="#02060c" stroke="none"/><rect x="72" y="12" width="32" height="22" fill="#00F0FF" stroke="none"/><rect x="79" y="16" width="7" height="14" fill="#02060c" stroke="none"/><line x1="56" y1="47" x2="72" y2="47" stroke="#00F0FF" stroke-width="2.5" stroke-linecap="round"/>'
+  },
+  {
+    name: 'Malu',
+    cat: 'TAP',
+    svg: '<rect x="27" y="12" width="30" height="26" rx="6" fill="#00F0FF" stroke="none"/><circle cx="45" cy="30" r="3" fill="#02060c" stroke="none"/><rect x="71" y="12" width="30" height="26" rx="6" fill="#00F0FF" stroke="none"/><circle cx="83" cy="30" r="3" fill="#02060c" stroke="none"/><line x1="18" y1="34" x2="21" y2="28" stroke="#00F0FF" stroke-width="2"/><line x1="22" y1="34" x2="25" y2="28" stroke="#00F0FF" stroke-width="2"/><line x1="26" y1="34" x2="29" y2="28" stroke="#00F0FF" stroke-width="2"/><line x1="102" y1="34" x2="105" y2="28" stroke="#00F0FF" stroke-width="2"/><line x1="106" y1="34" x2="109" y2="28" stroke="#00F0FF" stroke-width="2"/><line x1="110" y1="34" x2="113" y2="28" stroke="#00F0FF" stroke-width="2"/><path d="M56 47 Q64 53 72 47" fill="none" stroke="#00F0FF" stroke-width="2" stroke-linecap="round"/>'
+  },
+  {
+    name: 'Keren',
+    cat: 'TAP',
+    svg: '<rect x="24" y="8" width="32" height="28" rx="4" fill="#00F0FF" stroke="none"/><rect x="26" y="12" width="28" height="22" fill="#02060c" stroke="none"/><rect x="36" y="14" width="4" height="18" fill="#00F0FF" stroke="none"/><rect x="54" y="12" width="20" height="5" fill="#00F0FF" stroke="none"/><rect x="72" y="8" width="32" height="28" rx="4" fill="#00F0FF" stroke="none"/><rect x="74" y="12" width="28" height="22" fill="#02060c" stroke="none"/><rect x="84" y="14" width="4" height="18" fill="#00F0FF" stroke="none"/><path d="M56 49 Q64 49 72 45" fill="none" stroke="#00F0FF" stroke-width="2.5" stroke-linecap="round"/>'
+  },
+  {
+    name: 'Genit',
+    cat: 'TAP',
+    svg: '<path d="M26 26 Q40 12 54 26" fill="none" stroke="#00F0FF" stroke-width="4" stroke-linecap="round"/><circle cx="26" cy="32" r="3" fill="#00F0FF" stroke="none"/><rect x="72" y="6" width="32" height="34" rx="8" fill="#00F0FF" stroke="none"/><circle cx="80" cy="14" r="3" fill="#02060c" stroke="none"/><circle cx="94" cy="28" r="2" fill="#02060c" stroke="none"/><path d="M56 46 Q64 54 72 46 Z" fill="#00F0FF" stroke="none"/>'
+  },
+
+  // --- KATEGORI 3: TAHAN SENSOR (10..14) ---
+  {
+    name: 'Imut',
+    cat: 'TAHAN',
+    svg: '<path d="M26 25 Q40 11 54 25" fill="none" stroke="#00F0FF" stroke-width="4" stroke-linecap="round"/><circle cx="24" cy="30" r="3.5" fill="#00F0FF" stroke="none"/><path d="M74 25 Q88 11 102 25" fill="none" stroke="#00F0FF" stroke-width="4" stroke-linecap="round"/><circle cx="104" cy="30" r="3.5" fill="#00F0FF" stroke="none"/><path d="M56 46 Q64 54 72 46 Z" fill="#00F0FF" stroke="none"/>'
+  },
+  {
+    name: 'Tertawa',
+    cat: 'TAHAN',
+    svg: '<path d="M28 14 L46 23 L28 32" fill="none" stroke="#00F0FF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M100 14 L82 23 L100 32" fill="none" stroke="#00F0FF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M54 44 Q64 55 74 44 Z" fill="#00F0FF" stroke="none"/>'
+  },
+  {
+    name: 'Takjub',
+    cat: 'TAHAN',
+    svg: '<path d="M40 7 Q40 23 56 23 Q40 23 40 39 Q40 23 24 23 Q40 23 40 7 Z" fill="#00F0FF" stroke="none"/><path d="M88 7 Q88 23 104 23 Q88 23 88 39 Q88 23 72 23 Q88 23 88 7 Z" fill="#00F0FF" stroke="none"/><path d="M16 10 Q16 13 19 13 Q16 13 16 16 Q16 13 13 13 Q16 13 16 10 Z" fill="#00F0FF" stroke="none"/><path d="M112 32 Q112 35 115 35 Q112 35 112 38 Q112 35 109 35 Q112 35 112 32 Z" fill="#00F0FF" stroke="none"/><path d="M55 45 Q64 54 73 45 Z" fill="#00F0FF" stroke="none"/>'
+  },
+  {
+    name: 'Cium',
+    cat: 'TAHAN',
+    svg: '<rect x="26" y="11" width="28" height="24" rx="6" fill="#00F0FF" stroke="none"/><rect x="74" y="11" width="28" height="24" rx="6" fill="#00F0FF" stroke="none"/><ellipse cx="64" cy="47" rx="5" ry="4" fill="#00F0FF" stroke="none"/><ellipse cx="64" cy="47" rx="2.5" ry="2" fill="#02060c" stroke="none"/><path d="M76 26 C76 22 71 22 71 25 C71 28 76 33 76 35 C76 33 81 28 81 25 C81 22 76 22 76 26 Z" fill="#00F0FF" stroke="none"/>'
+  },
+  {
+    name: 'Cinta',
+    cat: 'TAHAN',
+    svg: '<path d="M40 20 C40 11 27 11 27 20 C27 28 40 37 40 39 C40 37 53 28 53 20 C53 11 40 11 40 20 Z" fill="#00F0FF" stroke="none"/><path d="M88 20 C88 11 75 11 75 20 C75 28 88 37 88 39 C88 37 101 28 101 20 C101 11 88 11 88 20 Z" fill="#00F0FF" stroke="none"/><path d="M56 47 Q64 53 72 47" fill="none" stroke="#00F0FF" stroke-width="2.5" stroke-linecap="round"/>'
+  },
+
+  // --- KATEGORI 4: GUNCANG TILT (15..19) ---
+  {
+    name: 'Kaget',
+    cat: 'GUNCANG',
+    svg: '<rect x="23" y="5" width="34" height="36" rx="8" fill="#00F0FF" stroke="none"/><circle cx="40" cy="23" r="5" fill="#02060c" stroke="none"/><rect x="71" y="5" width="34" height="36" rx="8" fill="#00F0FF" stroke="none"/><circle cx="88" cy="23" r="5" fill="#02060c" stroke="none"/><circle cx="64" cy="48" r="5" fill="#00F0FF" stroke="none"/><circle cx="64" cy="48" r="2.5" fill="#02060c" stroke="none"/>'
+  },
+  {
+    name: 'Panik',
+    cat: 'GUNCANG',
+    svg: '<rect x="22" y="7" width="32" height="30" rx="6" fill="#00F0FF" stroke="none"/><circle cx="38" cy="22" r="3" fill="#02060c" stroke="none"/><rect x="70" y="7" width="32" height="30" rx="6" fill="#00F0FF" stroke="none"/><circle cx="86" cy="22" r="3" fill="#02060c" stroke="none"/><ellipse cx="114" cy="18" rx="3.5" ry="5" fill="#00F0FF" stroke="none" transform="rotate(15 114 18)"/><path d="M56 47 Q60 44 62 47 Q64 50 66 47 Q68 44 72 47" fill="none" stroke="#00F0FF" stroke-width="2.5" stroke-linecap="round"/>'
+  },
+  {
+    name: 'Marah',
+    cat: 'GUNCANG',
+    svg: '<line x1="20" y1="8" x2="54" y2="18" stroke="#00F0FF" stroke-width="3.5" stroke-linecap="round"/><path d="M24 14 L56 24 L56 38 L24 38 Z" fill="#00F0FF" stroke="none"/><line x1="108" y1="8" x2="74" y2="18" stroke="#00F0FF" stroke-width="3.5" stroke-linecap="round"/><path d="M72 24 L104 14 L104 38 L72 38 Z" fill="#00F0FF" stroke="none"/><line x1="55" y1="47" x2="73" y2="47" stroke="#00F0FF" stroke-width="3" stroke-linecap="round"/>'
+  },
+  {
+    name: 'Pusing',
+    cat: 'GUNCANG',
+    svg: '<path d="M40 23 m0 -12 a12 12 0 1 1 0 24 a12 12 0 1 1 0 -24 a8 8 0 1 1 0 16 a8 8 0 1 1 0 -16 a4 4 0 1 1 0 8" fill="none" stroke="#00F0FF" stroke-width="2.5" stroke-linecap="round"/><path d="M88 23 m0 -12 a12 12 0 1 1 0 24 a12 12 0 1 1 0 -24 a8 8 0 1 1 0 16 a8 8 0 1 1 0 -16 a4 4 0 1 1 0 8" fill="none" stroke="#00F0FF" stroke-width="2.5" stroke-linecap="round"/><path d="M56 47 Q60 44 62 47 Q64 50 66 47 Q68 44 72 47" fill="none" stroke="#00F0FF" stroke-width="2.5" stroke-linecap="round"/>'
+  },
+  {
+    name: 'Pingsan',
+    cat: 'GUNCANG',
+    svg: '<line x1="27" y1="12" x2="53" y2="34" stroke="#00F0FF" stroke-width="4.5" stroke-linecap="round"/><line x1="53" y1="12" x2="27" y2="34" stroke="#00F0FF" stroke-width="4.5" stroke-linecap="round"/><line x1="75" y1="12" x2="101" y2="34" stroke="#00F0FF" stroke-width="4.5" stroke-linecap="round"/><line x1="101" y1="12" x2="75" y2="34" stroke="#00F0FF" stroke-width="4.5" stroke-linecap="round"/><path d="M64 5 L66 8 L69 8 L67 10 L68 13 L64 11 L60 13 L61 10 L59 8 L62 8 Z" fill="#00F0FF" stroke="none"/><line x1="57" y1="47" x2="71" y2="47" stroke="#00F0FF" stroke-width="2.5" stroke-linecap="round"/>'
+  }
 ];
 
 // UPDATE TAMPILAN WAJAH OLED DI DETAIL DAN OVERVIEW
@@ -859,20 +953,20 @@ function updateOledFacePreview(idx) {
   const detailMoodLabel = document.getElementById('detailFaceMoodLabel');
 
   if (detailWrap) {
-    detailWrap.innerHTML = `<svg viewBox="0 0 100 50" class="oled-face-svg">${item.svg}</svg>`;
+    detailWrap.innerHTML = `<svg viewBox="0 0 128 64" class="oled-face-svg">${item.svg}</svg>`;
   }
   if (overviewWrap) {
-    overviewWrap.innerHTML = `<svg viewBox="0 0 100 50" class="oled-face-svg">${item.svg}</svg>`;
+    overviewWrap.innerHTML = `<svg viewBox="0 0 128 64" class="oled-face-svg">${item.svg}</svg>`;
   }
   if (moodLabel) {
-    moodLabel.textContent = `MOOD: ${item.name}`;
+    moodLabel.textContent = `ANIMASI: ${item.name.toUpperCase()}`;
   }
   if (detailMoodLabel) {
-    detailMoodLabel.textContent = `MOOD: ${item.name}`;
+    detailMoodLabel.textContent = `ANIMASI: [${idx}] ${item.name} (${item.cat})`;
   }
 }
 
-// RENDER 13 KARTU EXPRESI WAJAH OLED DI HALAMAN DETAIL FITUR
+// RENDER 20 KARTU ANIMASI WAJAH OLED DI HALAMAN DETAIL FITUR
 function renderDetailFacesGrid() {
   const container = document.getElementById('detailFacesGrid');
   if (!container) return;
@@ -883,15 +977,15 @@ function renderDetailFacesGrid() {
     card.onclick = () => selectFaceFromDetail(index, card);
     card.innerHTML = `
       <div class="eye-preview">
-        <svg viewBox="0 0 100 50" class="oled-face-svg">${item.svg}</svg>
+        <svg viewBox="0 0 128 64" class="oled-face-svg">${item.svg}</svg>
       </div>
-      <span>${index + 1}. ${item.name}</span>
+      <span>[${index}] ${item.name}</span>
     `;
     container.appendChild(card);
   });
 }
 
-// PILIH EXPRESI WAJAH OLED (DURASI 3 DETIK, HANYA BISA DI FITUR/MODE ANIMASI)
+// PILIH EXPRESI WAJAH OLED (DURASI 5 DETIK SESUAI TASK.MD KECUALI STANDBY INAKTIVITAS)
 function selectFaceFromDetail(index, elem) {
   if (elem && typeof elem.blur === 'function') {
     elem.blur();
@@ -921,13 +1015,15 @@ function selectFaceFromDetail(index, elem) {
 
   triggerHaptic(25);
 
-  // Durasi animasi tepat 3 detik, lalu otomatis kembali ke netral (0: SENANG) sesuai firmware robot fisik
-  if (index !== 0) {
+  // Sesuai TASK.md: Reaksi aktif berjalan 5 detik lalu balik ke Kedip (0).
+  // Standby inaktivitas (0: Kedip, 2: Sedih, 3: Cemberut, 4: Tidur) bersifat fixed loop tanpa timer auto-return.
+  const isFixedStandby = (index === 0 || index === 2 || index === 3 || index === 4);
+  if (!isFixedStandby) {
     faceAnimationTimer = setTimeout(() => {
       currentFaceIndex = 0;
       updateOledFacePreview(0);
       sendCommand({ c: 'f', v: 0 }); // Kembalikan ke netral di robot fisik
-    }, 3000);
+    }, 5000);
   }
 }
 
