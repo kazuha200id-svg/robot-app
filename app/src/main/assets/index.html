@@ -1487,19 +1487,20 @@
           <div class="setting-item-block">
             <div class="setting-item-header">
               <span class="setting-item-label">Waktu Mode Sleep</span>
-              <span id="txtActiveSleepBadge" class="setting-val-badge">5 MENIT</span>
+              <span id="txtActiveSleepBadge" class="setting-val-badge">15 MENIT</span>
             </div>
             <div class="setting-pills-row">
-              <button type="button" class="setting-pill-btn active" data-sec="300" onclick="selectSleepPreset(300, this)">5 Menit</button>
-              <button type="button" class="setting-pill-btn" data-sec="600" onclick="selectSleepPreset(600, this)">10 Menit</button>
-              <button type="button" class="setting-pill-btn" data-sec="900" onclick="selectSleepPreset(900, this)">15 Menit</button>
+              <button type="button" class="setting-pill-btn active" data-sec="900" onclick="selectSleepPreset(900, this)">15 Menit</button>
+              <button type="button" class="setting-pill-btn" data-sec="1800" onclick="selectSleepPreset(1800, this)">30 Menit</button>
+              <button type="button" class="setting-pill-btn" data-sec="2700" onclick="selectSleepPreset(2700, this)">45 Menit</button>
+              <button type="button" class="setting-pill-btn" data-sec="3600" onclick="selectSleepPreset(3600, this)">60 Menit</button>
               <button type="button" class="setting-pill-btn" data-sec="0" onclick="selectSleepPreset(0, this)">Selalu Nyala</button>
             </div>
 
             <!-- Input Kustom Menit -->
             <div class="setting-custom-sleep-row">
               <div class="custom-input-wrap">
-                <input type="number" id="inputCustomSleepMin" min="5" max="60" placeholder="5 - 60 menit" class="neon-number-input">
+                <input type="number" id="inputCustomSleepMin" min="15" max="60" placeholder="15 - 60 menit" class="neon-number-input">
               </div>
               <button type="button" id="btnApplyCustomSleep" class="setting-action-btn" onclick="applyCustomSleepSetting()">TERAPKAN</button>
             </div>

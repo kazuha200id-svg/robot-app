@@ -4863,7 +4863,7 @@ function selectSleepPreset(sec, btnEl) {
   triggerHaptic(20);
 }
 
-// 3. Custom Auto-Sleep Input (Validasi Ketat Minimal 5 Menit, Maksimal 60 Menit)
+// 3. Custom Auto-Sleep Input (Validasi Ketat Minimal 15 Menit, Maksimal 60 Menit)
 function applyCustomSleepSetting() {
   const input = document.getElementById('inputCustomSleepMin');
   if (!input) return;
@@ -4873,10 +4873,10 @@ function applyCustomSleepSetting() {
     return;
   }
 
-  if (min < 5) {
-    input.value = 5;
-    min = 5;
-    showNeonToast('Minimal 5 menit!');
+  if (min < 15) {
+    input.value = 15;
+    min = 15;
+    showNeonToast('Minimal 15 menit!');
   } else if (min > 60) {
     input.value = 60;
     min = 60;
